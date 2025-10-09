@@ -1,0 +1,125 @@
+{
+	"name": "test_csv_to_db",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "test_blob_storage_nsw",
+						"type": "LinkedServiceReference"
+					},
+					"name": "csvFileRead"
+				},
+				{
+					"dataset": {
+						"referenceName": "test_db_nsw_dataset",
+						"type": "DatasetReference"
+					},
+					"name": "dbTableRead"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "test_db_nsw_dataset",
+						"type": "DatasetReference"
+					},
+					"name": "DeleteInsert"
+				}
+			],
+			"transformations": [
+				{
+					"name": "deleteInsertConditions"
+				},
+				{
+					"name": "derivedCsvYearMonthColumn"
+				},
+				{
+					"name": "derivedDbYearMonthColumn"
+				},
+				{
+					"name": "unionCsvDb"
+				},
+				{
+					"name": "deleteRecordFilter"
+				},
+				{
+					"name": "aggregateCsvYearMonth"
+				},
+				{
+					"name": "joinYearMonth"
+				},
+				{
+					"name": "derivedNewUpdateAtColumn"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          name as string,",
+				"          age as integer",
+				"     ),",
+				"     useSchema: false,",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     purgeFiles: true,",
+				"     rowUrlColumn: 'fileName',",
+				"     format: 'delimited',",
+				"     container: 'test-nsw',",
+				"     columnDelimiter: ',',",
+				"     escapeChar: '\\\\',",
+				"     quoteChar: '\\\"',",
+				"     columnNamesAsHeader: true,",
+				"     wildcardPaths:['test_nsw_1/test*.csv']) ~> csvFileRead",
+				"source(output(",
+				"          id as integer,",
+				"          name as string,",
+				"          age as integer,",
+				"          update_at as date",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> dbTableRead",
+				"derivedNewUpdateAtColumn alterRow(deleteIf(!isNull(id)),",
+				"     insertIf(isNull(id))) ~> deleteInsertConditions",
+				"csvFileRead derive(csvYearMonth = left(right(fileName, 12), 6),",
+				"          csvUpdate_at = toDate(left(right(fileName, 12), 4) + '-' + left(right(fileName, 8), 2) + '-' + left(right(fileName, 6), 2), 'yyyy-MM-dd')) ~> derivedCsvYearMonthColumn",
+				"dbTableRead derive(dbYearMonth = toString(update_at, 'yyyyMM')) ~> derivedDbYearMonthColumn",
+				"derivedCsvYearMonthColumn, derivedDbYearMonthColumn union(byName: true)~> unionCsvDb",
+				"joinYearMonth filter(iif(isNull(id), isNull(id), yearMonth == dbYearMonth)) ~> deleteRecordFilter",
+				"unionCsvDb aggregate(yearMonth = first(csvYearMonth, true())) ~> aggregateCsvYearMonth",
+				"unionCsvDb, aggregateCsvYearMonth join(!isNull(yearMonth) || iif(isNull(id), !isNull(csvYearMonth), !isNull(dbYearMonth)),",
+				"     joinType:'cross',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinYearMonth",
+				"deleteRecordFilter derive(newUpdateAt = iif(isNull(id), csvUpdate_at, update_at)) ~> derivedNewUpdateAtColumn",
+				"deleteInsertConditions sink(allowSchemaDrift: true,",
+				"     validateSchema: true,",
+				"     input(",
+				"          id as integer,",
+				"          name as string,",
+				"          age as integer,",
+				"          update_at as date",
+				"     ),",
+				"     deletable:true,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     keys:['update_at'],",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 1,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          name,",
+				"          age,",
+				"          update_at = newUpdateAt",
+				"     )) ~> DeleteInsert"
+			]
+		}
+	}
+}

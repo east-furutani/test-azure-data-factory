@@ -1,0 +1,19 @@
+{
+	"name": "test_blob_storage_nsw",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "test_blob_storage_nsw",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": "test_nsw_1",
+				"container": "test-nsw"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

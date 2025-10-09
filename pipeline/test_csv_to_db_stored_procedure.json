@@ -1,0 +1,273 @@
+{
+	"name": "test_csv_to_db_stored_procedure",
+	"properties": {
+		"activities": [
+			{
+				"name": "GetCsvFileNameList",
+				"description": "対象のフォルダ配下に存在するファイル名一覧を取得します。",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "test_blob_storage_nsw",
+						"type": "DatasetReference"
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "BinaryReadSettings"
+					}
+				}
+			},
+			{
+				"name": "DeleteInsertCsvData",
+				"description": "対象テーブルから条件に合致するレコードを削除した後、CSV ファイルから読み込んだデータを対象テーブルに INSERT します。",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "ForEachCsvFileRead",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[test_csv_to_db]",
+					"storedProcedureParameters": {
+						"csvDataJson": {
+							"value": {
+								"value": "@concat('[', substring(variables('csvDataJson'), 0, sub(length(variables('csvDataJson')), 1)), ']')\n",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"fileName": {
+							"value": {
+								"value": "@string(activity('FilterCsvFile').output.value)\n",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "test_db_nsw_link_service",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "ForEachCsvFileRead",
+				"description": "GetCsvFileNameList で読み込んだファイル数分ループします。",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FilterCsvFile",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FilterCsvFile').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "CsvDataInCache",
+							"description": "CSV ファイルから読み込んだデータを cache に保存します。",
+							"type": "ExecuteDataFlow",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataflow": {
+									"referenceName": "csv_cache",
+									"type": "DataFlowReference",
+									"parameters": {
+										"fileName": {
+											"value": "'@{item().name}'",
+											"type": "Expression"
+										}
+									}
+								},
+								"compute": {
+									"coreCount": 8,
+									"computeType": "General"
+								},
+								"traceLevel": "None"
+							}
+						},
+						{
+							"name": "SetCsvDataJson",
+							"description": "各 CSV ファイルのデータを1つの文字列　として結合します。",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "SetTempCsvDataJson",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "csvDataJson",
+								"value": {
+									"value": "@concat(replace(replace(variables('tempCsvDataJson'), '[', ''), ']', '')\n, replace(replace(string(activity('CsvDataInCache').output.runStatus.output.sink1.value), '[', ''), ']', '')\n, ',')",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "SetTempCsvDataJson",
+							"description": "SetCsvDataJson の値を一時退避します。",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "CsvDataInCache",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "tempCsvDataJson",
+								"value": {
+									"value": "@variables('csvDataJson')",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "ForEachCsvFileDelete",
+				"description": "GetCsvFileNameList で読み込んだファイル数分ループします。",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "DeleteInsertCsvData",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FilterCsvFile').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "DeleteCsvFile",
+							"description": "CSVファイルを削除します。",
+							"type": "Delete",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "test_blob_storage_nsw",
+									"type": "DatasetReference"
+								},
+								"enableLogging": false,
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFileName": {
+										"value": "@item().name",
+										"type": "Expression"
+									},
+									"enablePartitionDiscovery": false
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "FilterCsvFile",
+				"description": "取得したファイルの内、CSV ファイルのみを抽出します。",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "GetCsvFileNameList",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('GetCsvFileNameList').output.childItems",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@endswith(item().name, 'csv')",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"variables": {
+			"csvDataJson": {
+				"type": "String"
+			},
+			"tempCsvDataJson": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-10-09T01:55:14Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

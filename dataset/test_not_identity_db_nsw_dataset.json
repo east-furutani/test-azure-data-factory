@@ -1,0 +1,36 @@
+{
+	"name": "test_not_identity_db_nsw_dataset",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "test_db_nsw_link_service",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "age",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "update_at",
+				"type": "date"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "test_table_not_identity"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

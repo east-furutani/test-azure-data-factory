@@ -1,0 +1,58 @@
+{
+	"name": "csv_cache_bulk",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "test_blob_storage_nsw",
+						"type": "LinkedServiceReference"
+					},
+					"name": "csvFileRead"
+				}
+			],
+			"sinks": [
+				{
+					"name": "csvDataInCache"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedFileNameColumn"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          name as string,",
+				"          age as short",
+				"     ),",
+				"     useSchema: false,",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     rowUrlColumn: 'filePath',",
+				"     format: 'delimited',",
+				"     container: 'test-nsw',",
+				"     columnDelimiter: ',',",
+				"     escapeChar: '\\\\',",
+				"     quoteChar: '\\\"',",
+				"     columnNamesAsHeader: true,",
+				"     wildcardPaths:['test_nsw_1/test*.csv']) ~> csvFileRead",
+				"csvFileRead derive(fileName = split(filePath, '/')[size(split(filePath, '/'))]) ~> derivedFileNameColumn",
+				"derivedFileNameColumn sink(validateSchema: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     store: 'cache',",
+				"     format: 'inline',",
+				"     output: true,",
+				"     saveOrder: 1,",
+				"     mapColumn(",
+				"          name,",
+				"          age,",
+				"          fileName",
+				"     )) ~> csvDataInCache"
+			]
+		}
+	}
+}

@@ -1,0 +1,169 @@
+{
+	"name": "test_csv_to_db_stored_procedure_bulk",
+	"properties": {
+		"activities": [
+			{
+				"name": "DeleteInsertCsvData",
+				"description": "対象テーブルから条件に合致するレコードを削除した後、CSV ファイルから読み込んだデータを対象テーブルに INSERT します。\nまた、削除対象の CSV ファイル名一覧を 出力します。",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "CsvDataInCache",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[test_csv_to_db_output_filename]",
+					"storedProcedureParameters": {
+						"csvDataJson": {
+							"value": {
+								"value": "@string(activity('CsvDataInCache').output.runStatus.output.csvDataInCache.value)",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "test_db_nsw_link_service",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "ForEachCsvFileDelete",
+				"description": "GetCsvFileNameList で読み込んだファイル数分ループします。",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "GroupByFileName",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('GroupByFileName').output.resultSets[0].rows",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "DeleteCsvFile",
+							"description": "CSVファイルを削除します。",
+							"type": "Delete",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "test_blob_storage_nsw",
+									"type": "DatasetReference"
+								},
+								"enableLogging": false,
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFileName": {
+										"value": "@item().fileName",
+										"type": "Expression"
+									},
+									"enablePartitionDiscovery": false
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "CsvDataInCache",
+				"description": "CSV ファイルから読み込んだデータを cache に保存します。",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "csv_cache_bulk",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "None"
+				}
+			},
+			{
+				"name": "GroupByFileName",
+				"description": "削除対象のファイル名をグループ化します。",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "DeleteInsertCsvData",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "test_db_nsw_link_service",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"parameters": [
+								{
+									"name": "csvDataJson",
+									"type": "String",
+									"value": {
+										"value": "@string(activity('CsvDataInCache').output.runStatus.output.csvDataInCache.value)",
+										"type": "Expression"
+									},
+									"direction": "Input"
+								}
+							],
+							"type": "Query",
+							"text": "SELECT\r\n    fileName\r\nFROM\r\n    OPENJSON(@csvDataJson)\r\n    WITH (\r\n        fileName NVARCHAR(MAX)\r\n    )\r\nGROUP BY fileName"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2025-10-09T04:54:59Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

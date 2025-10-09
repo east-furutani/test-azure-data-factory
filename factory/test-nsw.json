@@ -1,0 +1,9 @@
+{
+	"name": "test-nsw",
+	"location": "japaneast",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "2e1941ad-c92e-4729-8f0d-b3bf3022fcae",
+		"tenantId": "115b7299-ac1e-44cc-abf8-f03ddd0e3474"
+	}
+}
