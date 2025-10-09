@@ -1,0 +1,18 @@
+{
+	"name": "fileUploadTrigger",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [],
+		"type": "BlobEventsTrigger",
+		"typeProperties": {
+			"blobPathBeginsWith": "/test-nsw/blobs/test_nsw_1",
+			"blobPathEndsWith": ".csv",
+			"ignoreEmptyBlobs": true,
+			"scope": "/subscriptions/ed8e7a79-7483-4d3d-9b7c-78cbf45d6bc9/resourceGroups/test/providers/Microsoft.Storage/storageAccounts/teststoragensw",
+			"events": [
+				"Microsoft.Storage.BlobCreated"
+			]
+		}
+	}
+}
