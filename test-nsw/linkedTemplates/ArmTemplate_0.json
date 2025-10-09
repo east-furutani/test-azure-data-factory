@@ -1,0 +1,1362 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "データ ファクトリ名",
+			"defaultValue": "test-nsw"
+		},
+		"test_blob_storage_nsw_connectionString": {
+			"type": "secureString",
+			"metadata": "'test_blob_storage_nsw' の 'connectionString' のセキュリティで保護された文字列"
+		},
+		"test_db_nsw_link_service_password": {
+			"type": "secureString",
+			"metadata": "'test_db_nsw_link_service' の 'password' のセキュリティで保護された文字列"
+		},
+		"test_db_nsw_link_service_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "test-server-nsw.database.windows.net"
+		},
+		"test_db_nsw_link_service_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "test-db-nsw"
+		},
+		"test_db_nsw_link_service_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "admin-user"
+		},
+		"fileUploadTrigger_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/ed8e7a79-7483-4d3d-9b7c-78cbf45d6bc9/resourceGroups/test/providers/Microsoft.Storage/storageAccounts/teststoragensw"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/test_blob_storage_nsw')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('test_blob_storage_nsw_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/test_db_nsw_link_service')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "test_db_nsw 用のリンクサービス",
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"server": "[parameters('test_db_nsw_link_service_properties_typeProperties_server')]",
+					"database": "[parameters('test_db_nsw_link_service_properties_typeProperties_database')]",
+					"encrypt": "mandatory",
+					"trustServerCertificate": false,
+					"authenticationType": "SQL",
+					"userName": "[parameters('test_db_nsw_link_service_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('test_db_nsw_link_service_password')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/test_blob_storage_nsw')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "test_blob_storage_nsw",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "test_nsw_1",
+						"container": "test-nsw"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/test_blob_storage_nsw')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/test_db_nsw_dataset')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "test_db_nsw_link_service",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "age",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "update_at",
+						"type": "date"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "test_table"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/test_db_nsw_link_service')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/test_not_identity_db_nsw_dataset')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "test_db_nsw_link_service",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "age",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "update_at",
+						"type": "date"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "test_table_not_identity"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/test_db_nsw_link_service')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/csv_cache')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"linkedService": {
+								"referenceName": "test_blob_storage_nsw",
+								"type": "LinkedServiceReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"name": "sink1"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"parameters{",
+						"     fileName as string ('test1_20251007.csv')",
+						"}",
+						"source(output(",
+						"          name as string,",
+						"          age as short",
+						"     ),",
+						"     useSchema: false,",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     format: 'delimited',",
+						"     container: 'test-nsw',",
+						"     folderPath: 'test_nsw_1',",
+						"     fileName: ($fileName),",
+						"     columnDelimiter: ',',",
+						"     escapeChar: '\\\\',",
+						"     quoteChar: '\\\"',",
+						"     columnNamesAsHeader: true) ~> source1",
+						"source1 sink(validateSchema: false,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     store: 'cache',",
+						"     format: 'inline',",
+						"     output: true,",
+						"     saveOrder: 1) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/test_blob_storage_nsw')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/csv_cache_bulk')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"linkedService": {
+								"referenceName": "test_blob_storage_nsw",
+								"type": "LinkedServiceReference"
+							},
+							"name": "csvFileRead"
+						}
+					],
+					"sinks": [
+						{
+							"name": "csvDataInCache"
+						}
+					],
+					"transformations": [
+						{
+							"name": "derivedFileNameColumn"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          name as string,",
+						"          age as short",
+						"     ),",
+						"     useSchema: false,",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     rowUrlColumn: 'filePath',",
+						"     format: 'delimited',",
+						"     container: 'test-nsw',",
+						"     columnDelimiter: ',',",
+						"     escapeChar: '\\\\',",
+						"     quoteChar: '\\\"',",
+						"     columnNamesAsHeader: true,",
+						"     wildcardPaths:['test_nsw_1/test*.csv']) ~> csvFileRead",
+						"csvFileRead derive(fileName = split(filePath, '/')[size(split(filePath, '/'))]) ~> derivedFileNameColumn",
+						"derivedFileNameColumn sink(validateSchema: false,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     store: 'cache',",
+						"     format: 'inline',",
+						"     output: true,",
+						"     saveOrder: 1,",
+						"     mapColumn(",
+						"          name,",
+						"          age,",
+						"          fileName",
+						"     )) ~> csvDataInCache"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/test_blob_storage_nsw')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/test_csv_file_delete')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "csv_file_delete",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "test_blob_storage_nsw",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"wildcardFileName": {
+									"value": "*.csv",
+									"type": "Expression"
+								},
+								"enablePartitionDiscovery": false
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-10-03T10:43:28Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/test_blob_storage_nsw')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/test_csv_to_db_script_bulk')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEachCsvFileDelete",
+						"description": "GetCsvFileNameList で読み込んだファイル数分ループします。",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "DeleteInsertCsvDataAndGroupByFileName",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('DeleteInsertCsvDataAndGroupByFileName').output.resultSets[0].rows",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "DeleteCsvFile",
+									"description": "CSVファイルを削除します。",
+									"type": "Delete",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "test_blob_storage_nsw",
+											"type": "DatasetReference",
+											"parameters": {}
+										},
+										"enableLogging": false,
+										"storeSettings": {
+											"type": "AzureBlobStorageReadSettings",
+											"recursive": true,
+											"wildcardFileName": {
+												"value": "@item().fileName",
+												"type": "Expression"
+											},
+											"enablePartitionDiscovery": false
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "CsvDataInCache",
+						"description": "CSV ファイルから読み込んだデータを cache に保存します。",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "csv_cache_bulk",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"csvFileRead": {},
+									"csvDataInCache": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "None",
+							"cacheSinks": {}
+						}
+					},
+					{
+						"name": "DeleteInsertCsvDataAndGroupByFileName",
+						"description": "削除対象のファイル名をグループ化します。",
+						"type": "Script",
+						"dependsOn": [
+							{
+								"activity": "CsvDataInCache",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "test_db_nsw_link_service",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"parameters": [
+										{
+											"name": "csvDataJson",
+											"type": "String",
+											"value": {
+												"value": "@string(activity('CsvDataInCache').output.runStatus.output.csvDataInCache.value)",
+												"type": "Expression"
+											},
+											"direction": "Input"
+										}
+									],
+									"type": "Query",
+									"text": "BEGIN TRY\n\t\t\n\tBEGIN TRANSACTION;\n\n\t-- 対象テーブルの内、日時が当月のデータのみ削除\n\tDELETE FROM test_table\n\tWHERE\n\t\tFORMAT(update_at, 'yyyyMM') = \n\t\t(\n\t\t\tSELECT\n\t\t\t\tLEFT(RIGHT(fileName, 12), 6) AS yearManth\n\t\t\tFROM\n\t\t\t\tOPENJSON(@csvDataJson)\n\t\t\t\tWITH (\n\t\t\t\t\tfileName NVARCHAR(MAX)\n\t\t\t\t)\n\t\t\tGROUP BY LEFT(RIGHT(fileName, 12), 6)\n\t\t);\t\n\n\t-- CSV ファイルから読み込んだデータを対象テーブルに INSERT\n\tINSERT INTO test_table(name, age, update_at)\n\tSELECT\n\t\tname,\n\t\tage,\n\t\tFORMAT(GETDATE(),'yyyy-MM-dd')\n\tFROM\n\t\tOPENJSON(@csvDataJson)\n\t\tWITH (\n\t\t\tname NVARCHAR(100),\n\t\t\tage INT\n\t\t);\n\n    SELECT\n        fileName\n    FROM\n        OPENJSON(@csvDataJson)\n        WITH (\n            fileName NVARCHAR(MAX)\n        )\n    GROUP BY fileName\n\n\tCOMMIT TRANSACTION;\n\nEND TRY\n\nBEGIN CATCH\n\n\tROLLBACK TRANSACTION;\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-10-09T04:54:59Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/csv_cache_bulk')]",
+				"[concat(variables('factoryId'), '/linkedServices/test_db_nsw_link_service')]",
+				"[concat(variables('factoryId'), '/datasets/test_blob_storage_nsw')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/test_csv_to_db_stored_procedure')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "GetCsvFileNameList",
+						"description": "対象のフォルダ配下に存在するファイル名一覧を取得します。",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "test_blob_storage_nsw",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "BinaryReadSettings"
+							}
+						}
+					},
+					{
+						"name": "DeleteInsertCsvData",
+						"description": "対象テーブルから条件に合致するレコードを削除した後、CSV ファイルから読み込んだデータを対象テーブルに INSERT します。",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "ForEachCsvFileRead",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[test_csv_to_db]",
+							"storedProcedureParameters": {
+								"csvDataJson": {
+									"value": {
+										"value": "@concat('[', substring(variables('csvDataJson'), 0, sub(length(variables('csvDataJson')), 1)), ']')\n",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"fileName": {
+									"value": {
+										"value": "@string(activity('FilterCsvFile').output.value)\n",
+										"type": "Expression"
+									},
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "test_db_nsw_link_service",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "ForEachCsvFileRead",
+						"description": "GetCsvFileNameList で読み込んだファイル数分ループします。",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "FilterCsvFile",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('FilterCsvFile').output.value",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "CsvDataInCache",
+									"description": "CSV ファイルから読み込んだデータを cache に保存します。",
+									"type": "ExecuteDataFlow",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataflow": {
+											"referenceName": "csv_cache",
+											"type": "DataFlowReference",
+											"parameters": {
+												"fileName": {
+													"value": "'@{item().name}'",
+													"type": "Expression"
+												}
+											},
+											"datasetParameters": {
+												"source1": {},
+												"sink1": {}
+											}
+										},
+										"staging": {},
+										"compute": {
+											"coreCount": 8,
+											"computeType": "General"
+										},
+										"traceLevel": "None",
+										"cacheSinks": {}
+									}
+								},
+								{
+									"name": "SetCsvDataJson",
+									"description": "各 CSV ファイルのデータを1つの文字列　として結合します。",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "SetTempCsvDataJson",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "csvDataJson",
+										"value": {
+											"value": "@concat(replace(replace(variables('tempCsvDataJson'), '[', ''), ']', '')\n, replace(replace(string(activity('CsvDataInCache').output.runStatus.output.sink1.value), '[', ''), ']', '')\n, ',')",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "SetTempCsvDataJson",
+									"description": "SetCsvDataJson の値を一時退避します。",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "CsvDataInCache",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "tempCsvDataJson",
+										"value": {
+											"value": "@variables('csvDataJson')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "ForEachCsvFileDelete",
+						"description": "GetCsvFileNameList で読み込んだファイル数分ループします。",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "DeleteInsertCsvData",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('FilterCsvFile').output.value",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "DeleteCsvFile",
+									"description": "CSVファイルを削除します。",
+									"type": "Delete",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "test_blob_storage_nsw",
+											"type": "DatasetReference",
+											"parameters": {}
+										},
+										"enableLogging": false,
+										"storeSettings": {
+											"type": "AzureBlobStorageReadSettings",
+											"recursive": true,
+											"wildcardFileName": {
+												"value": "@item().name",
+												"type": "Expression"
+											},
+											"enablePartitionDiscovery": false
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "FilterCsvFile",
+						"description": "取得したファイルの内、CSV ファイルのみを抽出します。",
+						"type": "Filter",
+						"dependsOn": [
+							{
+								"activity": "GetCsvFileNameList",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('GetCsvFileNameList').output.childItems",
+								"type": "Expression"
+							},
+							"condition": {
+								"value": "@endswith(item().name, 'csv')",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"csvDataJson": {
+						"type": "String"
+					},
+					"tempCsvDataJson": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-10-09T01:55:14Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/test_blob_storage_nsw')]",
+				"[concat(variables('factoryId'), '/linkedServices/test_db_nsw_link_service')]",
+				"[concat(variables('factoryId'), '/dataflows/csv_cache')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/test_csv_to_db_stored_procedure_bulk')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "DeleteInsertCsvData",
+						"description": "対象テーブルから条件に合致するレコードを削除した後、CSV ファイルから読み込んだデータを対象テーブルに INSERT します。\nまた、削除対象の CSV ファイル名一覧を 出力します。",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "CsvDataInCache",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[test_csv_to_db_output_filename]",
+							"storedProcedureParameters": {
+								"csvDataJson": {
+									"value": {
+										"value": "@string(activity('CsvDataInCache').output.runStatus.output.csvDataInCache.value)",
+										"type": "Expression"
+									},
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "test_db_nsw_link_service",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "ForEachCsvFileDelete",
+						"description": "GetCsvFileNameList で読み込んだファイル数分ループします。",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "GroupByFileName",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('GroupByFileName').output.resultSets[0].rows",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "DeleteCsvFile",
+									"description": "CSVファイルを削除します。",
+									"type": "Delete",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "test_blob_storage_nsw",
+											"type": "DatasetReference",
+											"parameters": {}
+										},
+										"enableLogging": false,
+										"storeSettings": {
+											"type": "AzureBlobStorageReadSettings",
+											"recursive": true,
+											"wildcardFileName": {
+												"value": "@item().fileName",
+												"type": "Expression"
+											},
+											"enablePartitionDiscovery": false
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "CsvDataInCache",
+						"description": "CSV ファイルから読み込んだデータを cache に保存します。",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "csv_cache_bulk",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"csvFileRead": {},
+									"csvDataInCache": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "None",
+							"cacheSinks": {}
+						}
+					},
+					{
+						"name": "GroupByFileName",
+						"description": "削除対象のファイル名をグループ化します。",
+						"type": "Script",
+						"dependsOn": [
+							{
+								"activity": "DeleteInsertCsvData",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "test_db_nsw_link_service",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"parameters": [
+										{
+											"name": "csvDataJson",
+											"type": "String",
+											"value": {
+												"value": "@string(activity('CsvDataInCache').output.runStatus.output.csvDataInCache.value)",
+												"type": "Expression"
+											},
+											"direction": "Input"
+										}
+									],
+									"type": "Query",
+									"text": "SELECT\r\n    fileName\r\nFROM\r\n    OPENJSON(@csvDataJson)\r\n    WITH (\r\n        fileName NVARCHAR(MAX)\r\n    )\r\nGROUP BY fileName"
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-10-09T04:54:59Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/test_db_nsw_link_service')]",
+				"[concat(variables('factoryId'), '/dataflows/csv_cache_bulk')]",
+				"[concat(variables('factoryId'), '/datasets/test_blob_storage_nsw')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/test_csv_to_db')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"linkedService": {
+								"referenceName": "test_blob_storage_nsw",
+								"type": "LinkedServiceReference"
+							},
+							"name": "csvFileRead"
+						},
+						{
+							"dataset": {
+								"referenceName": "test_db_nsw_dataset",
+								"type": "DatasetReference"
+							},
+							"name": "dbTableRead"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "test_db_nsw_dataset",
+								"type": "DatasetReference"
+							},
+							"name": "DeleteInsert"
+						}
+					],
+					"transformations": [
+						{
+							"name": "deleteInsertConditions"
+						},
+						{
+							"name": "derivedCsvYearMonthColumn"
+						},
+						{
+							"name": "derivedDbYearMonthColumn"
+						},
+						{
+							"name": "unionCsvDb"
+						},
+						{
+							"name": "deleteRecordFilter"
+						},
+						{
+							"name": "aggregateCsvYearMonth"
+						},
+						{
+							"name": "joinYearMonth"
+						},
+						{
+							"name": "derivedNewUpdateAtColumn"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          name as string,",
+						"          age as integer",
+						"     ),",
+						"     useSchema: false,",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     purgeFiles: true,",
+						"     rowUrlColumn: 'fileName',",
+						"     format: 'delimited',",
+						"     container: 'test-nsw',",
+						"     columnDelimiter: ',',",
+						"     escapeChar: '\\\\',",
+						"     quoteChar: '\\\"',",
+						"     columnNamesAsHeader: true,",
+						"     wildcardPaths:['test_nsw_1/test*.csv']) ~> csvFileRead",
+						"source(output(",
+						"          id as integer,",
+						"          name as string,",
+						"          age as integer,",
+						"          update_at as date",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> dbTableRead",
+						"derivedNewUpdateAtColumn alterRow(deleteIf(!isNull(id)),",
+						"     insertIf(isNull(id))) ~> deleteInsertConditions",
+						"csvFileRead derive(csvYearMonth = left(right(fileName, 12), 6),",
+						"          csvUpdate_at = toDate(left(right(fileName, 12), 4) + '-' + left(right(fileName, 8), 2) + '-' + left(right(fileName, 6), 2), 'yyyy-MM-dd')) ~> derivedCsvYearMonthColumn",
+						"dbTableRead derive(dbYearMonth = toString(update_at, 'yyyyMM')) ~> derivedDbYearMonthColumn",
+						"derivedCsvYearMonthColumn, derivedDbYearMonthColumn union(byName: true)~> unionCsvDb",
+						"joinYearMonth filter(iif(isNull(id), isNull(id), yearMonth == dbYearMonth)) ~> deleteRecordFilter",
+						"unionCsvDb aggregate(yearMonth = first(csvYearMonth, true())) ~> aggregateCsvYearMonth",
+						"unionCsvDb, aggregateCsvYearMonth join(!isNull(yearMonth) || iif(isNull(id), !isNull(csvYearMonth), !isNull(dbYearMonth)),",
+						"     joinType:'cross',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> joinYearMonth",
+						"deleteRecordFilter derive(newUpdateAt = iif(isNull(id), csvUpdate_at, update_at)) ~> derivedNewUpdateAtColumn",
+						"deleteInsertConditions sink(allowSchemaDrift: true,",
+						"     validateSchema: true,",
+						"     input(",
+						"          id as integer,",
+						"          name as string,",
+						"          age as integer,",
+						"          update_at as date",
+						"     ),",
+						"     deletable:true,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     keys:['update_at'],",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     saveOrder: 1,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          name,",
+						"          age,",
+						"          update_at = newUpdateAt",
+						"     )) ~> DeleteInsert"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/test_blob_storage_nsw')]",
+				"[concat(variables('factoryId'), '/datasets/test_db_nsw_dataset')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/test_not_identity_csv_to_db')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"linkedService": {
+								"referenceName": "test_blob_storage_nsw",
+								"type": "LinkedServiceReference"
+							},
+							"name": "csvFileRead"
+						},
+						{
+							"dataset": {
+								"referenceName": "test_not_identity_db_nsw_dataset",
+								"type": "DatasetReference"
+							},
+							"name": "dbTableRead"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "test_not_identity_db_nsw_dataset",
+								"type": "DatasetReference"
+							},
+							"name": "DeleteInsert"
+						}
+					],
+					"transformations": [
+						{
+							"name": "deleteInsertConditions"
+						},
+						{
+							"name": "derivedCsvYearMonthColumn"
+						},
+						{
+							"name": "derivedDbYearMonthColumn"
+						},
+						{
+							"name": "unionCsvDb"
+						},
+						{
+							"name": "deleteRecordFilter"
+						},
+						{
+							"name": "aggregateCsvYearMonth"
+						},
+						{
+							"name": "joinYearMonth"
+						},
+						{
+							"name": "derivedNewUpdateAtColumn"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          newId as short,",
+						"          name as string,",
+						"          age as short",
+						"     ),",
+						"     useSchema: false,",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     purgeFiles: true,",
+						"     rowUrlColumn: 'fileName',",
+						"     format: 'delimited',",
+						"     container: 'test-nsw',",
+						"     columnDelimiter: ',',",
+						"     escapeChar: '\\\\',",
+						"     quoteChar: '\\\"',",
+						"     columnNamesAsHeader: true,",
+						"     wildcardPaths:['test_nsw_1/test*.csv']) ~> csvFileRead",
+						"source(output(",
+						"          id as integer,",
+						"          name as string,",
+						"          age as integer,",
+						"          update_at as date",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> dbTableRead",
+						"derivedNewUpdateAtColumn alterRow(deleteIf(!isNull(id)),",
+						"     insertIf(isNull(id))) ~> deleteInsertConditions",
+						"csvFileRead derive(csvYearMonth = left(right(fileName, 12), 6),",
+						"          csvUpdate_at = toDate(left(right(fileName, 12), 4) + '-' + left(right(fileName, 8), 2) + '-' + left(right(fileName, 6), 2), 'yyyy-MM-dd')) ~> derivedCsvYearMonthColumn",
+						"dbTableRead derive(dbYearMonth = toString(update_at, 'yyyyMM')) ~> derivedDbYearMonthColumn",
+						"derivedCsvYearMonthColumn, derivedDbYearMonthColumn union(byName: true)~> unionCsvDb",
+						"joinYearMonth filter(iif(isNull(id), isNull(id), yearMonth == dbYearMonth)) ~> deleteRecordFilter",
+						"unionCsvDb aggregate(yearMonth = first(csvYearMonth, true())) ~> aggregateCsvYearMonth",
+						"unionCsvDb, aggregateCsvYearMonth join(!isNull(yearMonth) || iif(isNull(id), !isNull(csvYearMonth), !isNull(dbYearMonth)),",
+						"     joinType:'cross',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> joinYearMonth",
+						"deleteRecordFilter derive(newUpdateAt = iif(isNull(id), csvUpdate_at, update_at),",
+						"          insertId = iif(isNull(id), newId, toShort(id))) ~> derivedNewUpdateAtColumn",
+						"deleteInsertConditions sink(allowSchemaDrift: true,",
+						"     validateSchema: true,",
+						"     input(",
+						"          id as integer,",
+						"          name as string,",
+						"          age as integer,",
+						"          update_at as date",
+						"     ),",
+						"     deletable:true,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     keys:['id'],",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     saveOrder: 1,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          id = insertId,",
+						"          name,",
+						"          age,",
+						"          update_at = newUpdateAt",
+						"     )) ~> DeleteInsert"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/test_blob_storage_nsw')]",
+				"[concat(variables('factoryId'), '/datasets/test_not_identity_db_nsw_dataset')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/test_csv_to_db')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "test_csv_to_db",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "test_csv_to_db",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"csvFileRead": {},
+									"dbTableRead": {},
+									"DeleteInsert": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-10-08T08:03:50Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/test_csv_to_db')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/test_not_identity_csv_to_db')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "test_not_identity_csv_to_db",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "test_not_identity_csv_to_db",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"csvFileRead": {},
+									"dbTableRead": {},
+									"DeleteInsert": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-10-08T10:10:07Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/test_not_identity_csv_to_db')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/fileUploadTrigger')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "test_csv_to_db_script_bulk",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/test-nsw/blobs/test_nsw_1",
+					"blobPathEndsWith": ".csv",
+					"ignoreEmptyBlobs": true,
+					"scope": "[parameters('fileUploadTrigger_properties_typeProperties_scope')]",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/test_csv_to_db_script_bulk')]"
+			]
+		}
+	]
+}

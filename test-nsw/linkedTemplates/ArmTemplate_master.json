@@ -1,0 +1,84 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "データ ファクトリ名",
+			"defaultValue": "test-nsw"
+		},
+		"test_blob_storage_nsw_connectionString": {
+			"type": "secureString",
+			"metadata": "'test_blob_storage_nsw' の 'connectionString' のセキュリティで保護された文字列"
+		},
+		"test_db_nsw_link_service_password": {
+			"type": "secureString",
+			"metadata": "'test_db_nsw_link_service' の 'password' のセキュリティで保護された文字列"
+		},
+		"test_db_nsw_link_service_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "test-server-nsw.database.windows.net"
+		},
+		"test_db_nsw_link_service_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "test-db-nsw"
+		},
+		"test_db_nsw_link_service_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "admin-user"
+		},
+		"fileUploadTrigger_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/ed8e7a79-7483-4d3d-9b7c-78cbf45d6bc9/resourceGroups/test/providers/Microsoft.Storage/storageAccounts/teststoragensw"
+		},
+		"containerUri": {
+			"type": "string",
+			"metadata": "リンクされた ARM テンプレートを含むストレージ アカウントの URI"
+		},
+		"containerSasToken": {
+			"type": "string",
+			"metadata": "リンクされた ARM テンプレートを格納するストレージ アカウントへの SAS トークン"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "test-nsw_ArmTemplate_0",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"test_blob_storage_nsw_connectionString": {
+						"value": "[parameters('test_blob_storage_nsw_connectionString')]"
+					},
+					"test_db_nsw_link_service_password": {
+						"value": "[parameters('test_db_nsw_link_service_password')]"
+					},
+					"test_db_nsw_link_service_properties_typeProperties_server": {
+						"value": "[parameters('test_db_nsw_link_service_properties_typeProperties_server')]"
+					},
+					"test_db_nsw_link_service_properties_typeProperties_database": {
+						"value": "[parameters('test_db_nsw_link_service_properties_typeProperties_database')]"
+					},
+					"test_db_nsw_link_service_properties_typeProperties_userName": {
+						"value": "[parameters('test_db_nsw_link_service_properties_typeProperties_userName')]"
+					},
+					"fileUploadTrigger_properties_typeProperties_scope": {
+						"value": "[parameters('fileUploadTrigger_properties_typeProperties_scope')]"
+					}
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}
