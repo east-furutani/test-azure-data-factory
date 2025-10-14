@@ -25,7 +25,8 @@
 			"scriptLines": [
 				"source(output(",
 				"          name as string,",
-				"          age as short",
+				"          age as short,",
+				"          update_at as date 'yyyy/MM/dd'",
 				"     ),",
 				"     useSchema: false,",
 				"     allowSchemaDrift: true,",
@@ -39,7 +40,8 @@
 				"     quoteChar: '\\\"',",
 				"     columnNamesAsHeader: true,",
 				"     wildcardPaths:['test_nsw_1/test*.csv']) ~> csvFileRead",
-				"csvFileRead derive(fileName = split(filePath, '/')[size(split(filePath, '/'))]) ~> derivedFileNameColumn",
+				"csvFileRead derive(fileName = split(filePath, '/')[size(split(filePath, '/'))],",
+				"          update_at = toString(update_at, 'yyyy-MM-dd')) ~> derivedFileNameColumn",
 				"derivedFileNameColumn sink(validateSchema: false,",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
@@ -50,6 +52,7 @@
 				"     mapColumn(",
 				"          name,",
 				"          age,",
+				"          update_at,",
 				"          fileName",
 				"     )) ~> csvDataInCache"
 			]
