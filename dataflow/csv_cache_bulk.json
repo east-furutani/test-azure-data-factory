@@ -25,7 +25,8 @@
 			"scriptLines": [
 				"source(output(",
 				"          name as string,",
-				"          age as short",
+				"          age as short,",
+				"          update_at as date 'yyyy/MM/dd'",
 				"     ),",
 				"     useSchema: false,",
 				"     allowSchemaDrift: true,",
@@ -50,6 +51,7 @@
 				"     mapColumn(",
 				"          name,",
 				"          age,",
+				"          update_at,",
 				"          fileName",
 				"     )) ~> csvDataInCache"
 			]
