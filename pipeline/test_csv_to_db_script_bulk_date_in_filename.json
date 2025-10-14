@@ -1,5 +1,5 @@
 {
-	"name": "test_csv_to_db_script_bulk",
+	"name": "test_csv_to_db_script_bulk_date_in_filename",
 	"properties": {
 		"activities": [
 			{
