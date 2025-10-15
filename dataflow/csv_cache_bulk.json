@@ -14,12 +14,19 @@
 			],
 			"sinks": [
 				{
-					"name": "csvDataInCache"
+					"name": "csvDataInCache",
+					"rejectedDataLinkedService": {
+						"referenceName": "test_blob_storage_nsw",
+						"type": "LinkedServiceReference"
+					}
 				}
 			],
 			"transformations": [
 				{
 					"name": "derivedFileNameColumn"
+				},
+				{
+					"name": "asert1"
 				}
 			],
 			"scriptLines": [
@@ -42,13 +49,18 @@
 				"     wildcardPaths:['test_nsw_1/test*.csv']) ~> csvFileRead",
 				"csvFileRead derive(fileName = split(filePath, '/')[size(split(filePath, '/'))],",
 				"          update_at = toString(update_at, 'yyyy-MM-dd')) ~> derivedFileNameColumn",
-				"derivedFileNameColumn sink(validateSchema: false,",
+				"derivedFileNameColumn assert(expectTrue(!isNull(update_at), true, 'assert1')) ~> asert1",
+				"asert1 sink(validateSchema: false,",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
 				"     store: 'cache',",
 				"     format: 'inline',",
 				"     output: true,",
 				"     saveOrder: 1,",
+				"     outputAssertFailedRows: true,",
+				"     assertFailure_container: 'test-nsw',",
+				"     assertFailure_folderPath: 'test',",
+				"     ignoreAssertFailedRows: true,",
 				"     mapColumn(",
 				"          name,",
 				"          age,",
