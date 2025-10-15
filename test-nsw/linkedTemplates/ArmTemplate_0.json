@@ -327,7 +327,7 @@
 						"     wildcardPaths:['test_nsw_1/test*.csv']) ~> csvFileRead",
 						"csvFileRead derive(fileName = split(filePath, '/')[size(split(filePath, '/'))],",
 						"          update_at = toString(update_at, 'yyyy-MM-dd')) ~> derivedFileNameColumn",
-						"derivedFileNameColumn assert(expectTrue(!isNull(update_at), true, 'assert1')) ~> asert1",
+						"derivedFileNameColumn assert(expectTrue(!isNull(update_at), false, 'assert1')) ~> asert1",
 						"asert1 sink(validateSchema: false,",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
