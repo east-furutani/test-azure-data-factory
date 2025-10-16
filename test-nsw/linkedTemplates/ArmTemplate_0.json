@@ -1569,6 +1569,7 @@
 								"value": "@variables('foreachArray')",
 								"type": "Expression"
 							},
+							"isSequential": true,
 							"activities": [
 								{
 									"name": "Execute Pipeline1",
