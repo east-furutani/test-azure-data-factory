@@ -20,6 +20,9 @@
 			"transformations": [
 				{
 					"name": "derivedFileNameColumn"
+				},
+				{
+					"name": "assert1"
 				}
 			],
 			"scriptLines": [
@@ -42,7 +45,9 @@
 				"     wildcardPaths:['test_nsw_1/test*.csv']) ~> csvFileRead",
 				"csvFileRead derive(fileName = split(filePath, '/')[size(split(filePath, '/'))],",
 				"          update_at = toString(update_at, 'yyyy-MM-dd')) ~> derivedFileNameColumn",
-				"derivedFileNameColumn sink(validateSchema: false,",
+				"derivedFileNameColumn assert(expectTrue(!isNull(update_at), false, 'assert1', null, \"update_at 列に NULL が存在する場合\"),",
+				"     abort: true) ~> assert1",
+				"assert1 sink(validateSchema: false,",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
 				"     store: 'cache',",

@@ -123,6 +123,26 @@
 					],
 					"scriptBlockExecutionTimeout": "02:00:00"
 				}
+			},
+			{
+				"name": "Fail1",
+				"type": "Fail",
+				"dependsOn": [
+					{
+						"activity": "CsvDataInCache",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"message": {
+						"value": "@string(activity('CsvDataInCache').error.message)",
+						"type": "Expression"
+					},
+					"errorCode": "500"
+				}
 			}
 		],
 		"annotations": [],
