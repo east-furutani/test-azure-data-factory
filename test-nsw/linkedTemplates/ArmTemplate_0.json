@@ -293,25 +293,11 @@
 					"sinks": [
 						{
 							"name": "csvDataInCache"
-						},
-						{
-							"linkedService": {
-								"referenceName": "test_blob_storage_nsw",
-								"type": "LinkedServiceReference"
-							},
-							"name": "sink1",
-							"rejectedDataLinkedService": {
-								"referenceName": "test_blob_storage_nsw",
-								"type": "LinkedServiceReference"
-							}
 						}
 					],
 					"transformations": [
 						{
 							"name": "derivedFileNameColumn"
-						},
-						{
-							"name": "asert1"
 						}
 					],
 					"scriptLines": [
@@ -334,8 +320,7 @@
 						"     wildcardPaths:['test_nsw_1/test*.csv']) ~> csvFileRead",
 						"csvFileRead derive(fileName = split(filePath, '/')[size(split(filePath, '/'))],",
 						"          update_at = toString(update_at, 'yyyy-MM-dd')) ~> derivedFileNameColumn",
-						"derivedFileNameColumn assert(expectTrue(!isNull(update_at), false, 'assert1')) ~> asert1",
-						"asert1 sink(validateSchema: false,",
+						"derivedFileNameColumn sink(validateSchema: false,",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
 						"     store: 'cache',",
@@ -347,23 +332,7 @@
 						"          age,",
 						"          update_at,",
 						"          fileName",
-						"     )) ~> csvDataInCache",
-						"asert1 sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     format: 'delimited',",
-						"     container: 'test-nsw',",
-						"     folderPath: 'test',",
-						"     columnDelimiter: ',',",
-						"     escapeChar: '\\\\',",
-						"     quoteChar: '\\\"',",
-						"     columnNamesAsHeader: false,",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     saveOrder: 1,",
-						"     outputAssertFailedRows: true,",
-						"     assertFailure_container: 'test-nsw',",
-						"     assertFailure_folderPath: 'test',",
-						"     ignoreAssertFailedRows: true) ~> sink1"
+						"     )) ~> csvDataInCache"
 					]
 				}
 			},
@@ -497,8 +466,7 @@
 								"parameters": {},
 								"datasetParameters": {
 									"csvFileRead": {},
-									"csvDataInCache": {},
-									"sink1": {}
+									"csvDataInCache": {}
 								}
 							},
 							"staging": {},
@@ -647,8 +615,7 @@
 								"parameters": {},
 								"datasetParameters": {
 									"csvFileRead": {},
-									"csvDataInCache": {},
-									"sink1": {}
+									"csvDataInCache": {}
 								}
 							},
 							"staging": {},
@@ -1124,8 +1091,7 @@
 								"parameters": {},
 								"datasetParameters": {
 									"csvFileRead": {},
-									"csvDataInCache": {},
-									"sink1": {}
+									"csvDataInCache": {}
 								}
 							},
 							"staging": {},
