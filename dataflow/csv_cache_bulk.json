@@ -34,7 +34,7 @@
 				"     useSchema: false,",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     ignoreNoFilesFound: false,",
+				"     ignoreNoFilesFound: true,",
 				"     rowUrlColumn: 'filePath',",
 				"     format: 'delimited',",
 				"     container: 'test-nsw',",

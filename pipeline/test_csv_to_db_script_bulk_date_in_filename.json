@@ -3,12 +3,116 @@
 	"properties": {
 		"activities": [
 			{
+				"name": "CsvDataInCache",
+				"description": "CSV ファイルから読み込んだデータを cache に保存します。",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "csv_cache_bulk",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "None"
+				}
+			},
+			{
+				"name": "Fail1",
+				"type": "Fail",
+				"dependsOn": [
+					{
+						"activity": "CsvDataInCache",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"message": {
+						"value": "@string(activity('CsvDataInCache').error.message)",
+						"type": "Expression"
+					},
+					"errorCode": "500"
+				}
+			},
+			{
+				"name": "If Condition1",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "CsvDataInCache",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greater(activity('CsvDataInCache').output.runStatus.output.csvDataInCache.count, 0)",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "DeleteInsertCsvDataAndGroupByFileName",
+							"description": "削除対象のファイル名をグループ化します。",
+							"type": "Script",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"linkedServiceName": {
+								"referenceName": "test_db_nsw_link_service",
+								"type": "LinkedServiceReference"
+							},
+							"typeProperties": {
+								"scripts": [
+									{
+										"parameters": [
+											{
+												"name": "csvDataJson",
+												"type": "String",
+												"value": {
+													"value": "@string(activity('CsvDataInCache').output.runStatus.output.csvDataInCache.value)",
+													"type": "Expression"
+												},
+												"direction": "Input"
+											}
+										],
+										"type": "Query",
+										"text": "BEGIN TRY\n\t\t\n\tBEGIN TRANSACTION;\n\n\t-- 対象テーブルの内、日時が当月のデータのみ削除\n\tDELETE FROM test_table\n\tWHERE\n\t\tFORMAT(update_at, 'yyyyMM') = \n\t\t(\n\t\t\tSELECT\n\t\t\t\tLEFT(RIGHT(fileName, 12), 6) AS yearManth\n\t\t\tFROM\n\t\t\t\tOPENJSON(@csvDataJson)\n\t\t\t\tWITH (\n\t\t\t\t\tfileName NVARCHAR(MAX)\n\t\t\t\t)\n\t\t\tGROUP BY LEFT(RIGHT(fileName, 12), 6)\n\t\t);\t\n\n\t-- CSV ファイルから読み込んだデータを対象テーブルに INSERT\n\tINSERT INTO test_table(name, age, update_at)\n\tSELECT\n\t\tname,\n\t\tage,\n\t\tFORMAT(GETDATE(),'yyyy-MM-dd')\n\tFROM\n\t\tOPENJSON(@csvDataJson)\n\t\tWITH (\n\t\t\tname NVARCHAR(100),\n\t\t\tage INT\n\t\t);\n\n    SELECT\n        fileName\n    FROM\n        OPENJSON(@csvDataJson)\n        WITH (\n            fileName NVARCHAR(MAX)\n        )\n    GROUP BY fileName\n\n\tCOMMIT TRANSACTION;\n\nEND TRY\n\nBEGIN CATCH\n\n\tROLLBACK TRANSACTION;\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
+									}
+								],
+								"scriptBlockExecutionTimeout": "02:00:00"
+							}
+						}
+					]
+				}
+			},
+			{
 				"name": "ForEachCsvFileDelete",
 				"description": "GetCsvFileNameList で読み込んだファイル数分ループします。",
 				"type": "ForEach",
 				"dependsOn": [
 					{
-						"activity": "DeleteInsertCsvDataAndGroupByFileName",
+						"activity": "If Condition1",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -52,96 +156,6 @@
 							}
 						}
 					]
-				}
-			},
-			{
-				"name": "CsvDataInCache",
-				"description": "CSV ファイルから読み込んだデータを cache に保存します。",
-				"type": "ExecuteDataFlow",
-				"dependsOn": [],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"dataflow": {
-						"referenceName": "csv_cache_bulk",
-						"type": "DataFlowReference"
-					},
-					"compute": {
-						"coreCount": 8,
-						"computeType": "General"
-					},
-					"traceLevel": "None"
-				}
-			},
-			{
-				"name": "DeleteInsertCsvDataAndGroupByFileName",
-				"description": "削除対象のファイル名をグループ化します。",
-				"type": "Script",
-				"dependsOn": [
-					{
-						"activity": "CsvDataInCache",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"linkedServiceName": {
-					"referenceName": "test_db_nsw_link_service",
-					"type": "LinkedServiceReference"
-				},
-				"typeProperties": {
-					"scripts": [
-						{
-							"parameters": [
-								{
-									"name": "csvDataJson",
-									"type": "String",
-									"value": {
-										"value": "@string(activity('CsvDataInCache').output.runStatus.output.csvDataInCache.value)",
-										"type": "Expression"
-									},
-									"direction": "Input"
-								}
-							],
-							"type": "Query",
-							"text": "BEGIN TRY\n\t\t\n\tBEGIN TRANSACTION;\n\n\t-- 対象テーブルの内、日時が当月のデータのみ削除\n\tDELETE FROM test_table\n\tWHERE\n\t\tFORMAT(update_at, 'yyyyMM') = \n\t\t(\n\t\t\tSELECT\n\t\t\t\tLEFT(RIGHT(fileName, 12), 6) AS yearManth\n\t\t\tFROM\n\t\t\t\tOPENJSON(@csvDataJson)\n\t\t\t\tWITH (\n\t\t\t\t\tfileName NVARCHAR(MAX)\n\t\t\t\t)\n\t\t\tGROUP BY LEFT(RIGHT(fileName, 12), 6)\n\t\t);\t\n\n\t-- CSV ファイルから読み込んだデータを対象テーブルに INSERT\n\tINSERT INTO test_table(name, age, update_at)\n\tSELECT\n\t\tname,\n\t\tage,\n\t\tFORMAT(GETDATE(),'yyyy-MM-dd')\n\tFROM\n\t\tOPENJSON(@csvDataJson)\n\t\tWITH (\n\t\t\tname NVARCHAR(100),\n\t\t\tage INT\n\t\t);\n\n    SELECT\n        fileName\n    FROM\n        OPENJSON(@csvDataJson)\n        WITH (\n            fileName NVARCHAR(MAX)\n        )\n    GROUP BY fileName\n\n\tCOMMIT TRANSACTION;\n\nEND TRY\n\nBEGIN CATCH\n\n\tROLLBACK TRANSACTION;\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
-						}
-					],
-					"scriptBlockExecutionTimeout": "02:00:00"
-				}
-			},
-			{
-				"name": "Fail1",
-				"type": "Fail",
-				"dependsOn": [
-					{
-						"activity": "CsvDataInCache",
-						"dependencyConditions": [
-							"Failed"
-						]
-					}
-				],
-				"userProperties": [],
-				"typeProperties": {
-					"message": {
-						"value": "@string(activity('CsvDataInCache').error.message)",
-						"type": "Expression"
-					},
-					"errorCode": "500"
 				}
 			}
 		],
