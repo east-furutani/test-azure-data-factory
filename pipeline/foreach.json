@@ -1,0 +1,47 @@
+{
+	"name": "foreach",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@variables('foreachArray')",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Execute Pipeline1",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "test_csv_to_db_script_bulk_date_in_filename",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						}
+					]
+				}
+			}
+		],
+		"variables": {
+			"foreachArray": {
+				"type": "Array",
+				"defaultValue": [
+					"a",
+					"b"
+				]
+			}
+		},
+		"annotations": []
+	}
+}
