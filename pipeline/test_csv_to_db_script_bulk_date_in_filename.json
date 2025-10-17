@@ -28,27 +28,6 @@
 				}
 			},
 			{
-				"name": "FailCsvDataInCache",
-				"description": "CsvDataInCache アクティビティが異常終了した際、エラー情報を出力します。",
-				"type": "Fail",
-				"dependsOn": [
-					{
-						"activity": "CsvDataInCache",
-						"dependencyConditions": [
-							"Failed"
-						]
-					}
-				],
-				"userProperties": [],
-				"typeProperties": {
-					"message": {
-						"value": "@string(activity('CsvDataInCache').error.message)",
-						"type": "Expression"
-					},
-					"errorCode": "500"
-				}
-			},
-			{
 				"name": "ExitCsvFile",
 				"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
 				"type": "IfCondition",
@@ -131,11 +110,127 @@
 									"csvFileNameList": "@activity('DeleteInsertCsvDataAndGroupByFileName').output.resultSets[0].rows"
 								}
 							}
+						},
+						{
+							"name": "Set variable2",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "DeleteInsertCsvDataAndGroupByFileName",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "errorMessage",
+								"value": {
+									"value": "@string(activity('DeleteInsertCsvDataAndGroupByFileName').error.message)",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Set variable3",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "Execute_test_csv_file_delete",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "errorMessage",
+								"value": {
+									"value": "@string(activity('Execute_test_csv_file_delete').error.message)",
+									"type": "Expression"
+								}
+							}
 						}
 					]
 				}
+			},
+			{
+				"name": "CreateErrorInfomationFile",
+				"description": "エラー情報が出力されたファイルを作成します。",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Set variable1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "ExitCsvFile",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "PUT",
+					"headers": {
+						"x-ms-blob-type": "BlockBlob",
+						"Content-Type": "text/plain"
+					},
+					"url": {
+						"value": "https://teststoragensw.blob.core.windows.net/test-nsw/test/test_1/error_@{utcNow()}.txt?sp=rcw&st=2025-10-17T06:11:07Z&se=2025-11-30T14:26:07Z&spr=https&sv=2024-11-04&sr=c&sig=4dZsem0SOzi3sWFcyEh28GzKWiMDFI%2FA%2F6X9oBAU1hA%3D",
+						"type": "Expression"
+					},
+					"body": {
+						"value": "@variables('errorMessage')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set variable1",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "CsvDataInCache",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "errorMessage",
+					"value": "@string(activity('CsvDataInCache').error.message)"
+				}
 			}
 		],
+		"variables": {
+			"errorMessage": {
+				"type": "String"
+			}
+		},
 		"annotations": [],
 		"lastPublishTime": "2025-10-09T04:54:59Z"
 	},
