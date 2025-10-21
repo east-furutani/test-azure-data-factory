@@ -298,6 +298,9 @@
 					"transformations": [
 						{
 							"name": "derivedFileNameColumn"
+						},
+						{
+							"name": "assert1"
 						}
 					],
 					"scriptLines": [
@@ -309,7 +312,7 @@
 						"     useSchema: false,",
 						"     allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false,",
+						"     ignoreNoFilesFound: true,",
 						"     rowUrlColumn: 'filePath',",
 						"     format: 'delimited',",
 						"     container: 'test-nsw',",
@@ -320,7 +323,9 @@
 						"     wildcardPaths:['test_nsw_1/test*.csv']) ~> csvFileRead",
 						"csvFileRead derive(fileName = split(filePath, '/')[size(split(filePath, '/'))],",
 						"          update_at = toString(update_at, 'yyyy-MM-dd')) ~> derivedFileNameColumn",
-						"derivedFileNameColumn sink(validateSchema: false,",
+						"derivedFileNameColumn assert(expectTrue(!isNull(update_at), false, 'assert1', null, \"update_at 列に NULL が存在する場合\"),",
+						"     abort: true) ~> assert1",
+						"assert1 sink(validateSchema: false,",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
 						"     store: 'cache',",
@@ -347,44 +352,73 @@
 			"properties": {
 				"activities": [
 					{
-						"name": "csv_file_delete",
-						"type": "Delete",
+						"name": "ForEachCsvFileDelete",
+						"description": "GetCsvFileNameList で読み込んだファイル数分ループします。",
+						"type": "ForEach",
 						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
 						"userProperties": [],
 						"typeProperties": {
-							"dataset": {
-								"referenceName": "test_blob_storage_nsw",
-								"type": "DatasetReference",
-								"parameters": {}
+							"items": {
+								"value": "@pipeline().parameters.csvFileNameList",
+								"type": "Expression"
 							},
-							"enableLogging": false,
-							"storeSettings": {
-								"type": "AzureBlobStorageReadSettings",
-								"recursive": true,
-								"wildcardFileName": {
-									"value": "*.csv",
-									"type": "Expression"
-								},
-								"enablePartitionDiscovery": false
-							}
+							"activities": [
+								{
+									"name": "DeleteCsvFile",
+									"description": "CSVファイルを削除します。",
+									"type": "Delete",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "test_blob_storage_nsw",
+											"type": "DatasetReference",
+											"parameters": {}
+										},
+										"logStorageSettings": {
+											"linkedServiceName": {
+												"referenceName": "test_blob_storage_nsw",
+												"type": "LinkedServiceReference"
+											},
+											"path": "test-nsw/test"
+										},
+										"enableLogging": true,
+										"storeSettings": {
+											"type": "AzureBlobStorageReadSettings",
+											"recursive": false,
+											"wildcardFileName": {
+												"value": "@{item().fileName}",
+												"type": "Expression"
+											},
+											"enablePartitionDiscovery": false
+										}
+									}
+								}
+							]
 						}
 					}
 				],
 				"policy": {
 					"elapsedTimeMetric": {}
 				},
+				"parameters": {
+					"csvFileNameList": {
+						"type": "array"
+					}
+				},
 				"annotations": [],
 				"lastPublishTime": "2025-10-03T10:43:28Z"
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/test_blob_storage_nsw')]"
+				"[concat(variables('factoryId'), '/datasets/test_blob_storage_nsw')]",
+				"[concat(variables('factoryId'), '/linkedServices/test_blob_storage_nsw')]"
 			]
 		},
 		{
@@ -518,155 +552,6 @@
 									],
 									"type": "Query",
 									"text": "BEGIN TRY\n\t\t\n\tBEGIN TRANSACTION;\n\n\t-- 対象テーブルの内、日時が当月のデータのみ削除\n\tDELETE FROM test_table\n\tWHERE\n\t\tFORMAT(update_at, 'yyyyMM') = \n\t\t(\n\t\t\tSELECT\n\t\t\t\tREPLACE(LEFT(update_at, 7), '-', '') AS yearManth\n\t\t\tFROM\n\t\t\t\tOPENJSON(@csvDataJson)\n\t\t\t\tWITH (\n\t\t\t\t\tupdate_at date\n\t\t\t\t)\n\t\t\tGROUP BY REPLACE(LEFT(update_at, 7), '-', '')\n\t\t);\t\n\n\t-- CSV ファイルから読み込んだデータを対象テーブルに INSERT\n\tINSERT INTO test_table(name, age, update_at)\n\tSELECT\n\t\tname,\n\t\tage,\n\t\tFORMAT(GETDATE(),'yyyy-MM-dd')\n\tFROM\n\t\tOPENJSON(@csvDataJson)\n\t\tWITH (\n\t\t\tname NVARCHAR(100),\n\t\t\tage INT\n\t\t);\n\n    SELECT\n        fileName\n    FROM\n        OPENJSON(@csvDataJson)\n        WITH (\n            fileName NVARCHAR(MAX)\n        )\n    GROUP BY fileName\n\n\tCOMMIT TRANSACTION;\n\nEND TRY\n\nBEGIN CATCH\n\n\tROLLBACK TRANSACTION;\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
-								}
-							],
-							"scriptBlockExecutionTimeout": "02:00:00"
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"annotations": [],
-				"lastPublishTime": "2025-10-09T04:54:59Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/csv_cache_bulk')]",
-				"[concat(variables('factoryId'), '/linkedServices/test_db_nsw_link_service')]",
-				"[concat(variables('factoryId'), '/datasets/test_blob_storage_nsw')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/test_csv_to_db_script_bulk_date_in_filename')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "ForEachCsvFileDelete",
-						"description": "GetCsvFileNameList で読み込んだファイル数分ループします。",
-						"type": "ForEach",
-						"dependsOn": [
-							{
-								"activity": "DeleteInsertCsvDataAndGroupByFileName",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('DeleteInsertCsvDataAndGroupByFileName').output.resultSets[0].rows",
-								"type": "Expression"
-							},
-							"activities": [
-								{
-									"name": "DeleteCsvFile",
-									"description": "CSVファイルを削除します。",
-									"type": "Delete",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"dataset": {
-											"referenceName": "test_blob_storage_nsw",
-											"type": "DatasetReference",
-											"parameters": {}
-										},
-										"enableLogging": false,
-										"storeSettings": {
-											"type": "AzureBlobStorageReadSettings",
-											"recursive": true,
-											"wildcardFileName": {
-												"value": "@item().fileName",
-												"type": "Expression"
-											},
-											"enablePartitionDiscovery": false
-										}
-									}
-								}
-							]
-						}
-					},
-					{
-						"name": "CsvDataInCache",
-						"description": "CSV ファイルから読み込んだデータを cache に保存します。",
-						"type": "ExecuteDataFlow",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataflow": {
-								"referenceName": "csv_cache_bulk",
-								"type": "DataFlowReference",
-								"parameters": {},
-								"datasetParameters": {
-									"csvFileRead": {},
-									"csvDataInCache": {}
-								}
-							},
-							"staging": {},
-							"compute": {
-								"coreCount": 8,
-								"computeType": "General"
-							},
-							"traceLevel": "None",
-							"cacheSinks": {}
-						}
-					},
-					{
-						"name": "DeleteInsertCsvDataAndGroupByFileName",
-						"description": "削除対象のファイル名をグループ化します。",
-						"type": "Script",
-						"dependsOn": [
-							{
-								"activity": "CsvDataInCache",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"linkedServiceName": {
-							"referenceName": "test_db_nsw_link_service",
-							"type": "LinkedServiceReference"
-						},
-						"typeProperties": {
-							"scripts": [
-								{
-									"parameters": [
-										{
-											"name": "csvDataJson",
-											"type": "String",
-											"value": {
-												"value": "@string(activity('CsvDataInCache').output.runStatus.output.csvDataInCache.value)",
-												"type": "Expression"
-											},
-											"direction": "Input"
-										}
-									],
-									"type": "Query",
-									"text": "BEGIN TRY\n\t\t\n\tBEGIN TRANSACTION;\n\n\t-- 対象テーブルの内、日時が当月のデータのみ削除\n\tDELETE FROM test_table\n\tWHERE\n\t\tFORMAT(update_at, 'yyyyMM') = \n\t\t(\n\t\t\tSELECT\n\t\t\t\tLEFT(RIGHT(fileName, 12), 6) AS yearManth\n\t\t\tFROM\n\t\t\t\tOPENJSON(@csvDataJson)\n\t\t\t\tWITH (\n\t\t\t\t\tfileName NVARCHAR(MAX)\n\t\t\t\t)\n\t\t\tGROUP BY LEFT(RIGHT(fileName, 12), 6)\n\t\t);\t\n\n\t-- CSV ファイルから読み込んだデータを対象テーブルに INSERT\n\tINSERT INTO test_table(name, age, update_at)\n\tSELECT\n\t\tname,\n\t\tage,\n\t\tFORMAT(GETDATE(),'yyyy-MM-dd')\n\tFROM\n\t\tOPENJSON(@csvDataJson)\n\t\tWITH (\n\t\t\tname NVARCHAR(100),\n\t\t\tage INT\n\t\t);\n\n    SELECT\n        fileName\n    FROM\n        OPENJSON(@csvDataJson)\n        WITH (\n            fileName NVARCHAR(MAX)\n        )\n    GROUP BY fileName\n\n\tCOMMIT TRANSACTION;\n\nEND TRY\n\nBEGIN CATCH\n\n\tROLLBACK TRANSACTION;\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
 								}
 							],
 							"scriptBlockExecutionTimeout": "02:00:00"
@@ -1475,6 +1360,212 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/test_csv_to_db_script_bulk_date_in_filename')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ExitCsvFileUntil",
+						"description": "読み込み対象のフォルダに CSV ファイルが存在するまで処理を繰り返します",
+						"type": "Until",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@not(variables('isRetry'))",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "CsvDataInCache",
+									"description": "CSV ファイルから読み込んだデータを cache に保存します。",
+									"type": "ExecuteDataFlow",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataflow": {
+											"referenceName": "csv_cache_bulk",
+											"type": "DataFlowReference",
+											"parameters": {},
+											"datasetParameters": {
+												"csvFileRead": {},
+												"csvDataInCache": {}
+											}
+										},
+										"staging": {},
+										"compute": {
+											"coreCount": 8,
+											"computeType": "General"
+										},
+										"traceLevel": "None",
+										"cacheSinks": {}
+									}
+								},
+								{
+									"name": "ExitCsvFile",
+									"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
+									"type": "IfCondition",
+									"dependsOn": [
+										{
+											"activity": "CsvDataInCache",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"userProperties": [],
+									"typeProperties": {
+										"expression": {
+											"value": "@greater(activity('CsvDataInCache').output.runStatus.output.csvDataInCache.count, 0)",
+											"type": "Expression"
+										},
+										"ifFalseActivities": [
+											{
+												"name": "SetTrueToIsRetry",
+												"type": "SetVariable",
+												"dependsOn": [],
+												"policy": {
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"variableName": "isRetry",
+													"value": {
+														"value": "@bool(1)",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"ifTrueActivities": [
+											{
+												"name": "DeleteInsertCsvDataAndGroupByFileName",
+												"description": "削除対象のファイル名をグループ化します。",
+												"type": "Script",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"linkedServiceName": {
+													"referenceName": "test_db_nsw_link_service",
+													"type": "LinkedServiceReference"
+												},
+												"typeProperties": {
+													"scripts": [
+														{
+															"parameters": [
+																{
+																	"name": "csvDataJson",
+																	"type": "String",
+																	"value": {
+																		"value": "@string(activity('CsvDataInCache').output.runStatus.output.csvDataInCache.value)",
+																		"type": "Expression"
+																	},
+																	"direction": "Input"
+																}
+															],
+															"type": "Query",
+															"text": "BEGIN TRY\n\t\t\n\tBEGIN TRANSACTION;\n\n\t-- 対象テーブルの内、日時が当月のデータのみ削除\n\tDELETE FROM test_table\n\tWHERE\n\t\tFORMAT(update_at, 'yyyyMM') = \n\t\t(\n\t\t\tSELECT\n\t\t\t\tLEFT(RIGHT(fileName, 12), 6) AS yearManth\n\t\t\tFROM\n\t\t\t\tOPENJSON(@csvDataJson)\n\t\t\t\tWITH (\n\t\t\t\t\tfileName NVARCHAR(MAX)\n\t\t\t\t)\n\t\t\tGROUP BY LEFT(RIGHT(fileName, 12), 6)\n\t\t);\t\n\n\t-- CSV ファイルから読み込んだデータを対象テーブルに INSERT\n\tINSERT INTO test_table(name, age, update_at)\n\tSELECT\n\t\tname,\n\t\tage,\n\t\tFORMAT(GETDATE(),'yyyy-MM-dd')\n\tFROM\n\t\tOPENJSON(@csvDataJson)\n\t\tWITH (\n\t\t\tname NVARCHAR(100),\n\t\t\tage INT\n\t\t);\n\n    SELECT\n        fileName\n    FROM\n        OPENJSON(@csvDataJson)\n        WITH (\n            fileName NVARCHAR(MAX)\n        )\n    GROUP BY fileName\n\n\tCOMMIT TRANSACTION;\n\nEND TRY\n\nBEGIN CATCH\n\n\tROLLBACK TRANSACTION;\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
+														}
+													],
+													"scriptBlockExecutionTimeout": "02:00:00"
+												}
+											},
+											{
+												"name": "Execute_test_csv_file_delete",
+												"description": "test_csv_file_delete パイプラインを実行します。",
+												"type": "ExecutePipeline",
+												"dependsOn": [
+													{
+														"activity": "DeleteInsertCsvDataAndGroupByFileName",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"pipeline": {
+														"referenceName": "test_csv_file_delete",
+														"type": "PipelineReference"
+													},
+													"waitOnCompletion": true,
+													"parameters": {
+														"csvFileNameList": {
+															"value": "@activity('DeleteInsertCsvDataAndGroupByFileName').output.resultSets[0].rows",
+															"type": "Expression"
+														}
+													}
+												}
+											},
+											{
+												"name": "SetFalseToIsRetry",
+												"type": "SetVariable",
+												"dependsOn": [
+													{
+														"activity": "Execute_test_csv_file_delete",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"variableName": "isRetry",
+													"value": {
+														"value": "@bool(0)",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									}
+								}
+							],
+							"timeout": "0.12:00:00"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"isRetry": {
+						"type": "Boolean",
+						"defaultValue": false
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-10-09T04:54:59Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/csv_cache_bulk')]",
+				"[concat(variables('factoryId'), '/linkedServices/test_db_nsw_link_service')]",
+				"[concat(variables('factoryId'), '/pipelines/test_csv_file_delete')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/test_not_identity_csv_to_db')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1520,37 +1611,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/dataflows/test_not_identity_csv_to_db')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/fileUploadTrigger')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Stopped",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "test_csv_to_db_script_bulk_date_in_filename",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "BlobEventsTrigger",
-				"typeProperties": {
-					"blobPathBeginsWith": "/test-nsw/blobs/test_nsw_1",
-					"blobPathEndsWith": ".csv",
-					"ignoreEmptyBlobs": true,
-					"scope": "[parameters('fileUploadTrigger_properties_typeProperties_scope')]",
-					"events": [
-						"Microsoft.Storage.BlobCreated"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/test_csv_to_db_script_bulk_date_in_filename')]"
 			]
 		},
 		{
@@ -1605,6 +1665,37 @@
 					}
 				},
 				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/test_csv_to_db_script_bulk_date_in_filename')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/fileUploadTrigger')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "test_csv_to_db_script_bulk_date_in_filename",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/test-nsw/blobs/test_nsw_1",
+					"blobPathEndsWith": ".csv",
+					"ignoreEmptyBlobs": true,
+					"scope": "[parameters('fileUploadTrigger_properties_typeProperties_scope')]",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/pipelines/test_csv_to_db_script_bulk_date_in_filename')]"
