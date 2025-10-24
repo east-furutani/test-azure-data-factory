@@ -1,0 +1,128 @@
+{
+	"name": "csv_to_db_order_received_rest",
+	"properties": {
+		"activities": [
+			{
+				"name": "CsvDataInCache",
+				"description": "CSV ファイルから読み込んだデータを cache に保存します。",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "csv_cache_bulk_order_received_rest",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "None"
+				}
+			},
+			{
+				"name": "ExitCsvFile",
+				"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "CsvDataInCache",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greater(activity('CsvDataInCache').output.runStatus.output.csvDataInCache.count, 0)",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "Execute_test_csv_file_delete",
+							"description": "test_csv_file_delete パイプラインを実行します。",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "DeleteInsertCsvDataAndGroupByFileName",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "test_csv_file_delete",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"csvFileNameList": {
+										"value": "@activity('DeleteInsertCsvDataAndGroupByFileName').output.resultSets[0].rows",
+										"type": "Expression"
+									}
+								}
+							}
+						},
+						{
+							"name": "DeleteInsertCsvDataAndGroupByFileName",
+							"description": "削除対象のファイル名をグループ化します。",
+							"type": "Script",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"linkedServiceName": {
+								"referenceName": "test_db_nsw_link_service",
+								"type": "LinkedServiceReference"
+							},
+							"typeProperties": {
+								"scripts": [
+									{
+										"parameters": [
+											{
+												"name": "csvDataJson",
+												"type": "String",
+												"value": {
+													"value": "@string(activity('CsvDataInCache').output.runStatus.output.csvDataInCache.value)",
+													"type": "Expression"
+												},
+												"direction": "Input"
+											}
+										],
+										"type": "Query",
+										"text": "BEGIN TRY\n\t\t\n\tBEGIN TRANSACTION;\n\n\t-- 対象テーブルの内、日時が当月のデータのみ削除\n\tDELETE FROM test_table\n\tWHERE\n\t\tFORMAT(update_at, 'yyyyMM') = \n\t\t(\n\t\t\tSELECT\n\t\t\t\tREPLACE(LEFT(update_at, 7), '-', '') AS yearManth\n\t\t\tFROM\n\t\t\t\tOPENJSON(@csvDataJson)\n\t\t\t\tWITH (\n\t\t\t\t\tupdate_at date\n\t\t\t\t)\n\t\t\tGROUP BY REPLACE(LEFT(update_at, 7), '-', '')\n\t\t);\t\n\n\t-- CSV ファイルから読み込んだデータを対象テーブルに INSERT\n\tINSERT INTO test_table(name, age, update_at)\n\tSELECT\n\t\tname,\n\t\tage,\n\t\tFORMAT(GETDATE(),'yyyy-MM-dd')\n\tFROM\n\t\tOPENJSON(@csvDataJson)\n\t\tWITH (\n\t\t\tname NVARCHAR(100),\n\t\t\tage INT\n\t\t);\n\n    SELECT\n        fileName\n    FROM\n        OPENJSON(@csvDataJson)\n        WITH (\n            fileName NVARCHAR(MAX)\n        )\n    GROUP BY fileName\n\n\tCOMMIT TRANSACTION;\n\nEND TRY\n\nBEGIN CATCH\n\n\tROLLBACK TRANSACTION;\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
+									}
+								],
+								"scriptBlockExecutionTimeout": "02:00:00"
+							}
+						}
+					]
+				}
+			}
+		],
+		"folder": {
+			"name": "受注残"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-10-09T04:54:59Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

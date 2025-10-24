@@ -1,0 +1,115 @@
+{
+	"name": "csv_cache_bulk_order_received_rest",
+	"properties": {
+		"folder": {
+			"name": "受注残"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "test_blob_storage_nsw",
+						"type": "LinkedServiceReference"
+					},
+					"name": "csvFileRead"
+				}
+			],
+			"sinks": [
+				{
+					"name": "csvDataInCache"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedFileNameColumn"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          {処理年月} as string,",
+				"          {販売注文} as string,",
+				"          {明細行番号} as integer,",
+				"          {伝票タイプ} as string,",
+				"          {顧客} as string,",
+				"          {略称} as string,",
+				"          {出荷先コード} as string,",
+				"          {出荷先-略称} as string,",
+				"          {回収先ID} as string,",
+				"          {回収先-略称} as string,",
+				"          {仕入先} as string,",
+				"          {仕入先-検索名} as string,",
+				"          {営業所} as short,",
+				"          {営業所名} as string,",
+				"          {営業所グループ} as short,",
+				"          {営業所グループ名} as string,",
+				"          {カスタマー} as string,",
+				"          {カスタマー略称} as string,",
+				"          {請求先/元 ID} as string,",
+				"          {請求先-略称} as string,",
+				"          {請求先-名前} as string,",
+				"          {営業員} as string,",
+				"          {営業員名} as string,",
+				"          {需要家} as string,",
+				"          {運送業者} as string,",
+				"          {運送業者-検索名} as string,",
+				"          {品目番号} as string,",
+				"          {テキスト} as string,",
+				"          {荷姿名} as string,",
+				"          {出荷名コード} as string,",
+				"          {出荷名名称} as string,",
+				"          {商標コード} as short,",
+				"          {商標名} as string,",
+				"          {商品大分類コード} as short,",
+				"          {商品大分類名} as string,",
+				"          {製品群コード} as string,",
+				"          {製品群名} as string,",
+				"          {商品群コード} as string,",
+				"          {商品群名} as string,",
+				"          {サイト} as short,",
+				"          {サイト名} as string,",
+				"          {倉庫} as string,",
+				"          {倉庫名} as string,",
+				"          {契約単位数量} as short,",
+				"          {契約単価単位} as string,",
+				"          {販売-数量} as short,",
+				"          {販売-単位} as string,",
+				"          {販売-金額} as integer,",
+				"          {請求書-契約単位数量} as integer,",
+				"          {請求書-契約単価単位} as string,",
+				"          {請求書-金額} as integer,",
+				"          {請求書-台貫金額(諸費用)} as integer,",
+				"          {受注残金額} as integer,",
+				"          {会計通貨} as string,",
+				"          {請求書-計上日} as date 'yyyy/MM/dd',",
+				"          {整理年月} as string,",
+				"          {作成者} as string,",
+				"          {作成日時} as timestamp 'yyyy/MM/dd HH:mm:ss',",
+				"          {出荷予定日} as date 'yyyy/MM/dd',",
+				"          {入荷希望日} as date 'yyyy/MM/dd'",
+				"     ),",
+				"     useSchema: false,",
+				"     allowSchemaDrift: false,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: true,",
+				"     rowUrlColumn: 'filePath',",
+				"     format: 'delimited',",
+				"     container: 'test-nsw',",
+				"     columnDelimiter: ',',",
+				"     escapeChar: '\\\\',",
+				"     quoteChar: '\\\"',",
+				"     encodingName: 'SHIFT-JIS',",
+				"     columnNamesAsHeader: true,",
+				"     wildcardPaths:['受注残/*.csv']) ~> csvFileRead",
+				"csvFileRead derive(fileName = split(filePath, '/')[size(split(filePath, '/'))]) ~> derivedFileNameColumn",
+				"derivedFileNameColumn sink(validateSchema: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     store: 'cache',",
+				"     format: 'inline',",
+				"     output: true,",
+				"     saveOrder: 1) ~> csvDataInCache"
+			]
+		}
+	}
+}
