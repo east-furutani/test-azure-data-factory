@@ -1,0 +1,70 @@
+{
+	"name": "csv_file_delete_order_received_rest",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEachCsvFileDelete",
+				"description": "GetCsvFileNameList で読み込んだファイル数分ループします。",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.csvFileNameList",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "DeleteCsvFile",
+							"description": "CSVファイルを削除します。",
+							"type": "Delete",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "blob_storage_order_received_rest",
+									"type": "DatasetReference"
+								},
+								"logStorageSettings": {
+									"linkedServiceName": {
+										"referenceName": "test_blob_storage_nsw",
+										"type": "LinkedServiceReference"
+									},
+									"path": "test-nsw/test"
+								},
+								"enableLogging": true,
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": false,
+									"wildcardFileName": {
+										"value": "@{item().fileName}",
+										"type": "Expression"
+									},
+									"enablePartitionDiscovery": false
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"csvFileNameList": {
+				"type": "array"
+			}
+		},
+		"folder": {
+			"name": "受注残"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-10-03T10:43:28Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
