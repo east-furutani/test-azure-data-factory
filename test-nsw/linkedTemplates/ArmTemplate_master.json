@@ -72,13 +72,33 @@
 					},
 					"test_db_nsw_link_service_properties_typeProperties_userName": {
 						"value": "[parameters('test_db_nsw_link_service_properties_typeProperties_userName')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "test-nsw_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
 					},
 					"fileUploadTrigger_properties_typeProperties_scope": {
 						"value": "[parameters('fileUploadTrigger_properties_typeProperties_scope')]"
 					}
 				}
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'test-nsw_ArmTemplate_0')]"
+			]
 		}
 	]
 }

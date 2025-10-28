@@ -37,6 +37,229 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/csv_file_delete_order_received_rest')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEachCsvFileDelete",
+						"description": "GetCsvFileNameList で読み込んだファイル数分ループします。",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.csvFileNameList",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "DeleteCsvFile",
+									"description": "CSVファイルを削除します。",
+									"type": "Delete",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "blob_storage_order_received_rest",
+											"type": "DatasetReference",
+											"parameters": {}
+										},
+										"logStorageSettings": {
+											"linkedServiceName": {
+												"referenceName": "test_blob_storage_nsw",
+												"type": "LinkedServiceReference"
+											},
+											"path": "test-nsw/test"
+										},
+										"enableLogging": true,
+										"storeSettings": {
+											"type": "AzureBlobStorageReadSettings",
+											"recursive": false,
+											"wildcardFileName": {
+												"value": "@{item().fileName}",
+												"type": "Expression"
+											},
+											"enablePartitionDiscovery": false
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"csvFileNameList": {
+						"type": "array"
+					}
+				},
+				"folder": {
+					"name": "受注残"
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-10-03T10:43:28Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/blob_storage_order_received_rest')]",
+				"[concat(variables('factoryId'), '/linkedServices/test_blob_storage_nsw')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/csv_to_db_order_received_rest')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "CsvDataInCache",
+						"description": "CSV ファイルから読み込んだデータを cache に保存します。",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "csv_cache_bulk_order_received_rest",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"csvFileRead": {},
+									"csvDataInCache": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "None",
+							"cacheSinks": {}
+						}
+					},
+					{
+						"name": "ExitCsvFile",
+						"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "CsvDataInCache",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@greater(activity('CsvDataInCache').output.runStatus.output.csvDataInCache.count, 0)",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "Execute_test_csv_file_delete",
+									"description": "test_csv_file_delete パイプラインを実行します。",
+									"type": "ExecutePipeline",
+									"dependsOn": [
+										{
+											"activity": "DeleteInsertCsvDataAndGroupByFileName",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "csv_file_delete_order_received_rest",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"csvFileNameList": {
+												"value": "@activity('DeleteInsertCsvDataAndGroupByFileName').output.resultSets[0].rows",
+												"type": "Expression"
+											}
+										}
+									}
+								},
+								{
+									"name": "DeleteInsertCsvDataAndGroupByFileName",
+									"description": "削除対象のファイル名をグループ化します。",
+									"type": "Script",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"linkedServiceName": {
+										"referenceName": "test_db_nsw_link_service",
+										"type": "LinkedServiceReference"
+									},
+									"typeProperties": {
+										"scripts": [
+											{
+												"parameters": [
+													{
+														"name": "csvDataJson",
+														"type": "String",
+														"value": {
+															"value": "@string(activity('CsvDataInCache').output.runStatus.output.csvDataInCache.value)",
+															"type": "Expression"
+														},
+														"direction": "Input"
+													}
+												],
+												"type": "Query",
+												"text": "BEGIN TRY\n\t\t\n\tBEGIN TRANSACTION;\n\n\t-- 対象テーブルの内、日時が当月のデータのみ削除\n\tDELETE FROM order_received_rest\n\tWHERE\n\t\tprocess_date = \n\t\t(\n\t\t\tSELECT\n\t\t\t\tprocess_date\n\t\t\tFROM\n\t\t\t\tOPENJSON(@csvDataJson)\n\t\t\t\tWITH (\n\t\t\t\t\tprocess_date CHAR(4)\n\t\t\t\t)\n\t\t\tGROUP BY process_date\n\t\t);\t\n\n\t-- CSV ファイルから読み込んだデータを対象テーブルに INSERT\n\tINSERT INTO order_received_rest\n\t(\n\t\tprocess_date,\n\t\tsales_order,\n\t\tdetail_row_number,\n\t\tslip_type,\n\t\tclient,\n\t\tabbreviation,\n\t\tshipping_destination,\n\t\tshipping_destination_abbreviation,\n\t\tcollection_destination_id,\n\t\tcollection_destination_abbreviation,\n\t\tsupplier,\n\t\tsupplier_search_name,\n\t\tsales_office,\n\t\tsales_office_name,\n\t\tsales_office_group,\n\t\tsales_office_group_name,\n\t\tcustomer,\n\t\tcustomer_abbreviation,\n\t\tbilling_address_or_old_id,\n\t\tbilling_address_abbreviation,\n\t\tbilling_address_name,\n\t\tsales_person,\n\t\tsales_person_name,\n\t\tconsumer,\n\t\tcarrier,\n\t\tcarrier_search_name,\n\t\titem_number,\n\t\ttext,\n\t\tpacking_style_name,\n\t\tshipping_name_code,\n\t\tshipping_destination_name,\n\t\ttrademark_code,\n\t\ttrademark_name,\n\t\tgoods_big_classification_code,\n\t\tgoods_big_classification_name,\n\t\tproduct_group_code,\n\t\tproduct_group_name,\n\t\tgoods_group_code,\n\t\tgoods_group_name,\n\t\tsite,\n\t\tsite_name,\n\t\twarehouse,\n\t\twarehouse_name,\n\t\tcontract_unit_quantity,\n\t\tcontract_price_unit,\n\t\tsale_quantity,\n\t\tsale_unit,\n\t\tsale_amount,\n\t\tinvoice_contract_unit_quantity,\n\t\tinvoice_contract_price_unit,\n\t\tinvoice_amount,\n\t\tinvoice_mimscellaneous_expenses,\n\t\torders_remaining_amount,\n\t\taccountant_currency,\n\t\tinvoice_recording_date,\n\t\tsorting_date,\n\t\tauthor,\n\t\tcreate_at,\n\t\tshipping_scheduled_date,\n\t\tarrival_desired_date\n\t)\n\tSELECT\n\t\tprocess_date,\n\t\tsales_order,\n\t\tdetail_row_number,\n\t\tslip_type,\n\t\tclient,\n\t\tabbreviation,\n\t\tshipping_destination,\n\t\tshipping_destination_abbreviation,\n\t\tcollection_destination_id,\n\t\tcollection_destination_abbreviation,\n\t\tsupplier,\n\t\tsupplier_search_name,\n\t\tsales_office,\n\t\tsales_office_name,\n\t\tsales_office_group,\n\t\tsales_office_group_name,\n\t\tcustomer,\n\t\tcustomer_abbreviation,\n\t\tbilling_address_or_old_id,\n\t\tbilling_address_abbreviation,\n\t\tbilling_address_name,\n\t\tsales_person,\n\t\tsales_person_name,\n\t\tconsumer,\n\t\tcarrier,\n\t\tcarrier_search_name,\n\t\titem_number,\n\t\ttext,\n\t\tpacking_style_name,\n\t\tshipping_name_code,\n\t\tshipping_destination_name,\n\t\ttrademark_code,\n\t\ttrademark_name,\n\t\tgoods_big_classification_code,\n\t\tgoods_big_classification_name,\n\t\tproduct_group_code,\n\t\tproduct_group_name,\n\t\tgoods_group_code,\n\t\tgoods_group_name,\n\t\tsite,\n\t\tsite_name,\n\t\twarehouse,\n\t\twarehouse_name,\n\t\tcontract_unit_quantity,\n\t\tcontract_price_unit,\n\t\tsale_quantity,\n\t\tsale_unit,\n\t\tsale_amount,\n\t\tinvoice_contract_unit_quantity,\n\t\tinvoice_contract_price_unit,\n\t\tinvoice_amount,\n\t\tinvoice_mimscellaneous_expenses,\n\t\torders_remaining_amount,\n\t\taccountant_currency,\n\t\tinvoice_recording_date,\n\t\tsorting_date,\n\t\tauthor,\n\t\tcreate_at,\n\t\tshipping_scheduled_date,\n\t\tarrival_desired_date\n\tFROM\n\t\tOPENJSON(@csvDataJson)\n\t\tWITH\n\t\t(\n\t\t\tprocess_date CHAR(4),\n\t\t\tsales_order VARCHAR(20),\n\t\t\tdetail_row_number REAL,\n\t\t\tslip_type NVARCHAR(10),\n\t\t\tclient CHAR(20),\n\t\t\tabbreviation NVARCHAR(40),\n\t\t\tshipping_destination CHAR(20),\n\t\t\tshipping_destination_abbreviation NVARCHAR(40),\n\t\t\tcollection_destination_id CHAR(20),\n\t\t\tcollection_destination_abbreviation NVARCHAR(40),\n\t\t\tsupplier CHAR(20),\n\t\t\tsupplier_search_name NVARCHAR(20),\n\t\t\tsales_office CHAR(4),\n\t\t\tsales_office_name NVARCHAR(60),\n\t\t\tsales_office_group CHAR(3),\n\t\t\tsales_office_group_name NVARCHAR(60),\n\t\t\tcustomer CHAR(20),\n\t\t\tcustomer_abbreviation NVARCHAR(40),\n\t\t\tbilling_address_or_old_id CHAR(20),\n\t\t\tbilling_address_abbreviation NVARCHAR(40),\n\t\t\tbilling_address_name NVARCHAR(160),\n\t\t\tsales_person CHAR(20),\n\t\t\tsales_person_name NVARCHAR(250),\n\t\t\tconsumer NVARCHAR(MAX),\n\t\t\tcarrier CHAR(20),\n\t\t\tcarrier_search_name NVARCHAR(20),\n\t\t\titem_number VARCHAR(20),\n\t\t\ttext CHAR(20),\n\t\t\tpacking_style_name NVARCHAR(100),\n\t\t\tshipping_name_code CHAR(3),\n\t\t\tshipping_destination_name NVARCHAR(40),\n\t\t\ttrademark_code VARCHAR(4),\n\t\t\ttrademark_name NVARCHAR(40),\n\t\t\tgoods_big_classification_code CHAR(2),\n\t\t\tgoods_big_classification_name NVARCHAR(100),\n\t\t\tproduct_group_code CHAR(9),\n\t\t\tproduct_group_name NVARCHAR(100),\n\t\t\tgoods_group_code CHAR(4),\n\t\t\tgoods_group_name NVARCHAR(100),\n\t\t\tsite CHAR(10),\n\t\t\tsite_name NVARCHAR(60),\n\t\t\twarehouse CHAR(10),\n\t\t\twarehouse_name NVARCHAR(60),\n\t\t\tcontract_unit_quantity REAL,\n\t\t\tcontract_price_unit NVARCHAR(10),\n\t\t\tsale_quantity REAL,\n\t\t\tsale_unit NVARCHAR(10),\n\t\t\tsale_amount REAL,\n\t\t\tinvoice_contract_unit_quantity REAL,\n\t\t\tinvoice_contract_price_unit NVARCHAR(10),\n\t\t\tinvoice_amount REAL,\n\t\t\tinvoice_mimscellaneous_expenses REAL,\n\t\t\torders_remaining_amount REAL,\n\t\t\taccountant_currency VARCHAR(3),\n\t\t\tinvoice_recording_date VARCHAR(20),\n\t\t\tsorting_date CHAR(60),\n\t\t\tauthor VARCHAR(20),\n\t\t\tcreate_at VARCHAR(40),\n\t\t\tshipping_scheduled_date VARCHAR(20),\n\t\t\tarrival_desired_date VARCHAR(20)\n\t\t);\n\n    SELECT\n        fileName\n    FROM\n        OPENJSON(@csvDataJson)\n        WITH (\n            fileName NVARCHAR(MAX)\n        )\n    GROUP BY fileName\n\n\tCOMMIT TRANSACTION;\n\nEND TRY\n\nBEGIN CATCH\n\n\tROLLBACK TRANSACTION;\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
+											}
+										],
+										"scriptBlockExecutionTimeout": "02:00:00"
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "受注残"
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-10-09T04:54:59Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/csv_cache_bulk_order_received_rest')]",
+				"[concat(variables('factoryId'), '/pipelines/csv_file_delete_order_received_rest')]",
+				"[concat(variables('factoryId'), '/linkedServices/test_db_nsw_link_service')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/foreach')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1140,6 +1363,29 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/blob_storage_order_received_rest')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "test_blob_storage_nsw",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "受注残",
+						"container": "test-nsw"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/test_blob_storage_nsw')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/test_blob_storage_nsw')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -1427,6 +1673,192 @@
 						"          name,",
 						"          age,",
 						"          update_at,",
+						"          fileName",
+						"     )) ~> csvDataInCache"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/test_blob_storage_nsw')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/csv_cache_bulk_order_received_rest')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "受注残"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"linkedService": {
+								"referenceName": "test_blob_storage_nsw",
+								"type": "LinkedServiceReference"
+							},
+							"name": "csvFileRead"
+						}
+					],
+					"sinks": [
+						{
+							"name": "csvDataInCache"
+						}
+					],
+					"transformations": [
+						{
+							"name": "derivedFileNameColumn"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          {処理年月} as string,",
+						"          {販売注文} as string,",
+						"          {明細行番号} as integer,",
+						"          {伝票タイプ} as string,",
+						"          {顧客} as string,",
+						"          {略称} as string,",
+						"          {出荷先コード} as string,",
+						"          {出荷先-略称} as string,",
+						"          {回収先ID} as string,",
+						"          {回収先-略称} as string,",
+						"          {仕入先} as string,",
+						"          {仕入先-検索名} as string,",
+						"          {営業所} as short,",
+						"          {営業所名} as string,",
+						"          {営業所グループ} as short,",
+						"          {営業所グループ名} as string,",
+						"          {カスタマー} as string,",
+						"          {カスタマー略称} as string,",
+						"          {請求先/元 ID} as string,",
+						"          {請求先-略称} as string,",
+						"          {請求先-名前} as string,",
+						"          {営業員} as string,",
+						"          {営業員名} as string,",
+						"          {需要家} as string,",
+						"          {運送業者} as string,",
+						"          {運送業者-検索名} as string,",
+						"          {品目番号} as string,",
+						"          {テキスト} as string,",
+						"          {荷姿名} as string,",
+						"          {出荷名コード} as string,",
+						"          {出荷名名称} as string,",
+						"          {商標コード} as short,",
+						"          {商標名} as string,",
+						"          {商品大分類コード} as short,",
+						"          {商品大分類名} as string,",
+						"          {製品群コード} as string,",
+						"          {製品群名} as string,",
+						"          {商品群コード} as string,",
+						"          {商品群名} as string,",
+						"          {サイト} as short,",
+						"          {サイト名} as string,",
+						"          {倉庫} as string,",
+						"          {倉庫名} as string,",
+						"          {契約単位数量} as short,",
+						"          {契約単価単位} as string,",
+						"          {販売-数量} as short,",
+						"          {販売-単位} as string,",
+						"          {販売-金額} as integer,",
+						"          {請求書-契約単位数量} as integer,",
+						"          {請求書-契約単価単位} as string,",
+						"          {請求書-金額} as integer,",
+						"          {請求書-台貫金額(諸費用)} as integer,",
+						"          {受注残金額} as integer,",
+						"          {会計通貨} as string,",
+						"          {請求書-計上日} as date 'yyyy/MM/dd',",
+						"          {整理年月} as string,",
+						"          {作成者} as string,",
+						"          {作成日時} as timestamp 'yyyy/MM/dd HH:mm:ss',",
+						"          {出荷予定日} as date 'yyyy/MM/dd',",
+						"          {入荷希望日} as date 'yyyy/MM/dd'",
+						"     ),",
+						"     useSchema: false,",
+						"     allowSchemaDrift: false,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: true,",
+						"     rowUrlColumn: 'filePath',",
+						"     format: 'delimited',",
+						"     container: 'test-nsw',",
+						"     columnDelimiter: ',',",
+						"     escapeChar: '\\\\',",
+						"     quoteChar: '\\\"',",
+						"     encodingName: 'SHIFT-JIS',",
+						"     columnNamesAsHeader: true,",
+						"     wildcardPaths:['受注残/*.csv']) ~> csvFileRead",
+						"csvFileRead derive(fileName = split(filePath, '/')[size(split(filePath, '/'))],",
+						"          {請求書-計上日} = toString({請求書-計上日}, 'yyyy-MM-dd'),",
+						"          {作成日時} = toString({作成日時}, 'yyyy-MM-dd hh:mm:ss'),",
+						"          {出荷予定日} = toString({出荷予定日}, 'yyyy-MM-dd'),",
+						"          {入荷希望日} = toString({入荷希望日}, 'yyyy-MM-dd')) ~> derivedFileNameColumn",
+						"derivedFileNameColumn sink(validateSchema: false,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     store: 'cache',",
+						"     format: 'inline',",
+						"     output: true,",
+						"     saveOrder: 1,",
+						"     mapColumn(",
+						"          process_date = {処理年月},",
+						"          sales_order = {販売注文},",
+						"          detail_row_number = {明細行番号},",
+						"          slip_type = {伝票タイプ},",
+						"          client = {顧客},",
+						"          abbreviation = {略称},",
+						"          shipping_destination = {出荷先コード},",
+						"          shipping_destination_abbreviation = {出荷先-略称},",
+						"          collection_destination_id = {回収先ID},",
+						"          collection_destination_abbreviation = {回収先-略称},",
+						"          supplier = {仕入先},",
+						"          supplier_search_name = {仕入先-検索名},",
+						"          sales_office = {営業所},",
+						"          sales_office_name = {営業所名},",
+						"          sales_office_group = {営業所グループ},",
+						"          customer = {カスタマー},",
+						"          customer_abbreviation = {カスタマー略称},",
+						"          billing_address_or_old_id = {請求先/元 ID},",
+						"          billing_address_abbreviation = {請求先-略称},",
+						"          billing_address_name = {請求先-名前},",
+						"          sales_person = {営業員},",
+						"          sales_person_name = {営業員名},",
+						"          consumer = {需要家},",
+						"          carrier = {運送業者},",
+						"          carrier_search_name = {運送業者-検索名},",
+						"          item_number = {品目番号},",
+						"          text = {テキスト},",
+						"          packing_style_name = {荷姿名},",
+						"          shipping_name_code = {出荷名コード},",
+						"          shipping_destination_name = {出荷名名称},",
+						"          trademark_code = {商標コード},",
+						"          trademark_name = {商標名},",
+						"          goods_big_classification_code = {商品大分類コード},",
+						"          goods_big_classification_name = {商品大分類名},",
+						"          product_group_code = {製品群コード},",
+						"          product_group_name = {製品群名},",
+						"          goods_group_code = {商品群コード},",
+						"          goods_group_name = {商品群名},",
+						"          site = {サイト},",
+						"          site_name = {サイト名},",
+						"          warehouse = {倉庫},",
+						"          warehouse_name = {倉庫名},",
+						"          contract_unit_quantity = {契約単位数量},",
+						"          contract_price_unit = {契約単価単位},",
+						"          sale_quantity = {販売-数量},",
+						"          sale_unit = {販売-単位},",
+						"          sale_amount = {販売-金額},",
+						"          invoice_contract_unit_quantity = {請求書-契約単位数量},",
+						"          invoice_contract_price_unit = {請求書-契約単価単位},",
+						"          invoice_amount = {請求書-金額},",
+						"          invoice_mimscellaneous_expenses = {請求書-台貫金額(諸費用)},",
+						"          orders_remaining_amount = {受注残金額},",
+						"          accountant_currency = {会計通貨},",
+						"          invoice_recording_date = {請求書-計上日},",
+						"          sorting_date = {整理年月},",
+						"          author = {作成者},",
+						"          create_at = {作成日時},",
+						"          shipping_scheduled_date = {出荷予定日},",
+						"          arrival_desired_date = {入荷希望日},",
 						"          fileName",
 						"     )) ~> csvDataInCache"
 					]
