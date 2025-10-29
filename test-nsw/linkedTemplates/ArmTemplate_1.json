@@ -17,6 +17,260 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/test_csv_to_db')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "test_csv_to_db",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "test_csv_to_db",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"csvFileRead": {},
+									"dbTableRead": {},
+									"DeleteInsert": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "検証用"
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-10-08T08:03:50Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/test_csv_to_db_script_bulk_date_in_filename')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ExitCsvFileUntil",
+						"description": "読み込み対象のフォルダに CSV ファイルが存在するまで処理を繰り返します",
+						"type": "Until",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@not(variables('isRetry'))",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "CsvDataInCache",
+									"description": "CSV ファイルから読み込んだデータを cache に保存します。",
+									"type": "ExecuteDataFlow",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataflow": {
+											"referenceName": "csv_cache_bulk",
+											"type": "DataFlowReference",
+											"parameters": {},
+											"datasetParameters": {
+												"csvFileRead": {},
+												"csvDataInCache": {}
+											}
+										},
+										"staging": {},
+										"compute": {
+											"coreCount": 8,
+											"computeType": "General"
+										},
+										"traceLevel": "None",
+										"cacheSinks": {}
+									}
+								},
+								{
+									"name": "ExitCsvFile",
+									"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
+									"type": "IfCondition",
+									"dependsOn": [
+										{
+											"activity": "CsvDataInCache",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"userProperties": [],
+									"typeProperties": {
+										"expression": {
+											"value": "@greater(activity('CsvDataInCache').output.runStatus.output.csvDataInCache.count, 0)",
+											"type": "Expression"
+										},
+										"ifFalseActivities": [
+											{
+												"name": "SetTrueToIsRetry",
+												"type": "SetVariable",
+												"dependsOn": [],
+												"policy": {
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"variableName": "isRetry",
+													"value": {
+														"value": "@bool(1)",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"ifTrueActivities": [
+											{
+												"name": "DeleteInsertCsvDataAndGroupByFileName",
+												"description": "削除対象のファイル名をグループ化します。",
+												"type": "Script",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"linkedServiceName": {
+													"referenceName": "test_db_nsw_link_service",
+													"type": "LinkedServiceReference"
+												},
+												"typeProperties": {
+													"scripts": [
+														{
+															"parameters": [
+																{
+																	"name": "csvDataJson",
+																	"type": "String",
+																	"value": {
+																		"value": "@string(activity('CsvDataInCache').output.runStatus.output.csvDataInCache.value)",
+																		"type": "Expression"
+																	},
+																	"direction": "Input"
+																}
+															],
+															"type": "Query",
+															"text": "BEGIN TRY\n\t\t\n\tBEGIN TRANSACTION;\n\n\t-- 対象テーブルの内、日時が当月のデータのみ削除\n\tDELETE FROM test_table\n\tWHERE\n\t\tFORMAT(update_at, 'yyyyMM') = \n\t\t(\n\t\t\tSELECT\n\t\t\t\tLEFT(RIGHT(fileName, 12), 6) AS yearManth\n\t\t\tFROM\n\t\t\t\tOPENJSON(@csvDataJson)\n\t\t\t\tWITH (\n\t\t\t\t\tfileName NVARCHAR(MAX)\n\t\t\t\t)\n\t\t\tGROUP BY LEFT(RIGHT(fileName, 12), 6)\n\t\t);\t\n\n\t-- CSV ファイルから読み込んだデータを対象テーブルに INSERT\n\tINSERT INTO test_table(name, age, update_at)\n\tSELECT\n\t\tname,\n\t\tage,\n\t\tFORMAT(GETDATE(),'yyyy-MM-dd')\n\tFROM\n\t\tOPENJSON(@csvDataJson)\n\t\tWITH (\n\t\t\tname NVARCHAR(100),\n\t\t\tage INT\n\t\t);\n\n    SELECT\n        fileName\n    FROM\n        OPENJSON(@csvDataJson)\n        WITH (\n            fileName NVARCHAR(MAX)\n        )\n    GROUP BY fileName\n\n\tCOMMIT TRANSACTION;\n\nEND TRY\n\nBEGIN CATCH\n\n\tROLLBACK TRANSACTION;\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
+														}
+													],
+													"scriptBlockExecutionTimeout": "02:00:00"
+												}
+											},
+											{
+												"name": "Execute_test_csv_file_delete",
+												"description": "test_csv_file_delete パイプラインを実行します。",
+												"type": "ExecutePipeline",
+												"dependsOn": [
+													{
+														"activity": "DeleteInsertCsvDataAndGroupByFileName",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"pipeline": {
+														"referenceName": "test_csv_file_delete",
+														"type": "PipelineReference"
+													},
+													"waitOnCompletion": true,
+													"parameters": {
+														"csvFileNameList": {
+															"value": "@activity('DeleteInsertCsvDataAndGroupByFileName').output.resultSets[0].rows",
+															"type": "Expression"
+														}
+													}
+												}
+											},
+											{
+												"name": "SetFalseToIsRetry",
+												"type": "SetVariable",
+												"dependsOn": [
+													{
+														"activity": "Execute_test_csv_file_delete",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"variableName": "isRetry",
+													"value": {
+														"value": "@bool(0)",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									}
+								}
+							],
+							"timeout": "0.12:00:00"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"isRetry": {
+						"type": "Boolean",
+						"defaultValue": false
+					}
+				},
+				"folder": {
+					"name": "検証用"
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-10-09T04:54:59Z"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/test_not_identity_csv_to_db')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -57,8 +311,140 @@
 				"policy": {
 					"elapsedTimeMetric": {}
 				},
+				"folder": {
+					"name": "検証用"
+				},
 				"annotations": [],
 				"lastPublishTime": "2025-10-08T10:10:07Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/csv_to_db_not_chche_order_received_rest')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "CsvDataInMiddleTable",
+						"description": "CSV ファイルから読み込んだデータを cache に保存します。",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "csv_db_bulk_order_received_rest_diff",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"csvFileRead": {},
+									"csvDataInMiddleTable": {}
+								},
+								"linkedServiceParameters": {}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "ExitCsvFile",
+						"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "CsvDataInMiddleTable",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@greater(activity('CsvDataInMiddleTable').output.runStatus.metrics.csvDataInMiddleTable.sources.csvFileRead.details.fileReadCount[0], 0)",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "Execute_test_csv_file_delete",
+									"description": "test_csv_file_delete パイプラインを実行します。",
+									"type": "ExecutePipeline",
+									"dependsOn": [
+										{
+											"activity": "DeleteInsertCsvDataAndGroupByFileName",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "csv_file_delete_order_received_rest",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"csvFileNameList": {
+												"value": "@activity('DeleteInsertCsvDataAndGroupByFileName').output.resultSets[0].rows",
+												"type": "Expression"
+											}
+										}
+									}
+								},
+								{
+									"name": "DeleteInsertCsvDataAndGroupByFileName",
+									"description": "削除対象のファイル名をグループ化します。",
+									"type": "Script",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"linkedServiceName": {
+										"referenceName": "test_db_nsw_link_service",
+										"type": "LinkedServiceReference"
+									},
+									"typeProperties": {
+										"scripts": [
+											{
+												"type": "Query",
+												"text": "BEGIN TRY\n\t\t\n\tBEGIN TRANSACTION;\n\n\t-- 対象テーブルの内、年月が前月、当月、来月、当月より 2 年前のデータのみ削除\n\tDELETE FROM order_received_rest\n\tWHERE\n\t\tprocess_date IN\n\t\t(\n\t\t\tSELECT\n\t\t\t\tprocess_date\n\t\t\tFROM\n\t\t\t\torder_received_rest_diff\n\t\t\tGROUP BY\n\t\t\t    process_date\n\t\t)\n\t\tOR\n\t\tprocess_date <= FORMAT(DATEADD(YEAR, -2, GETDATE() AT TIME ZONE 'UTC' AT TIME ZONE 'Tokyo Standard Time'), 'yyyyMM');\n\n\t-- CSV ファイルから読み込んだデータを対象テーブルに INSERT\n\tINSERT INTO order_received_rest\n\t(\n\t\tprocess_date,\n\t\tsales_order,\n\t\tdetail_row_number,\n\t\tslip_type,\n\t\tclient,\n\t\tabbreviation,\n\t\tshipping_destination,\n\t\tshipping_destination_abbreviation,\n\t\tcollection_destination_id,\n\t\tcollection_destination_abbreviation,\n\t\tsupplier,\n\t\tsupplier_search_name,\n\t\tsales_office,\n\t\tsales_office_name,\n\t\tsales_office_group,\n\t\tsales_office_group_name,\n\t\tcustomer,\n\t\tcustomer_abbreviation,\n\t\tbilling_address_or_old_id,\n\t\tbilling_address_abbreviation,\n\t\tbilling_address_name,\n\t\tsales_person,\n\t\tsales_person_name,\n\t\tconsumer,\n\t\tcarrier,\n\t\tcarrier_search_name,\n\t\titem_number,\n\t\ttext,\n\t\tpacking_style_name,\n\t\tshipping_name_code,\n\t\tshipping_destination_name,\n\t\ttrademark_code,\n\t\ttrademark_name,\n\t\tgoods_big_classification_code,\n\t\tgoods_big_classification_name,\n\t\tproduct_group_code,\n\t\tproduct_group_name,\n\t\tgoods_group_code,\n\t\tgoods_group_name,\n\t\tsite,\n\t\tsite_name,\n\t\twarehouse,\n\t\twarehouse_name,\n\t\tcontract_unit_quantity,\n\t\tcontract_price_unit,\n\t\tsale_quantity,\n\t\tsale_unit,\n\t\tsale_amount,\n\t\tinvoice_contract_unit_quantity,\n\t\tinvoice_contract_price_unit,\n\t\tinvoice_amount,\n\t\tinvoice_mimscellaneous_expenses,\n\t\torders_remaining_amount,\n\t\taccountant_currency,\n\t\tinvoice_recording_date,\n\t\tsorting_date,\n\t\tauthor,\n\t\tcreate_at,\n\t\tshipping_scheduled_date,\n\t\tarrival_desired_date\n\t)\n\tSELECT\n\t\tprocess_date,\n\t\tsales_order,\n\t\tdetail_row_number,\n\t\tslip_type,\n\t\tclient,\n\t\tabbreviation,\n\t\tshipping_destination,\n\t\tshipping_destination_abbreviation,\n\t\tcollection_destination_id,\n\t\tcollection_destination_abbreviation,\n\t\tsupplier,\n\t\tsupplier_search_name,\n\t\tsales_office,\n\t\tsales_office_name,\n\t\tsales_office_group,\n\t\tsales_office_group_name,\n\t\tcustomer,\n\t\tcustomer_abbreviation,\n\t\tbilling_address_or_old_id,\n\t\tbilling_address_abbreviation,\n\t\tbilling_address_name,\n\t\tsales_person,\n\t\tsales_person_name,\n\t\tconsumer,\n\t\tcarrier,\n\t\tcarrier_search_name,\n\t\titem_number,\n\t\ttext,\n\t\tpacking_style_name,\n\t\tshipping_name_code,\n\t\tshipping_destination_name,\n\t\ttrademark_code,\n\t\ttrademark_name,\n\t\tgoods_big_classification_code,\n\t\tgoods_big_classification_name,\n\t\tproduct_group_code,\n\t\tproduct_group_name,\n\t\tgoods_group_code,\n\t\tgoods_group_name,\n\t\tsite,\n\t\tsite_name,\n\t\twarehouse,\n\t\twarehouse_name,\n\t\tcontract_unit_quantity,\n\t\tcontract_price_unit,\n\t\tsale_quantity,\n\t\tsale_unit,\n\t\tsale_amount,\n\t\tinvoice_contract_unit_quantity,\n\t\tinvoice_contract_price_unit,\n\t\tinvoice_amount,\n\t\tinvoice_mimscellaneous_expenses,\n\t\torders_remaining_amount,\n\t\taccountant_currency,\n\t\tinvoice_recording_date,\n\t\tsorting_date,\n\t\tauthor,\n\t\tcreate_at,\n\t\tshipping_scheduled_date,\n\t\tarrival_desired_date\n\tFROM\n\t\torder_received_rest_diff\n\n    SELECT\n        file_name\n    FROM\n        order_received_rest_diff\n    GROUP BY file_name\n\n\t-- 中間テーブルに格納されているデータを削除\n\tTRUNCATE TABLE order_received_rest_diff;\n\n\tCOMMIT TRANSACTION;\n\nEND TRY\n\nBEGIN CATCH\n\n\tROLLBACK TRANSACTION;\n\n\t-- 中間テーブルに格納されているデータを削除\n\tTRUNCATE TABLE order_received_rest_diff;\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
+											}
+										],
+										"scriptBlockExecutionTimeout": "02:00:00"
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "受注残/CSV データを中間テーブルに保存"
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-10-09T04:54:59Z"
 			},
 			"dependsOn": []
 		},
@@ -113,9 +499,14 @@
 						]
 					}
 				},
+				"folder": {
+					"name": "検証用"
+				},
 				"annotations": []
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/test_csv_to_db_script_bulk_date_in_filename')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/fileUploadTrigger')]",
@@ -144,7 +535,9 @@
 					]
 				}
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/test_csv_to_db_script_bulk_date_in_filename')]"
+			]
 		}
 	]
 }
