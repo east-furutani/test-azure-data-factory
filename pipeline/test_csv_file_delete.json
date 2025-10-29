@@ -60,6 +60,9 @@
 				"type": "array"
 			}
 		},
+		"folder": {
+			"name": "検証用"
+		},
 		"annotations": [],
 		"lastPublishTime": "2025-10-03T10:43:28Z"
 	},

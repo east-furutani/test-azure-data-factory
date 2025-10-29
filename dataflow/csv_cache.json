@@ -1,6 +1,9 @@
 {
 	"name": "csv_cache",
 	"properties": {
+		"folder": {
+			"name": "検証用"
+		},
 		"type": "MappingDataFlow",
 		"typeProperties": {
 			"sources": [

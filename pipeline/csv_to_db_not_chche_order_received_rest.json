@@ -108,7 +108,7 @@
 			}
 		],
 		"folder": {
-			"name": "受注残"
+			"name": "受注残/CSV データを中間テーブルに保存"
 		},
 		"annotations": [],
 		"lastPublishTime": "2025-10-09T04:54:59Z"

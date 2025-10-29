@@ -30,6 +30,9 @@
 				}
 			}
 		],
+		"folder": {
+			"name": "検証用"
+		},
 		"annotations": []
 	}
 }

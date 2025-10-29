@@ -27,6 +27,9 @@
 				}
 			}
 		],
+		"folder": {
+			"name": "検証用"
+		},
 		"annotations": [],
 		"lastPublishTime": "2025-10-08T10:10:07Z"
 	},

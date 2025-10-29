@@ -266,6 +266,9 @@
 				"type": "String"
 			}
 		},
+		"folder": {
+			"name": "検証用"
+		},
 		"annotations": [],
 		"lastPublishTime": "2025-10-09T01:55:14Z"
 	},

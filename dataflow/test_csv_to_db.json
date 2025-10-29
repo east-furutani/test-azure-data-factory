@@ -1,6 +1,9 @@
 {
 	"name": "test_csv_to_db",
 	"properties": {
+		"folder": {
+			"name": "検証用"
+		},
 		"type": "MappingDataFlow",
 		"typeProperties": {
 			"sources": [
