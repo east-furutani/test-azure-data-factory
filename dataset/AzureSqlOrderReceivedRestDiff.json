@@ -1,0 +1,271 @@
+{
+	"name": "AzureSqlOrderReceivedRestDiff",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "test_db_nsw_link_service",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "process_date",
+				"type": "char"
+			},
+			{
+				"name": "sales_order",
+				"type": "varchar"
+			},
+			{
+				"name": "detail_row_number",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "slip_type",
+				"type": "nvarchar"
+			},
+			{
+				"name": "client",
+				"type": "char"
+			},
+			{
+				"name": "abbreviation",
+				"type": "nvarchar"
+			},
+			{
+				"name": "shipping_destination",
+				"type": "char"
+			},
+			{
+				"name": "shipping_destination_abbreviation",
+				"type": "nvarchar"
+			},
+			{
+				"name": "collection_destination_id",
+				"type": "char"
+			},
+			{
+				"name": "collection_destination_abbreviation",
+				"type": "nvarchar"
+			},
+			{
+				"name": "supplier",
+				"type": "char"
+			},
+			{
+				"name": "supplier_search_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_office",
+				"type": "char"
+			},
+			{
+				"name": "sales_office_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_office_group",
+				"type": "char"
+			},
+			{
+				"name": "sales_office_group_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "customer",
+				"type": "char"
+			},
+			{
+				"name": "customer_abbreviation",
+				"type": "nvarchar"
+			},
+			{
+				"name": "billing_address_or_old_id",
+				"type": "char"
+			},
+			{
+				"name": "billing_address_abbreviation",
+				"type": "nvarchar"
+			},
+			{
+				"name": "billing_address_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_person",
+				"type": "char"
+			},
+			{
+				"name": "sales_person_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "consumer",
+				"type": "nvarchar"
+			},
+			{
+				"name": "carrier",
+				"type": "char"
+			},
+			{
+				"name": "carrier_search_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "item_number",
+				"type": "nvarchar"
+			},
+			{
+				"name": "text",
+				"type": "char"
+			},
+			{
+				"name": "packing_style_name",
+				"type": "char"
+			},
+			{
+				"name": "shipping_name_code",
+				"type": "nvarchar"
+			},
+			{
+				"name": "shipping_destination_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "trademark_code",
+				"type": "varchar"
+			},
+			{
+				"name": "trademark_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "goods_big_classification_code",
+				"type": "char"
+			},
+			{
+				"name": "goods_big_classification_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "product_group_code",
+				"type": "char"
+			},
+			{
+				"name": "product_group_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "goods_group_code",
+				"type": "char"
+			},
+			{
+				"name": "goods_group_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "site",
+				"type": "char"
+			},
+			{
+				"name": "site_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "warehouse",
+				"type": "char"
+			},
+			{
+				"name": "warehouse_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "contract_unit_quantity",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "contract_price_unit",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sale_quantity",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "sale_unit",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sale_amount",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "invoice_contract_unit_quantity",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "invoice_contract_price_unit",
+				"type": "nvarchar"
+			},
+			{
+				"name": "invoice_amount",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "invoice_mimscellaneous_expenses",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "orders_remaining_amount",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "accountant_currency",
+				"type": "varchar"
+			},
+			{
+				"name": "invoice_recording_date",
+				"type": "date"
+			},
+			{
+				"name": "sorting_date",
+				"type": "char"
+			},
+			{
+				"name": "author",
+				"type": "varchar"
+			},
+			{
+				"name": "create_at",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "shipping_scheduled_date",
+				"type": "date"
+			},
+			{
+				"name": "arrival_desired_date",
+				"type": "date"
+			},
+			{
+				"name": "file_name",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "order_received_rest_diff"
+		}
+	}
+}

@@ -1,5 +1,5 @@
 {
-	"name": "csv_db_bulk_order_received_rest",
+	"name": "csv_db_bulk_order_received_rest_diff",
 	"properties": {
 		"folder": {
 			"name": "受注残"
@@ -17,11 +17,11 @@
 			],
 			"sinks": [
 				{
-					"linkedService": {
-						"referenceName": "test_db_nsw_link_service",
-						"type": "LinkedServiceReference"
+					"dataset": {
+						"referenceName": "AzureSqlOrderReceivedRestDiff",
+						"type": "DatasetReference"
 					},
-					"name": "csvDataInCache"
+					"name": "csvDataInMiddleTable"
 				}
 			],
 			"transformations": [
@@ -106,11 +106,7 @@
 				"     encodingName: 'SHIFT-JIS',",
 				"     columnNamesAsHeader: true,",
 				"     wildcardPaths:['受注残/*.csv']) ~> csvFileRead",
-				"csvFileRead derive(fileName = split(filePath, '/')[size(split(filePath, '/'))],",
-				"          {請求書-計上日} = toString({請求書-計上日}, 'yyyy-MM-dd'),",
-				"          {作成日時} = toString({作成日時}, 'yyyy-MM-dd hh:mm:ss'),",
-				"          {出荷予定日} = toString({出荷予定日}, 'yyyy-MM-dd'),",
-				"          {入荷希望日} = toString({入荷希望日}, 'yyyy-MM-dd')) ~> derivedFileNameColumn",
+				"csvFileRead derive(fileName = split(filePath, '/')[size(split(filePath, '/'))]) ~> derivedFileNameColumn",
 				"derivedFileNameColumn sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
@@ -173,16 +169,14 @@
 				"          author as string,",
 				"          create_at as timestamp,",
 				"          shipping_scheduled_date as date,",
-				"          arrival_desired_date as date",
+				"          arrival_desired_date as date,",
+				"          file_name as string",
 				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
 				"     format: 'table',",
-				"     store: 'sqlserver',",
-				"     schemaName: 'dbo',",
-				"     tableName: 'order_received_rest_diff',",
-				"     insertable: true,",
-				"     updateable: false,",
-				"     deletable: false,",
-				"     upsertable: false,",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
 				"     saveOrder: 1,",
@@ -203,6 +197,7 @@
 				"          sales_office = {営業所},",
 				"          sales_office_name = {営業所名},",
 				"          sales_office_group = {営業所グループ},",
+				"          sales_office_group_name = {営業所グループ名},",
 				"          customer = {カスタマー},",
 				"          customer_abbreviation = {カスタマー略称},",
 				"          billing_address_or_old_id = {請求先/元 ID},",
@@ -246,8 +241,9 @@
 				"          author = {作成者},",
 				"          create_at = {作成日時},",
 				"          shipping_scheduled_date = {出荷予定日},",
-				"          arrival_desired_date = {入荷希望日}",
-				"     )) ~> csvDataInCache"
+				"          arrival_desired_date = {入荷希望日},",
+				"          file_name = fileName",
+				"     )) ~> csvDataInMiddleTable"
 			]
 		}
 	}

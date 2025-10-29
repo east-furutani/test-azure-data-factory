@@ -1,0 +1,151 @@
+{
+	"name": "csv_to_db_not_chche_order_received_rest",
+	"properties": {
+		"activities": [
+			{
+				"name": "CsvDataInMiddleTable",
+				"description": "CSV ファイルから読み込んだデータを cache に保存します。",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "csv_db_bulk_order_received_rest_diff",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "ExitCsvFile",
+				"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "CsvDataInMiddleTable",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greater(activity('CsvDataInMiddleTable').output.runStatus.metrics.csvDataInMiddleTable.sources.csvFileRead.details.fileReadCount[0], 0)",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "Execute_test_csv_file_delete",
+							"description": "test_csv_file_delete パイプラインを実行します。",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "DeleteInsertCsvDataAndGroupByFileName",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "csv_file_delete_order_received_rest",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"csvFileNameList": {
+										"value": "@activity('DeleteInsertCsvDataAndGroupByFileName').output.resultSets[0].rows",
+										"type": "Expression"
+									}
+								}
+							}
+						},
+						{
+							"name": "DeleteInsertCsvDataAndGroupByFileName",
+							"description": "削除対象のファイル名をグループ化します。",
+							"type": "Script",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"linkedServiceName": {
+								"referenceName": "test_db_nsw_link_service",
+								"type": "LinkedServiceReference"
+							},
+							"typeProperties": {
+								"scripts": [
+									{
+										"type": "Query",
+										"text": "BEGIN TRY\n\t\t\n\tBEGIN TRANSACTION;\n\n\t-- 対象テーブルの内、日時が当月のデータのみ削除\n\tDELETE FROM order_received_rest\n\tWHERE\n\t\tprocess_date = \n\t\t(\n\t\t\tSELECT\n\t\t\t\tprocess_date\n\t\t\tFROM\n\t\t\t\torder_received_rest_diff\n\t\t\tGROUP BY\n\t\t\t    process_date\n\t\t);\t\n\n\t-- CSV ファイルから読み込んだデータを対象テーブルに INSERT\n\tINSERT INTO order_received_rest\n\t(\n\t\tprocess_date,\n\t\tsales_order,\n\t\tdetail_row_number,\n\t\tslip_type,\n\t\tclient,\n\t\tabbreviation,\n\t\tshipping_destination,\n\t\tshipping_destination_abbreviation,\n\t\tcollection_destination_id,\n\t\tcollection_destination_abbreviation,\n\t\tsupplier,\n\t\tsupplier_search_name,\n\t\tsales_office,\n\t\tsales_office_name,\n\t\tsales_office_group,\n\t\tsales_office_group_name,\n\t\tcustomer,\n\t\tcustomer_abbreviation,\n\t\tbilling_address_or_old_id,\n\t\tbilling_address_abbreviation,\n\t\tbilling_address_name,\n\t\tsales_person,\n\t\tsales_person_name,\n\t\tconsumer,\n\t\tcarrier,\n\t\tcarrier_search_name,\n\t\titem_number,\n\t\ttext,\n\t\tpacking_style_name,\n\t\tshipping_name_code,\n\t\tshipping_destination_name,\n\t\ttrademark_code,\n\t\ttrademark_name,\n\t\tgoods_big_classification_code,\n\t\tgoods_big_classification_name,\n\t\tproduct_group_code,\n\t\tproduct_group_name,\n\t\tgoods_group_code,\n\t\tgoods_group_name,\n\t\tsite,\n\t\tsite_name,\n\t\twarehouse,\n\t\twarehouse_name,\n\t\tcontract_unit_quantity,\n\t\tcontract_price_unit,\n\t\tsale_quantity,\n\t\tsale_unit,\n\t\tsale_amount,\n\t\tinvoice_contract_unit_quantity,\n\t\tinvoice_contract_price_unit,\n\t\tinvoice_amount,\n\t\tinvoice_mimscellaneous_expenses,\n\t\torders_remaining_amount,\n\t\taccountant_currency,\n\t\tinvoice_recording_date,\n\t\tsorting_date,\n\t\tauthor,\n\t\tcreate_at,\n\t\tshipping_scheduled_date,\n\t\tarrival_desired_date\n\t)\n\tSELECT\n\t\tprocess_date,\n\t\tsales_order,\n\t\tdetail_row_number,\n\t\tslip_type,\n\t\tclient,\n\t\tabbreviation,\n\t\tshipping_destination,\n\t\tshipping_destination_abbreviation,\n\t\tcollection_destination_id,\n\t\tcollection_destination_abbreviation,\n\t\tsupplier,\n\t\tsupplier_search_name,\n\t\tsales_office,\n\t\tsales_office_name,\n\t\tsales_office_group,\n\t\tsales_office_group_name,\n\t\tcustomer,\n\t\tcustomer_abbreviation,\n\t\tbilling_address_or_old_id,\n\t\tbilling_address_abbreviation,\n\t\tbilling_address_name,\n\t\tsales_person,\n\t\tsales_person_name,\n\t\tconsumer,\n\t\tcarrier,\n\t\tcarrier_search_name,\n\t\titem_number,\n\t\ttext,\n\t\tpacking_style_name,\n\t\tshipping_name_code,\n\t\tshipping_destination_name,\n\t\ttrademark_code,\n\t\ttrademark_name,\n\t\tgoods_big_classification_code,\n\t\tgoods_big_classification_name,\n\t\tproduct_group_code,\n\t\tproduct_group_name,\n\t\tgoods_group_code,\n\t\tgoods_group_name,\n\t\tsite,\n\t\tsite_name,\n\t\twarehouse,\n\t\twarehouse_name,\n\t\tcontract_unit_quantity,\n\t\tcontract_price_unit,\n\t\tsale_quantity,\n\t\tsale_unit,\n\t\tsale_amount,\n\t\tinvoice_contract_unit_quantity,\n\t\tinvoice_contract_price_unit,\n\t\tinvoice_amount,\n\t\tinvoice_mimscellaneous_expenses,\n\t\torders_remaining_amount,\n\t\taccountant_currency,\n\t\tinvoice_recording_date,\n\t\tsorting_date,\n\t\tauthor,\n\t\tcreate_at,\n\t\tshipping_scheduled_date,\n\t\tarrival_desired_date\n\tFROM\n\t\torder_received_rest_diff\n\n    SELECT\n        file_name\n    FROM\n        order_received_rest_diff\n    GROUP BY file_name\n\n\tCOMMIT TRANSACTION;\n\nEND TRY\n\nBEGIN CATCH\n\n\tROLLBACK TRANSACTION;\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
+									}
+								],
+								"scriptBlockExecutionTimeout": "02:00:00"
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "TruncateMiddleTable",
+				"description": "中間テーブルのデータを削除します。",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "ExitCsvFile",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "test_db_nsw_link_service",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "TRUNCATE TABLE order_received_rest_diff;"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			}
+		],
+		"folder": {
+			"name": "受注残"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-10-09T04:54:59Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
