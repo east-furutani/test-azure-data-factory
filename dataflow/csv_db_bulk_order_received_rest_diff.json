@@ -102,7 +102,6 @@
 				"     columnDelimiter: ',',",
 				"     escapeChar: '\\\\',",
 				"     quoteChar: '\\\"',",
-				"     nullValue: (''),",
 				"     encodingName: 'SHIFT-JIS',",
 				"     columnNamesAsHeader: true,",
 				"     wildcardPaths:['受注残/*.csv']) ~> csvFileRead",
