@@ -21,7 +21,11 @@
 						"referenceName": "AzureSqlOrderReceivedRestDiff",
 						"type": "DatasetReference"
 					},
-					"name": "csvDataInMiddleTable"
+					"name": "csvDataInMiddleTable",
+					"rejectedDataLinkedService": {
+						"referenceName": "test_blob_storage_nsw",
+						"type": "LinkedServiceReference"
+					}
 				}
 			],
 			"transformations": [
@@ -179,7 +183,9 @@
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
 				"     saveOrder: 1,",
-				"     errorHandlingOption: 'stopOnFirstError',",
+				"     errorHandlingOption: 'allErrors',",
+				"     transactionCommit: 'single',",
+				"     reportSuccessOnError: false,",
 				"     mapColumn(",
 				"          process_date = {処理年月},",
 				"          sales_order = {販売注文},",

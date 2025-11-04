@@ -207,6 +207,29 @@
 					],
 					"scriptBlockExecutionTimeout": "02:00:00"
 				}
+			},
+			{
+				"name": "Fail1",
+				"type": "Fail",
+				"dependsOn": [
+					{
+						"activity": "CsvDataInMiddleTable",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"message": {
+						"value": "@string(activity('CsvDataInMiddleTable').output.sinkErrors)",
+						"type": "Expression"
+					},
+					"errorCode": {
+						"value": "@string(500)",
+						"type": "Expression"
+					}
+				}
 			}
 		],
 		"folder": {
