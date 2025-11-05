@@ -8,7 +8,7 @@
 				"type": "ExecuteDataFlow",
 				"dependsOn": [
 					{
-						"activity": "TruncateMiddelTableIfExitMiddelTableData",
+						"activity": "ForEachGetLatestDatetime",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -25,7 +25,13 @@
 				"typeProperties": {
 					"dataflow": {
 						"referenceName": "csv_db_bulk_order_received_rest_diff",
-						"type": "DataFlowReference"
+						"type": "DataFlowReference",
+						"parameters": {
+							"latestDateTime": {
+								"value": "'@{variables('latestDatetimeFileName')}'",
+								"type": "Expression"
+							}
+						}
 					},
 					"compute": {
 						"coreCount": 8,
@@ -230,8 +236,178 @@
 						"type": "Expression"
 					}
 				}
+			},
+			{
+				"name": "GetFileNameList",
+				"description": "対象のフォルダ配下に存在するアイテム一覧を取得します。",
+				"type": "GetMetadata",
+				"dependsOn": [
+					{
+						"activity": "TruncateMiddelTableIfExitMiddelTableData",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "blob_storage_order_received_rest",
+						"type": "DatasetReference"
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "BinaryReadSettings"
+					}
+				}
+			},
+			{
+				"name": "FilterCsvFile",
+				"description": "取得したアイテムの内、CSV ファイルのみを抽出します。",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "GetFileNameList",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('GetFileNameList').output.childItems",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(startswith(item().name, 'backlog'), endswith(item().name, 'csv'))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ForEachGetLatestDatetime",
+				"description": "フィルタリングで残った CSV ファイルの数だけループします。",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FilterCsvFile",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FilterCsvFile').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "LatestDatetimeFileNameIsEmpty",
+							"description": "latestDatetimeFileName の値が empty かどうか判断します。",
+							"type": "IfCondition",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@empty(variables('latestDatetimeFileName'))",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "SetTempLatestDatetimeFileName",
+										"description": "tempLatestDatetimeFileName に latestDatetimeFileName の値を設定します。",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "tempLatestDatetimeFileName",
+											"value": {
+												"value": "@variables('latestDatetimeFileName')",
+												"type": "Expression"
+											}
+										}
+									},
+									{
+										"name": "SetLatestDatetimeFileName",
+										"description": "ForEach に渡されたファイル名の日時と tempLatestDatetimeFileName の日時を比較し、最新の日時のファイル名のみを保持します。",
+										"type": "SetVariable",
+										"dependsOn": [
+											{
+												"activity": "SetTempLatestDatetimeFileName",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "latestDatetimeFileName",
+											"value": {
+												"value": "@if(greater(substring(item().name, 22, 14), substring(variables('tempLatestDatetimeFileName'), 22, 14)), item().name, variables('tempLatestDatetimeFileName'))",
+												"type": "Expression"
+											}
+										}
+									}
+								],
+								"ifTrueActivities": [
+									{
+										"name": "SetFileName",
+										"description": "latestDatetimeFileName に ForEach に渡されたファイル名を設定します。",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "latestDatetimeFileName",
+											"value": {
+												"value": "@item().name",
+												"type": "Expression"
+											}
+										}
+									}
+								]
+							}
+						}
+					]
+				}
 			}
 		],
+		"variables": {
+			"latestDatetimeFileName": {
+				"type": "String"
+			},
+			"tempLatestDatetimeFileName": {
+				"type": "String"
+			}
+		},
 		"folder": {
 			"name": "受注残/CSV データを中間テーブルに保存"
 		},

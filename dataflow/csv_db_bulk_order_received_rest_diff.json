@@ -34,6 +34,9 @@
 				}
 			],
 			"scriptLines": [
+				"parameters{",
+				"     latestDateTime as string ('backlog_202510_202512_20251105053200.csv')",
+				"}",
 				"source(output(",
 				"          {処理年月} as string,",
 				"          {販売注文} as string,",
@@ -108,7 +111,7 @@
 				"     quoteChar: '\\\"',",
 				"     encodingName: 'SHIFT-JIS',",
 				"     columnNamesAsHeader: true,",
-				"     wildcardPaths:['受注残/*.csv']) ~> csvFileRead",
+				"     wildcardPaths:[(concat('受注残/', $latestDateTime))]) ~> csvFileRead",
 				"csvFileRead derive(fileName = split(filePath, '/')[size(split(filePath, '/'))]) ~> derivedFileNameColumn",
 				"derivedFileNameColumn sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
