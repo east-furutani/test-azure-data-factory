@@ -60,36 +60,6 @@
 					},
 					"ifTrueActivities": [
 						{
-							"name": "Execute_test_csv_file_delete",
-							"description": "test_csv_file_delete パイプラインを実行します。",
-							"type": "ExecutePipeline",
-							"dependsOn": [
-								{
-									"activity": "TruncateMiddelTableAfterCsvFileDelete",
-									"dependencyConditions": [
-										"Completed"
-									]
-								}
-							],
-							"policy": {
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"pipeline": {
-									"referenceName": "csv_file_delete_order_received_rest",
-									"type": "PipelineReference"
-								},
-								"waitOnCompletion": true,
-								"parameters": {
-									"csvFileNameList": {
-										"value": "@activity('DeleteInsertCsvDataAndGroupByFileName').output.resultSets[0].rows",
-										"type": "Expression"
-									}
-								}
-							}
-						},
-						{
 							"name": "DeleteInsertCsvDataAndGroupByFileName",
 							"description": "削除対象のファイル名をグループ化します。",
 							"type": "Script",
@@ -182,6 +152,39 @@
 									}
 								],
 								"scriptBlockExecutionTimeout": "02:00:00"
+							}
+						},
+						{
+							"name": "DeleteCsvFile",
+							"type": "Delete",
+							"dependsOn": [
+								{
+									"activity": "TruncateMiddelTableAfterCsvFileDelete",
+									"dependencyConditions": [
+										"Completed"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "blob_storage_order_received_rest",
+									"type": "DatasetReference"
+								},
+								"enableLogging": false,
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFileName": "backlog_*.csv",
+									"enablePartitionDiscovery": false
+								}
 							}
 						}
 					]
