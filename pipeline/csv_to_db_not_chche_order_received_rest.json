@@ -61,7 +61,7 @@
 					"ifTrueActivities": [
 						{
 							"name": "DeleteInsertCsvDataAndGroupByFileName",
-							"description": "削除対象のファイル名をグループ化します。",
+							"description": "CSV ファイルから読み込んだデータを DELETE INSERT します",
 							"type": "Script",
 							"dependsOn": [],
 							"policy": {
@@ -156,6 +156,7 @@
 						},
 						{
 							"name": "DeleteCsvFile",
+							"description": "対象のフォルダ配下に存在するアイテムの内、プレフィックスが \"backlog_\" の CSV ファイルのみ削除します。",
 							"type": "Delete",
 							"dependsOn": [
 								{
@@ -280,7 +281,7 @@
 			},
 			{
 				"name": "FilterCsvFile",
-				"description": "取得したアイテムの内、CSV ファイルのみを抽出します。",
+				"description": "取得したアイテムの内、プレフィックスが \"backlog_\" のCSV ファイルのみを抽出します。",
 				"type": "Filter",
 				"dependsOn": [
 					{
