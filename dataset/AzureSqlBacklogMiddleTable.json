@@ -268,7 +268,7 @@
 		],
 		"typeProperties": {
 			"schema": "dbo",
-			"table": "backlog_middle_table"
+			"table": "temp_backlog"
 		}
 	}
 }
