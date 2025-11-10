@@ -1,0 +1,274 @@
+{
+	"name": "AzureSqlBacklogMiddleTable",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "test_db_nsw_link_service",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "system_date",
+				"type": "char"
+			},
+			{
+				"name": "sales_id",
+				"type": "varchar"
+			},
+			{
+				"name": "line_num",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "voucher_type",
+				"type": "nvarchar"
+			},
+			{
+				"name": "cust_account",
+				"type": "varchar"
+			},
+			{
+				"name": "cust_short_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_ship_to_account_num",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_ship_to_short_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "cust_collections",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_cust_collection_short_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_vend_account_num",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_vend_name_alias",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_office",
+				"type": "char"
+			},
+			{
+				"name": "sales_office_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_group",
+				"type": "char"
+			},
+			{
+				"name": "sales_group_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_end_user_account_num",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_end_user_short_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "invoice_account",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_invoice_short_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_invoice_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_person",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_person_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_consumer",
+				"type": "nvarchar"
+			},
+			{
+				"name": "carrier_cd",
+				"type": "varchar"
+			},
+			{
+				"name": "carrier_name_alias",
+				"type": "nvarchar"
+			},
+			{
+				"name": "item_id",
+				"type": "nvarchar"
+			},
+			{
+				"name": "item_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "pack_style_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "shipping_name_code",
+				"type": "char"
+			},
+			{
+				"name": "shipping_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "trade_mark_code",
+				"type": "char"
+			},
+			{
+				"name": "trade_mark_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_item_class_code",
+				"type": "char"
+			},
+			{
+				"name": "sales_item_class_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "product_item_group_code",
+				"type": "varchar"
+			},
+			{
+				"name": "product_item_group_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_item_group_code",
+				"type": "char"
+			},
+			{
+				"name": "sales_item_group_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "invent_site_id",
+				"type": "varchar"
+			},
+			{
+				"name": "invent_site_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "invent_location_id",
+				"type": "varchar"
+			},
+			{
+				"name": "invent_location_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "contract_unit_qty",
+				"type": "decimal",
+				"precision": 12,
+				"scale": 2
+			},
+			{
+				"name": "contract_unit_price_uom",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_qty",
+				"type": "decimal",
+				"precision": 12,
+				"scale": 2
+			},
+			{
+				"name": "sales_unit",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_amount",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "invoice_contract_unit_qty",
+				"type": "decimal",
+				"precision": 12,
+				"scale": 2
+			},
+			{
+				"name": "invoice_contract_unit_price_uom",
+				"type": "nvarchar"
+			},
+			{
+				"name": "invoice_amount",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "invoice_additional_costs",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "backlog_amount",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "accounting_currency",
+				"type": "char"
+			},
+			{
+				"name": "invoice_date",
+				"type": "date"
+			},
+			{
+				"name": "processing_date",
+				"type": "char"
+			},
+			{
+				"name": "created_by",
+				"type": "nvarchar"
+			},
+			{
+				"name": "created_date_time",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "shipping_date_requested",
+				"type": "date"
+			},
+			{
+				"name": "receipt_date_requested",
+				"type": "date"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "backlog_middle_table"
+		}
+	}
+}
