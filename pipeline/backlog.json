@@ -212,33 +212,10 @@
 					"scripts": [
 						{
 							"type": "Query",
-							"text": "BEGIN TRY\r\n\r\n    DECLARE @RecordCount INT;\r\n\r\n\tSELECT @RecordCount = COUNT(sales_id)\r\n\tFROM temp_backlog;\r\n\r\n\t-- 中間テーブルにレコードが存在する場合\r\n\tIF @RecordCount > 0\r\n\tBEGIN\r\n\t\t-- 中間テーブルに格納されているデータを削除\r\n\t\tTRUNCATE TABLE backlog_middle_table;\r\n\tEND\r\n\r\nEND TRY\r\n\r\nBEGIN CATCH\r\n\r\n\t-- ADF に異常終了を伝えるため\r\n\tTHROW;\r\n\r\nEND CATCH"
+							"text": "BEGIN TRY\n\n    DECLARE @RecordCount INT;\n\n\tSELECT @RecordCount = COUNT(sales_id)\n\tFROM temp_backlog;\n\n\t-- 中間テーブルにレコードが存在する場合\n\tIF @RecordCount > 0\n\tBEGIN\n\t\t-- 中間テーブルに格納されているデータを削除\n\t\tTRUNCATE TABLE temp_backlog;\n\tEND\n\nEND TRY\n\nBEGIN CATCH\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
 						}
 					],
 					"scriptBlockExecutionTimeout": "02:00:00"
-				}
-			},
-			{
-				"name": "Fail1",
-				"type": "Fail",
-				"dependsOn": [
-					{
-						"activity": "CsvDataInMiddleTable",
-						"dependencyConditions": [
-							"Failed"
-						]
-					}
-				],
-				"userProperties": [],
-				"typeProperties": {
-					"message": {
-						"value": "@string(activity('CsvDataInMiddleTable').output.sinkErrors)",
-						"type": "Expression"
-					},
-					"errorCode": {
-						"value": "@string(500)",
-						"type": "Expression"
-					}
 				}
 			},
 			{

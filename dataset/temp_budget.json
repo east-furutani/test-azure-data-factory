@@ -1,0 +1,418 @@
+{
+	"name": "temp_budget",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "test_db_nsw_link_service",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "予算データ"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "sales_id",
+				"type": "varchar"
+			},
+			{
+				"name": "voucher_type",
+				"type": "varchar"
+			},
+			{
+				"name": "processing_date",
+				"type": "char"
+			},
+			{
+				"name": "sales_office",
+				"type": "char"
+			},
+			{
+				"name": "sales_office_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_group",
+				"type": "char"
+			},
+			{
+				"name": "sales_group_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_consumer",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_item_group_cd",
+				"type": "char"
+			},
+			{
+				"name": "sales_item_group_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "item_id",
+				"type": "varchar"
+			},
+			{
+				"name": "item_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_qty",
+				"type": "decimal",
+				"precision": 12,
+				"scale": 2
+			},
+			{
+				"name": "sales_amount",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "marginal_profit",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "gross_profit",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "accounting_currency",
+				"type": "char"
+			},
+			{
+				"name": "shipping_name_cd",
+				"type": "char"
+			},
+			{
+				"name": "shipping_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_unit_price",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "billing_qty_inventory_unit",
+				"type": "decimal",
+				"precision": 12,
+				"scale": 2
+			},
+			{
+				"name": "fare",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "purchase_unit_price",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "direct_selling_costs",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "billing_price",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "variable_costs",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "shipment_qty",
+				"type": "decimal",
+				"precision": 12,
+				"scale": 2
+			},
+			{
+				"name": "billing_qty",
+				"type": "decimal",
+				"precision": 12,
+				"scale": 2
+			},
+			{
+				"name": "purchase_price",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "actual_cost",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "sales_volume",
+				"type": "decimal",
+				"precision": 12,
+				"scale": 2
+			},
+			{
+				"name": "sales_price",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "transportation_cost",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "fixed_costs",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "created_date_time",
+				"type": "char"
+			},
+			{
+				"name": "billing_date",
+				"type": "char"
+			},
+			{
+				"name": "sales_document_details",
+				"type": "varchar"
+			},
+			{
+				"name": "voucher_type_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "customer_cd",
+				"type": "varchar"
+			},
+			{
+				"name": "customer_short_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_ship_to_account_num",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_ship_to_short_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_end_user_account_num",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_end_user_short_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "invoice_account",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_invoice_short_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "payer_cd",
+				"type": "varchar"
+			},
+			{
+				"name": "payer_short_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_person",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_person_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "carrier_cd",
+				"type": "varchar"
+			},
+			{
+				"name": "carrier_name_alias",
+				"type": "nvarchar"
+			},
+			{
+				"name": "oem_cd",
+				"type": "varchar"
+			},
+			{
+				"name": "oem_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_vend_account_num",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_vend_name_alias",
+				"type": "nvarchar"
+			},
+			{
+				"name": "pack_style_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "trade_mark_cd",
+				"type": "char"
+			},
+			{
+				"name": "trade_mark_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_item_class_cd",
+				"type": "char"
+			},
+			{
+				"name": "sales_item_class_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "product_item_group_cd",
+				"type": "char"
+			},
+			{
+				"name": "product_item_group_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "invent_site_id",
+				"type": "varchar"
+			},
+			{
+				"name": "invent_site_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "shipping_point",
+				"type": "char"
+			},
+			{
+				"name": "shipping_point_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "specified_delivery_date",
+				"type": "date"
+			},
+			{
+				"name": "delivery_date",
+				"type": "date"
+			},
+			{
+				"name": "estimated_ship_date",
+				"type": "date"
+			},
+			{
+				"name": "shipment_posting_date",
+				"type": "date"
+			},
+			{
+				"name": "purchase_order_document",
+				"type": "varchar"
+			},
+			{
+				"name": "billing_document",
+				"type": "varchar"
+			},
+			{
+				"name": "registrant",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_organization",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_organization_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "distribution_channels",
+				"type": "nvarchar"
+			},
+			{
+				"name": "distribution_channels_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "product_department",
+				"type": "nvarchar"
+			},
+			{
+				"name": "product_department_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "purchase_currency",
+				"type": "char"
+			},
+			{
+				"name": "sales_unit",
+				"type": "nvarchar"
+			},
+			{
+				"name": "base_unit",
+				"type": "nvarchar"
+			},
+			{
+				"name": "condition_unit",
+				"type": "nvarchar"
+			},
+			{
+				"name": "shipping_unit_of_measure",
+				"type": "nvarchar"
+			},
+			{
+				"name": "billing_unit_of_measure",
+				"type": "nvarchar"
+			},
+			{
+				"name": "inventory_unit",
+				"type": "nvarchar"
+			},
+			{
+				"name": "direct_selling_costs_excl_fare",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "registration_time",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "temp_budget"
+		}
+	}
+}
