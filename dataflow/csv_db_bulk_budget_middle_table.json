@@ -127,7 +127,7 @@
 				"     format: 'delimited',",
 				"     container: 'test-nsw',",
 				"     columnDelimiter: ',',",
-				"     escapeChar: '\\\\',",
+				"     escapeChar: '\\\"',",
 				"     quoteChar: '\\\"',",
 				"     encodingName: 'SHIFT-JIS',",
 				"     columnNamesAsHeader: true,",
