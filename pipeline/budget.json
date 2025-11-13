@@ -1,0 +1,397 @@
+{
+	"name": "budget",
+	"properties": {
+		"activities": [
+			{
+				"name": "CsvDataInMiddleTable",
+				"description": "CSV ファイルから読み込んだデータを中間テーブルに保存します。",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "ForEachGetLatestDatetime",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "csv_db_bulk_budget_middle_table",
+						"type": "DataFlowReference",
+						"parameters": {
+							"latestDateTime": "'budget_20251105053200.csv'"
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "ExitCsvFile",
+				"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "CsvDataInMiddleTable",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greater(activity('CsvDataInMiddleTable').output.runStatus.metrics.csvDataInMiddleTable.sources.csvFileRead.details.fileReadCount[0], 0)",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "DeleteInsertCsvDataAndGroupByFileName",
+							"description": "CSV ファイルから読み込んだデータを DELETE INSERT します",
+							"type": "Script",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"linkedServiceName": {
+								"referenceName": "test_db_nsw_link_service",
+								"type": "LinkedServiceReference"
+							},
+							"typeProperties": {
+								"scripts": [
+									{
+										"type": "Query",
+										"text": "BEGIN TRY\n\t\t\n\tBEGIN TRANSACTION;\n\n\t-- 対象テーブルの内、年月が前月、当月、来月、当月より 2 年前のデータのみ削除\n\tDELETE FROM budget\n\tWHERE\n\t\tprocessing_date IN\n\t\t(\n\t\t\tSELECT\n\t\t\t\tprocessing_date\n\t\t\tFROM\n\t\t\t\ttemp_budget\n\t\t\tGROUP BY\n\t\t\t    processing_date\n\t\t)\n\t\tOR\n\t\tprocessing_date <= FORMAT(DATEADD(YEAR, -2, GETDATE() AT TIME ZONE 'UTC' AT TIME ZONE 'Tokyo Standard Time'), 'yyyyMM');\n\n\t-- CSV ファイルから読み込んだデータを対象テーブルに INSERT\n\tINSERT INTO budget\n\t(\n\t\tsales_id,\n\t    voucher_type,\n\t    processing_date,\n\t    sales_office,\n\t    sales_office_name,\n\t    sales_group,\n\t    sales_group_name,\n\t    sales_consumer,\n\t    sales_item_group_cd,\n\t    sales_item_group_name,\n\t    item_id,\n\t    item_name,\n\t    sales_qty,\n\t    sales_amount,\n\t    marginal_profit,\n\t    gross_profit,\n\t    accounting_currency,\n\t    shipping_name_cd,\n\t    shipping_name,\n\t    sales_unit_price,\n\t    billing_qty_inventory_unit,\n\t    fare,\n\t    purchase_unit_price,\n\t    direct_selling_costs,\n\t    billing_price,\n\t    variable_costs,\n\t    shipment_qty,\n\t    billing_qty,\n\t    purchase_price,\n\t    actual_cost,\n\t    sales_volume,\n\t    sales_price,\n\t    transportation_cost,\n\t    fixed_costs,\n\t    created_date_time,\n\t    billing_date,\n\t    sales_document_details,\n\t    voucher_type_name,\n\t    customer_cd,\n\t    customer_short_name,\n\t    sales_ship_to_account_num,\n\t    sales_ship_to_short_name,\n\t    sales_end_user_account_num,\n\t    sales_end_user_short_name,\n\t    invoice_account,\n\t    sales_invoice_short_name,\n\t    payer_cd,\n\t    payer_short_name,\n\t    sales_person,\n\t    sales_person_name,\n\t    carrier_cd,\n\t    carrier_name_alias,\n\t    oem_cd,\n\t    oem_name,\n\t    sales_vend_account_num,\n\t    sales_vend_name_alias,\n\t    pack_style_name,\n\t    trade_mark_cd,\n\t    trade_mark_name,\n\t    sales_item_class_cd,\n\t    sales_item_class_name,\n\t    product_item_group_cd,\n\t    product_item_group_name,\n\t    invent_site_id,\n\t    invent_site_name,\n\t    shipping_point,\n\t    shipping_point_name,\n\t    specified_delivery_date,\n\t    delivery_date,\n\t    estimated_ship_date,\n\t    shipment_posting_date,\n\t    purchase_order_document,\n\t    billing_document,\n\t    registrant,\n\t    sales_organization,\n\t    sales_organization_name,\n\t    distribution_channels,\n\t    distribution_channels_name,\n\t    product_department,\n\t    product_department_name,\n\t    purchase_currency,\n\t    sales_unit,\n\t    base_unit,\n\t    condition_unit,\n\t    shipping_unit_of_measure,\n\t    billing_unit_of_measure,\n\t    inventory_unit,\n\t    direct_selling_costs_excl_fare,\n\t    registration_time\n\t)\n\tSELECT\n\t\tsales_id,\n\t    voucher_type,\n\t    processing_date,\n\t    sales_office,\n\t    sales_office_name,\n\t    sales_group,\n\t    sales_group_name,\n\t    sales_consumer,\n\t    sales_item_group_cd,\n\t    sales_item_group_name,\n\t    item_id,\n\t    item_name,\n\t    sales_qty,\n\t    sales_amount,\n\t    marginal_profit,\n\t    gross_profit,\n\t    accounting_currency,\n\t    shipping_name_cd,\n\t    shipping_name,\n\t    sales_unit_price,\n\t    billing_qty_inventory_unit,\n\t    fare,\n\t    purchase_unit_price,\n\t    direct_selling_costs,\n\t    billing_price,\n\t    variable_costs,\n\t    shipment_qty,\n\t    billing_qty,\n\t    purchase_price,\n\t    actual_cost,\n\t    sales_volume,\n\t    sales_price,\n\t    transportation_cost,\n\t    fixed_costs,\n\t    created_date_time,\n\t    billing_date,\n\t    sales_document_details,\n\t    voucher_type_name,\n\t    customer_cd,\n\t    customer_short_name,\n\t    sales_ship_to_account_num,\n\t    sales_ship_to_short_name,\n\t    sales_end_user_account_num,\n\t    sales_end_user_short_name,\n\t    invoice_account,\n\t    sales_invoice_short_name,\n\t    payer_cd,\n\t    payer_short_name,\n\t    sales_person,\n\t    sales_person_name,\n\t    carrier_cd,\n\t    carrier_name_alias,\n\t    oem_cd,\n\t    oem_name,\n\t    sales_vend_account_num,\n\t    sales_vend_name_alias,\n\t    pack_style_name,\n\t    trade_mark_cd,\n\t    trade_mark_name,\n\t    sales_item_class_cd,\n\t    sales_item_class_name,\n\t    product_item_group_cd,\n\t    product_item_group_name,\n\t    invent_site_id,\n\t    invent_site_name,\n\t    shipping_point,\n\t    shipping_point_name,\n\t    specified_delivery_date,\n\t    delivery_date,\n\t    estimated_ship_date,\n\t    shipment_posting_date,\n\t    purchase_order_document,\n\t    billing_document,\n\t    registrant,\n\t    sales_organization,\n\t    sales_organization_name,\n\t    distribution_channels,\n\t    distribution_channels_name,\n\t    product_department,\n\t    product_department_name,\n\t    purchase_currency,\n\t    sales_unit,\n\t    base_unit,\n\t    condition_unit,\n\t    shipping_unit_of_measure,\n\t    billing_unit_of_measure,\n\t    inventory_unit,\n\t    direct_selling_costs_excl_fare,\n\t    registration_time\n\tFROM\n\t\ttemp_budget\n\n\tCOMMIT TRANSACTION;\n\nEND TRY\n\nBEGIN CATCH\n\n\tROLLBACK TRANSACTION;\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
+									}
+								],
+								"scriptBlockExecutionTimeout": "02:00:00"
+							}
+						},
+						{
+							"name": "TruncateMiddelTableAfterCsvFileDelete",
+							"description": "中間テーブルのテーブルデータを全削除します。\n次のアクティビティで CSV ファイルを削除します。",
+							"type": "Script",
+							"dependsOn": [
+								{
+									"activity": "DeleteInsertCsvDataAndGroupByFileName",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"linkedServiceName": {
+								"referenceName": "test_db_nsw_link_service",
+								"type": "LinkedServiceReference"
+							},
+							"typeProperties": {
+								"scripts": [
+									{
+										"type": "Query",
+										"text": "BEGIN TRY\r\n\r\n    -- 中間テーブルに格納されているデータを削除\r\n    TRUNCATE TABLE temp_budget;\r\n\r\nEND TRY\r\n\r\nBEGIN CATCH\r\n\r\n\t-- ADF に異常終了を伝えるため\r\n\tTHROW;\r\n\r\nEND CATCH"
+									}
+								],
+								"scriptBlockExecutionTimeout": "02:00:00"
+							}
+						},
+						{
+							"name": "TruncateMiddelTableNotAfterCsvFileDelete",
+							"description": "中間テーブルのテーブルデータを全削除します。\n次のアクティビティで CSV ファイルを削除しません",
+							"type": "Script",
+							"dependsOn": [
+								{
+									"activity": "DeleteInsertCsvDataAndGroupByFileName",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"linkedServiceName": {
+								"referenceName": "test_db_nsw_link_service",
+								"type": "LinkedServiceReference"
+							},
+							"typeProperties": {
+								"scripts": [
+									{
+										"type": "Query",
+										"text": "BEGIN TRY\r\n\r\n    -- 中間テーブルに格納されているデータを削除\r\n    TRUNCATE TABLE temp_budget;\r\n\r\nEND TRY\r\n\r\nBEGIN CATCH\r\n\r\n\t-- ADF に異常終了を伝えるため\r\n\tTHROW;\r\n\r\nEND CATCH"
+									}
+								],
+								"scriptBlockExecutionTimeout": "02:00:00"
+							}
+						},
+						{
+							"name": "DeleteCsvFile",
+							"description": "対象のフォルダ配下に存在するアイテムの内、プレフィックスが \"backlog_\" の CSV ファイルのみ削除します。",
+							"type": "Delete",
+							"dependsOn": [
+								{
+									"activity": "TruncateMiddelTableAfterCsvFileDelete",
+									"dependencyConditions": [
+										"Completed"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "binary_budget",
+									"type": "DatasetReference"
+								},
+								"enableLogging": false,
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFileName": "budget_*.csv",
+									"enablePartitionDiscovery": false
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "TruncateMiddelTableIfExitMiddelTableData",
+				"description": "中間テーブルにレコードが存在する場合にのみ、中間テーブルのテーブルデータを全削除します。",
+				"type": "Script",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "test_db_nsw_link_service",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "BEGIN TRY\n\n    DECLARE @RecordCount INT;\n\n\tSELECT @RecordCount = COUNT(sales_id)\n\tFROM temp_budget;\n\n\t-- 中間テーブルにレコードが存在する場合\n\tIF @RecordCount > 0\n\tBEGIN\n\t\t-- 中間テーブルに格納されているデータを削除\n\t\tTRUNCATE TABLE temp_budget;\n\tEND\n\nEND TRY\n\nBEGIN CATCH\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			},
+			{
+				"name": "GetFileNameList",
+				"description": "対象のフォルダ配下に存在するアイテム一覧を取得します。",
+				"type": "GetMetadata",
+				"dependsOn": [
+					{
+						"activity": "TruncateMiddelTableIfExitMiddelTableData",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "binary_budget",
+						"type": "DatasetReference"
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "BinaryReadSettings"
+					}
+				}
+			},
+			{
+				"name": "FilterCsvFile",
+				"description": "取得したアイテムの内、プレフィックスが \"backlog_\" のCSV ファイルのみを抽出します。",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "GetFileNameList",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('GetFileNameList').output.childItems",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(startswith(item().name, 'budget'), endswith(item().name, 'csv'))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ForEachGetLatestDatetime",
+				"description": "フィルタリングで残った CSV ファイルの数だけループします。",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FilterCsvFile",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FilterCsvFile').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "LatestDatetimeFileNameIsEmpty",
+							"description": "latestDatetimeFileName の値が empty かどうか判断します。",
+							"type": "IfCondition",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@empty(variables('latestDatetimeFileName'))",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "SetTempLatestDatetimeFileName",
+										"description": "tempLatestDatetimeFileName に latestDatetimeFileName の値を設定します。",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "tempLatestDatetimeFileName",
+											"value": {
+												"value": "@variables('latestDatetimeFileName')",
+												"type": "Expression"
+											}
+										}
+									},
+									{
+										"name": "SetLatestDatetimeFileName",
+										"description": "ForEach に渡されたファイル名の日時と tempLatestDatetimeFileName の日時を比較し、最新の日時のファイル名のみを保持します。",
+										"type": "SetVariable",
+										"dependsOn": [
+											{
+												"activity": "SetTempLatestDatetimeFileName",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "latestDatetimeFileName",
+											"value": {
+												"value": "@if(greater(substring(item().name, 7, 14), substring(variables('tempLatestDatetimeFileName'), 7, 14)), item().name, variables('tempLatestDatetimeFileName'))",
+												"type": "Expression"
+											}
+										}
+									}
+								],
+								"ifTrueActivities": [
+									{
+										"name": "SetFileName",
+										"description": "latestDatetimeFileName に ForEach に渡されたファイル名を設定します。",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "latestDatetimeFileName",
+											"value": {
+												"value": "@item().name",
+												"type": "Expression"
+											}
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		],
+		"variables": {
+			"latestDatetimeFileName": {
+				"type": "String"
+			},
+			"tempLatestDatetimeFileName": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "予算データ"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-10-09T04:54:59Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
