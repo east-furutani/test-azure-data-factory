@@ -1,0 +1,629 @@
+{
+	"name": "temp_plstatement",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "test_db_nsw_link_service",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "実績損益"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "system_date",
+				"type": "date"
+			},
+			{
+				"name": "sales_id",
+				"type": "varchar"
+			},
+			{
+				"name": "line_num",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "corporate_code",
+				"type": "nvarchar"
+			},
+			{
+				"name": "source_id",
+				"type": "varchar"
+			},
+			{
+				"name": "voucher_type",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_office",
+				"type": "char"
+			},
+			{
+				"name": "sales_office_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_group",
+				"type": "char"
+			},
+			{
+				"name": "sales_group_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "cust_account",
+				"type": "varchar"
+			},
+			{
+				"name": "cust_short_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "phone_number",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_ship_to_account_num",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_ship_to_short_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_ship_to_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_ship_to_name2",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_ship_to_belonging",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_ship_to_name_notes",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_ship_to_prefectures",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_ship_to_municipality",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_ship_to_address",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_ship_to_building_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_ship_to_address_notes",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_ship_to_remarks1",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_ship_to_remarks2",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_ship_to_remarks3",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_ship_to_phone_num",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_end_user_account_num",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_end_user_short_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "invoice_account",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_invoice_short_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_invoice_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_invoice_name2",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_invoice_belonging",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_invoice_name_notes",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_invoice_post_code",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_invoice_prefectures",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_invoice_municipality",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_invoice_address",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_invoice_building_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_invoice_address_notes",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_invoice_remarks1",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_invoice_remarks2",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_invoice_remarks3",
+				"type": "nvarchar"
+			},
+			{
+				"name": "cust_collections",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_cust_collection_short_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_person",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_person_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "carrier_cd",
+				"type": "varchar"
+			},
+			{
+				"name": "carrier_name_alias",
+				"type": "nvarchar"
+			},
+			{
+				"name": "oem_cd",
+				"type": "varchar"
+			},
+			{
+				"name": "oem_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "oem_name2",
+				"type": "nvarchar"
+			},
+			{
+				"name": "oem_prefectures",
+				"type": "nvarchar"
+			},
+			{
+				"name": "oem_municipality",
+				"type": "nvarchar"
+			},
+			{
+				"name": "oem_address",
+				"type": "nvarchar"
+			},
+			{
+				"name": "oem_building_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "oem_address_notes",
+				"type": "nvarchar"
+			},
+			{
+				"name": "oem_remarks1",
+				"type": "nvarchar"
+			},
+			{
+				"name": "oem_remarks2",
+				"type": "nvarchar"
+			},
+			{
+				"name": "oem_remarks3",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_vend_account_num",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_vend_name_alias",
+				"type": "nvarchar"
+			},
+			{
+				"name": "customer_requirements",
+				"type": "nvarchar"
+			},
+			{
+				"name": "billing_block",
+				"type": "nvarchar"
+			},
+			{
+				"name": "item_id",
+				"type": "varchar"
+			},
+			{
+				"name": "item_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "pack_style_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "shipping_name_code",
+				"type": "char"
+			},
+			{
+				"name": "shipping_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "trade_mark_code",
+				"type": "char"
+			},
+			{
+				"name": "trade_mark_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_item_class_code",
+				"type": "char"
+			},
+			{
+				"name": "sales_item_class_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "product_item_group_code",
+				"type": "varchar"
+			},
+			{
+				"name": "product_item_group_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_item_group_code",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_item_group_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "shipping_type",
+				"type": "nvarchar"
+			},
+			{
+				"name": "truck_scale_type",
+				"type": "nvarchar"
+			},
+			{
+				"name": "product_type",
+				"type": "nvarchar"
+			},
+			{
+				"name": "correction_category",
+				"type": "nvarchar"
+			},
+			{
+				"name": "invent_site_id",
+				"type": "varchar"
+			},
+			{
+				"name": "invent_site_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "invent_location_id",
+				"type": "varchar"
+			},
+			{
+				"name": "invent_location_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "receipt_date_requested",
+				"type": "date"
+			},
+			{
+				"name": "shipping_date_requested",
+				"type": "date"
+			},
+			{
+				"name": "shipping_date",
+				"type": "date"
+			},
+			{
+				"name": "sales_status",
+				"type": "nvarchar"
+			},
+			{
+				"name": "delivery_method",
+				"type": "varchar"
+			},
+			{
+				"name": "delivery_method_description",
+				"type": "nvarchar"
+			},
+			{
+				"name": "detailed_status",
+				"type": "nvarchar"
+			},
+			{
+				"name": "customer_delete_flag",
+				"type": "nvarchar"
+			},
+			{
+				"name": "customer_delete_reason",
+				"type": "nvarchar"
+			},
+			{
+				"name": "purchase_order_number",
+				"type": "varchar"
+			},
+			{
+				"name": "purchase_order_status",
+				"type": "nvarchar"
+			},
+			{
+				"name": "picking_route",
+				"type": "varchar"
+			},
+			{
+				"name": "inventory_order",
+				"type": "varchar"
+			},
+			{
+				"name": "picking_status",
+				"type": "nvarchar"
+			},
+			{
+				"name": "line_status",
+				"type": "nvarchar"
+			},
+			{
+				"name": "truck_scale_completion_flag",
+				"type": "nvarchar"
+			},
+			{
+				"name": "invoice",
+				"type": "varchar"
+			},
+			{
+				"name": "invoice_line_num",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "invoice_date",
+				"type": "date"
+			},
+			{
+				"name": "delivery_note_category",
+				"type": "varchar"
+			},
+			{
+				"name": "delivery_note_category_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "closing_date",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "created_date_time",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "created_by",
+				"type": "nvarchar"
+			},
+			{
+				"name": "shipping_terms",
+				"type": "nvarchar"
+			},
+			{
+				"name": "shipping_terms_description",
+				"type": "nvarchar"
+			},
+			{
+				"name": "payment_terms",
+				"type": "nvarchar"
+			},
+			{
+				"name": "payment_terms_description",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sales_consumer",
+				"type": "nvarchar"
+			},
+			{
+				"name": "updated_date_time",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "updated_by",
+				"type": "nvarchar"
+			},
+			{
+				"name": "profit_and_loss_department",
+				"type": "nvarchar"
+			},
+			{
+				"name": "qty_per_pack",
+				"type": "decimal",
+				"precision": 12,
+				"scale": 2
+			},
+			{
+				"name": "sales_qty",
+				"type": "decimal",
+				"precision": 12,
+				"scale": 2
+			},
+			{
+				"name": "sales_unit",
+				"type": "nvarchar"
+			},
+			{
+				"name": "contract_unit_qty",
+				"type": "decimal",
+				"precision": 12,
+				"scale": 2
+			},
+			{
+				"name": "contract_unit_price_uom",
+				"type": "nvarchar"
+			},
+			{
+				"name": "contract_unit_price",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "net_amount",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "shipping_qty",
+				"type": "decimal",
+				"precision": 12,
+				"scale": 2
+			},
+			{
+				"name": "invoice_qty",
+				"type": "decimal",
+				"precision": 12,
+				"scale": 2
+			},
+			{
+				"name": "invoice_unit_qty",
+				"type": "decimal",
+				"precision": 12,
+				"scale": 2
+			},
+			{
+				"name": "invoice_contract_unit_price",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "invoice_net_amount",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "consumption_tax",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "tax_rate",
+				"type": "decimal",
+				"precision": 5,
+				"scale": 2
+			},
+			{
+				"name": "factory_variable_costs",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "factory_fixed_costs",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "direct_delivery_variable_costs",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "one_price_variable_costs",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "one_price_fixed_costs",
+				"type": "decimal",
+				"precision": 15,
+				"scale": 2
+			},
+			{
+				"name": "accounting_currency",
+				"type": "char"
+			},
+			{
+				"name": "countryregionid",
+				"type": "char"
+			},
+			{
+				"name": "country",
+				"type": "nvarchar"
+			},
+			{
+				"name": "billinig_date",
+				"type": "char"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "temp_plstatement"
+		}
+	}
+}
