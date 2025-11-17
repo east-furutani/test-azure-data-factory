@@ -153,7 +153,7 @@
 						},
 						{
 							"name": "DeleteCsvFile",
-							"description": "対象のフォルダ配下に存在するアイテムの内、プレフィックスが \"backlog_\" の CSV ファイルのみ削除します。",
+							"description": "対象のフォルダ配下に存在するアイテムの内、プレフィックスが \"budget_\" の CSV ファイルのみ削除します。",
 							"type": "Delete",
 							"dependsOn": [
 								{
@@ -255,7 +255,7 @@
 			},
 			{
 				"name": "FilterCsvFile",
-				"description": "取得したアイテムの内、プレフィックスが \"backlog_\" のCSV ファイルのみを抽出します。",
+				"description": "取得したアイテムの内、プレフィックスが \"budget_\" のCSV ファイルのみを抽出します。",
 				"type": "Filter",
 				"dependsOn": [
 					{
