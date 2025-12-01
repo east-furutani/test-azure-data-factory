@@ -17,197 +17,143 @@
 	},
 	"resources": [
 		{
-			"name": "[concat(parameters('factoryName'), '/test_csv_to_db_stored_procedure_bulk')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
+			"name": "[concat(parameters('factoryName'), '/test_csv_to_db')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"activities": [
-					{
-						"name": "DeleteInsertCsvData",
-						"description": "対象テーブルから条件に合致するレコードを削除した後、CSV ファイルから読み込んだデータを対象テーブルに INSERT します。\nまた、削除対象の CSV ファイル名一覧を 出力します。",
-						"type": "SqlServerStoredProcedure",
-						"dependsOn": [
-							{
-								"activity": "CsvDataInCache",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"storedProcedureName": "[[dbo].[test_csv_to_db_output_filename]",
-							"storedProcedureParameters": {
-								"csvDataJson": {
-									"value": {
-										"value": "@string(activity('CsvDataInCache').output.runStatus.output.csvDataInCache.value)",
-										"type": "Expression"
-									},
-									"type": "String"
-								}
-							}
-						},
-						"linkedServiceName": {
-							"referenceName": "test_db_nsw_link_service",
-							"type": "LinkedServiceReference"
-						}
-					},
-					{
-						"name": "ForEachCsvFileDelete",
-						"description": "GetCsvFileNameList で読み込んだファイル数分ループします。",
-						"type": "ForEach",
-						"dependsOn": [
-							{
-								"activity": "GroupByFileName",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('GroupByFileName').output.resultSets[0].rows",
-								"type": "Expression"
-							},
-							"activities": [
-								{
-									"name": "DeleteCsvFile",
-									"description": "CSVファイルを削除します。",
-									"type": "Delete",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"dataset": {
-											"referenceName": "test_blob_storage_nsw",
-											"type": "DatasetReference",
-											"parameters": {}
-										},
-										"enableLogging": false,
-										"storeSettings": {
-											"type": "AzureBlobStorageReadSettings",
-											"recursive": true,
-											"wildcardFileName": {
-												"value": "@item().fileName",
-												"type": "Expression"
-											},
-											"enablePartitionDiscovery": false
-										}
-									}
-								}
-							]
-						}
-					},
-					{
-						"name": "CsvDataInCache",
-						"description": "CSV ファイルから読み込んだデータを cache に保存します。",
-						"type": "ExecuteDataFlow",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataflow": {
-								"referenceName": "csv_cache_bulk",
-								"type": "DataFlowReference",
-								"parameters": {},
-								"datasetParameters": {
-									"csvFileRead": {},
-									"csvDataInCache": {}
-								}
-							},
-							"staging": {},
-							"compute": {
-								"coreCount": 8,
-								"computeType": "General"
-							},
-							"traceLevel": "None",
-							"cacheSinks": {}
-						}
-					},
-					{
-						"name": "GroupByFileName",
-						"description": "削除対象のファイル名をグループ化します。",
-						"type": "Script",
-						"dependsOn": [
-							{
-								"activity": "DeleteInsertCsvData",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"linkedServiceName": {
-							"referenceName": "test_db_nsw_link_service",
-							"type": "LinkedServiceReference"
-						},
-						"typeProperties": {
-							"scripts": [
-								{
-									"parameters": [
-										{
-											"name": "csvDataJson",
-											"type": "String",
-											"value": {
-												"value": "@string(activity('CsvDataInCache').output.runStatus.output.csvDataInCache.value)",
-												"type": "Expression"
-											},
-											"direction": "Input"
-										}
-									],
-									"type": "Query",
-									"text": "SELECT\r\n    fileName\r\nFROM\r\n    OPENJSON(@csvDataJson)\r\n    WITH (\r\n        fileName NVARCHAR(MAX)\r\n    )\r\nGROUP BY fileName"
-								}
-							],
-							"scriptBlockExecutionTimeout": "02:00:00"
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
 				"folder": {
 					"name": "検証用"
 				},
-				"annotations": [],
-				"lastPublishTime": "2025-10-09T04:54:59Z"
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"linkedService": {
+								"referenceName": "test_blob_storage_nsw",
+								"type": "LinkedServiceReference"
+							},
+							"name": "csvFileRead"
+						},
+						{
+							"dataset": {
+								"referenceName": "test_db_nsw_dataset",
+								"type": "DatasetReference"
+							},
+							"name": "dbTableRead"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "test_db_nsw_dataset",
+								"type": "DatasetReference"
+							},
+							"name": "DeleteInsert"
+						}
+					],
+					"transformations": [
+						{
+							"name": "deleteInsertConditions"
+						},
+						{
+							"name": "derivedCsvYearMonthColumn"
+						},
+						{
+							"name": "derivedDbYearMonthColumn"
+						},
+						{
+							"name": "unionCsvDb"
+						},
+						{
+							"name": "deleteRecordFilter"
+						},
+						{
+							"name": "aggregateCsvYearMonth"
+						},
+						{
+							"name": "joinYearMonth"
+						},
+						{
+							"name": "derivedNewUpdateAtColumn"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          name as string,",
+						"          age as integer",
+						"     ),",
+						"     useSchema: false,",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     purgeFiles: true,",
+						"     rowUrlColumn: 'fileName',",
+						"     format: 'delimited',",
+						"     container: 'test-nsw',",
+						"     columnDelimiter: ',',",
+						"     escapeChar: '\\\\',",
+						"     quoteChar: '\\\"',",
+						"     columnNamesAsHeader: true,",
+						"     wildcardPaths:['test_nsw_1/test*.csv']) ~> csvFileRead",
+						"source(output(",
+						"          id as integer,",
+						"          name as string,",
+						"          age as integer,",
+						"          update_at as date",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> dbTableRead",
+						"derivedNewUpdateAtColumn alterRow(deleteIf(!isNull(id)),",
+						"     insertIf(isNull(id))) ~> deleteInsertConditions",
+						"csvFileRead derive(csvYearMonth = left(right(fileName, 12), 6),",
+						"          csvUpdate_at = toDate(left(right(fileName, 12), 4) + '-' + left(right(fileName, 8), 2) + '-' + left(right(fileName, 6), 2), 'yyyy-MM-dd')) ~> derivedCsvYearMonthColumn",
+						"dbTableRead derive(dbYearMonth = toString(update_at, 'yyyyMM')) ~> derivedDbYearMonthColumn",
+						"derivedCsvYearMonthColumn, derivedDbYearMonthColumn union(byName: true)~> unionCsvDb",
+						"joinYearMonth filter(iif(isNull(id), isNull(id), yearMonth == dbYearMonth)) ~> deleteRecordFilter",
+						"unionCsvDb aggregate(yearMonth = first(csvYearMonth, true())) ~> aggregateCsvYearMonth",
+						"unionCsvDb, aggregateCsvYearMonth join(!isNull(yearMonth) || iif(isNull(id), !isNull(csvYearMonth), !isNull(dbYearMonth)),",
+						"     joinType:'cross',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> joinYearMonth",
+						"deleteRecordFilter derive(newUpdateAt = iif(isNull(id), csvUpdate_at, update_at)) ~> derivedNewUpdateAtColumn",
+						"deleteInsertConditions sink(allowSchemaDrift: true,",
+						"     validateSchema: true,",
+						"     input(",
+						"          id as integer,",
+						"          name as string,",
+						"          age as integer,",
+						"          update_at as date",
+						"     ),",
+						"     deletable:true,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     keys:['update_at'],",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     saveOrder: 1,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          name,",
+						"          age,",
+						"          update_at = newUpdateAt",
+						"     )) ~> DeleteInsert"
+					]
+				}
 			},
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/csv_db_bulk_backlog_middle_table')]",
+			"name": "[concat(parameters('factoryName'), '/test_not_identity_csv_to_db')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"folder": {
-					"name": "受注残"
+					"name": "検証用"
 				},
 				"type": "MappingDataFlow",
 				"typeProperties": {
@@ -218,579 +164,125 @@
 								"type": "LinkedServiceReference"
 							},
 							"name": "csvFileRead"
+						},
+						{
+							"dataset": {
+								"referenceName": "test_not_identity_db_nsw_dataset",
+								"type": "DatasetReference"
+							},
+							"name": "dbTableRead"
 						}
 					],
 					"sinks": [
 						{
 							"dataset": {
-								"referenceName": "AzureSqlBacklogMiddleTable",
+								"referenceName": "test_not_identity_db_nsw_dataset",
 								"type": "DatasetReference"
 							},
-							"name": "csvDataInMiddleTable",
-							"rejectedDataLinkedService": {
-								"referenceName": "test_blob_storage_nsw",
-								"type": "LinkedServiceReference"
-							}
+							"name": "DeleteInsert"
 						}
 					],
-					"transformations": [],
+					"transformations": [
+						{
+							"name": "deleteInsertConditions"
+						},
+						{
+							"name": "derivedCsvYearMonthColumn"
+						},
+						{
+							"name": "derivedDbYearMonthColumn"
+						},
+						{
+							"name": "unionCsvDb"
+						},
+						{
+							"name": "deleteRecordFilter"
+						},
+						{
+							"name": "aggregateCsvYearMonth"
+						},
+						{
+							"name": "joinYearMonth"
+						},
+						{
+							"name": "derivedNewUpdateAtColumn"
+						}
+					],
 					"scriptLines": [
-						"parameters{",
-						"     latestDateTime as string ('backlog_202510_202512_20251105053200.csv')",
-						"}",
 						"source(output(",
-						"          {処理年月} as string,",
-						"          {販売注文} as string,",
-						"          {明細行番号} as integer,",
-						"          {伝票タイプ} as string,",
-						"          {顧客} as string,",
-						"          {略称} as string,",
-						"          {出荷先コード} as string,",
-						"          {出荷先-略称} as string,",
-						"          {回収先ID} as string,",
-						"          {回収先-略称} as string,",
-						"          {仕入先} as string,",
-						"          {仕入先-検索名} as string,",
-						"          {営業所} as short,",
-						"          {営業所名} as string,",
-						"          {営業所グループ} as short,",
-						"          {営業所グループ名} as string,",
-						"          {カスタマー} as string,",
-						"          {カスタマー略称} as string,",
-						"          {請求先/元 ID} as string,",
-						"          {請求先-略称} as string,",
-						"          {請求先-名前} as string,",
-						"          {営業員} as string,",
-						"          {営業員名} as string,",
-						"          {需要家} as string,",
-						"          {運送業者} as string,",
-						"          {運送業者-検索名} as string,",
-						"          {品目番号} as string,",
-						"          {テキスト} as string,",
-						"          {荷姿名} as string,",
-						"          {出荷名コード} as string,",
-						"          {出荷名名称} as string,",
-						"          {商標コード} as short,",
-						"          {商標名} as string,",
-						"          {商品大分類コード} as short,",
-						"          {商品大分類名} as string,",
-						"          {製品群コード} as string,",
-						"          {製品群名} as string,",
-						"          {商品群コード} as string,",
-						"          {商品群名} as string,",
-						"          {サイト} as short,",
-						"          {サイト名} as string,",
-						"          {倉庫} as string,",
-						"          {倉庫名} as string,",
-						"          {契約単位数量} as short,",
-						"          {契約単価単位} as string,",
-						"          {販売-数量} as short,",
-						"          {販売-単位} as string,",
-						"          {販売-金額} as integer,",
-						"          {請求書-契約単位数量} as integer,",
-						"          {請求書-契約単価単位} as string,",
-						"          {請求書-金額} as integer,",
-						"          {請求書-台貫金額(諸費用)} as integer,",
-						"          {受注残金額} as integer,",
-						"          {会計通貨} as string,",
-						"          {請求書-計上日} as date 'yyyy/MM/dd',",
-						"          {整理年月} as string,",
-						"          {作成者} as string,",
-						"          {作成日時} as timestamp 'yyyy/MM/dd HH:mm:ss',",
-						"          {出荷予定日} as date 'yyyy/MM/dd',",
-						"          {入荷希望日} as date 'yyyy/MM/dd'",
+						"          newId as short,",
+						"          name as string,",
+						"          age as short",
 						"     ),",
 						"     useSchema: false,",
-						"     allowSchemaDrift: false,",
+						"     allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     ignoreNoFilesFound: true,",
+						"     ignoreNoFilesFound: false,",
+						"     purgeFiles: true,",
+						"     rowUrlColumn: 'fileName',",
 						"     format: 'delimited',",
 						"     container: 'test-nsw',",
 						"     columnDelimiter: ',',",
-						"     escapeChar: '\\\"',",
+						"     escapeChar: '\\\\',",
 						"     quoteChar: '\\\"',",
-						"     encodingName: 'SHIFT-JIS',",
 						"     columnNamesAsHeader: true,",
-						"     wildcardPaths:[(concat('受注残/', $latestDateTime))]) ~> csvFileRead",
-						"csvFileRead sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     input(",
-						"          system_date as string,",
-						"          sales_id as string,",
-						"          line_num as integer,",
-						"          voucher_type as string,",
-						"          cust_account as string,",
-						"          cust_short_name as string,",
-						"          sales_ship_to_account_num as string,",
-						"          sales_ship_to_short_name as string,",
-						"          cust_collections as string,",
-						"          sales_cust_collection_short_name as string,",
-						"          sales_vend_account_num as string,",
-						"          sales_vend_name_alias as string,",
-						"          sales_office as string,",
-						"          sales_office_name as string,",
-						"          sales_group as string,",
-						"          sales_group_name as string,",
-						"          sales_end_user_account_num as string,",
-						"          sales_end_user_short_name as string,",
-						"          invoice_account as string,",
-						"          sales_invoice_short_name as string,",
-						"          sales_invoice_name as string,",
-						"          sales_person as string,",
-						"          sales_person_name as string,",
-						"          sales_consumer as string,",
-						"          carrier_cd as string,",
-						"          carrier_name_alias as string,",
-						"          item_id as string,",
-						"          item_name as string,",
-						"          pack_style_name as string,",
-						"          shipping_name_code as string,",
-						"          shipping_name as string,",
-						"          trade_mark_code as string,",
-						"          trade_mark_name as string,",
-						"          sales_item_class_code as string,",
-						"          sales_item_class_name as string,",
-						"          product_item_group_code as string,",
-						"          product_item_group_name as string,",
-						"          sales_item_group_code as string,",
-						"          sales_item_group_name as string,",
-						"          invent_site_id as string,",
-						"          invent_site_name as string,",
-						"          invent_location_id as string,",
-						"          invent_location_name as string,",
-						"          contract_unit_qty as decimal(12,2),",
-						"          contract_unit_price_uom as string,",
-						"          sales_qty as decimal(12,2),",
-						"          sales_unit as string,",
-						"          sales_amount as decimal(15,2),",
-						"          invoice_contract_unit_qty as decimal(12,2),",
-						"          invoice_contract_unit_price_uom as string,",
-						"          invoice_amount as decimal(15,2),",
-						"          invoice_additional_costs as decimal(15,2),",
-						"          backlog_amount as decimal(15,2),",
-						"          accounting_currency as string,",
-						"          invoice_date as date,",
-						"          processing_date as string,",
-						"          created_by as string,",
-						"          created_date_time as timestamp,",
-						"          shipping_date_requested as date,",
-						"          receipt_date_requested as date",
-						"     ),",
-						"     deletable:false,",
-						"     insertable:true,",
-						"     updateable:false,",
-						"     upsertable:false,",
-						"     format: 'table',",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     saveOrder: 1,",
-						"     errorHandlingOption: 'stopOnFirstError',",
-						"     outputRejectedData: true,",
-						"     rejectedData_container: 'test-nsw',",
-						"     rejectedData_folderPath: 'エラー出力',",
-						"     mapColumn(",
-						"          system_date = {処理年月},",
-						"          sales_id = {販売注文},",
-						"          line_num = {明細行番号},",
-						"          voucher_type = {伝票タイプ},",
-						"          cust_account = {顧客},",
-						"          cust_short_name = {略称},",
-						"          sales_ship_to_account_num = {出荷先コード},",
-						"          sales_ship_to_short_name = {出荷先-略称},",
-						"          cust_collections = {回収先ID},",
-						"          sales_cust_collection_short_name = {回収先-略称},",
-						"          sales_vend_account_num = {仕入先},",
-						"          sales_vend_name_alias = {仕入先-検索名},",
-						"          sales_office = {営業所},",
-						"          sales_office_name = {営業所名},",
-						"          sales_group = {営業所グループ},",
-						"          sales_group_name = {営業所グループ名},",
-						"          sales_end_user_account_num = {カスタマー},",
-						"          sales_end_user_short_name = {カスタマー略称},",
-						"          invoice_account = {請求先/元 ID},",
-						"          sales_invoice_short_name = {請求先-略称},",
-						"          sales_invoice_name = {請求先-名前},",
-						"          sales_person = {営業員},",
-						"          sales_person_name = {営業員名},",
-						"          sales_consumer = {需要家},",
-						"          carrier_cd = {運送業者},",
-						"          carrier_name_alias = {運送業者-検索名},",
-						"          item_id = {品目番号},",
-						"          item_name = {テキスト},",
-						"          pack_style_name = {荷姿名},",
-						"          shipping_name_code = {出荷名コード},",
-						"          shipping_name = {出荷名名称},",
-						"          trade_mark_code = {商標コード},",
-						"          trade_mark_name = {商標名},",
-						"          sales_item_class_code = {商品大分類コード},",
-						"          sales_item_class_name = {商品大分類名},",
-						"          product_item_group_code = {製品群コード},",
-						"          product_item_group_name = {製品群名},",
-						"          sales_item_group_code = {商品群コード},",
-						"          sales_item_group_name = {商品群名},",
-						"          invent_site_id = {サイト},",
-						"          invent_site_name = {サイト名},",
-						"          invent_location_id = {倉庫},",
-						"          invent_location_name = {倉庫名},",
-						"          contract_unit_qty = {契約単位数量},",
-						"          contract_unit_price_uom = {契約単価単位},",
-						"          sales_qty = {販売-数量},",
-						"          sales_unit = {販売-単位},",
-						"          sales_amount = {販売-金額},",
-						"          invoice_contract_unit_qty = {請求書-契約単位数量},",
-						"          invoice_contract_unit_price_uom = {請求書-契約単価単位},",
-						"          invoice_amount = {請求書-金額},",
-						"          invoice_additional_costs = {請求書-台貫金額(諸費用)},",
-						"          backlog_amount = {受注残金額},",
-						"          accounting_currency = {会計通貨},",
-						"          invoice_date = {請求書-計上日},",
-						"          processing_date = {整理年月},",
-						"          created_by = {作成者},",
-						"          created_date_time = {作成日時},",
-						"          shipping_date_requested = {出荷予定日},",
-						"          receipt_date_requested = {入荷希望日}",
-						"     )) ~> csvDataInMiddleTable"
-					]
-				}
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/csv_db_bulk_budget_middle_table')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"folder": {
-					"name": "予算データ"
-				},
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"linkedService": {
-								"referenceName": "test_blob_storage_nsw",
-								"type": "LinkedServiceReference"
-							},
-							"name": "csvFileRead"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "temp_budget",
-								"type": "DatasetReference"
-							},
-							"name": "csvDataInMiddleTable"
-						}
-					],
-					"transformations": [],
-					"scriptLines": [
-						"parameters{",
-						"     latestDateTime as string ('budget_20251105053200.csv')",
-						"}",
+						"     wildcardPaths:['test_nsw_1/test*.csv']) ~> csvFileRead",
 						"source(output(",
-						"          {販売伝票} as string,",
-						"          {販売伝票タイプ} as string,",
-						"          {整理年月} as string,",
-						"          {営業所} as string,",
-						"          {営業所名称} as string,",
-						"          {営業グループ} as string,",
-						"          {営業グループ名称} as string,",
-						"          {需要家} as string,",
-						"          {商品群コード} as string,",
-						"          {商品群名} as string,",
-						"          {品目コード} as string,",
-						"          {品目テキスト} as string,",
-						"          {売上（基本）数量} as decimal(10,0),",
-						"          {売上（請求金額）} as decimal(10,0),",
-						"          {限界利益} as decimal(10,0),",
-						"          {売上総利益} as decimal(10,0),",
-						"          {伝票通貨} as string,",
-						"          {出荷名コード} as string,",
-						"          {出荷名} as string,",
-						"          {販売単価} as decimal(10,0),",
-						"          {請求数量（在庫単位）} as decimal(10,0),",
-						"          {運賃} as decimal(10,0),",
-						"          {購入単価} as decimal(10,0),",
-						"          {販売直接費} as decimal(10,0),",
-						"          {請求単価} as decimal(10,0),",
-						"          {変動製造費} as decimal(10,0),",
-						"          {出荷数量} as decimal(10,0),",
-						"          {請求数量} as decimal(10,0),",
-						"          {購入金額} as decimal(10,0),",
-						"          {実績原価} as decimal(10,0),",
-						"          {販売数量} as decimal(10,0),",
-						"          {販売価格} as decimal(10,0),",
-						"          {輸送費} as decimal(10,0),",
-						"          {固定製造費} as decimal(10,0),",
-						"          {登録日-DISPLAY_KEY} as string,",
-						"          {請求日-DISPLAY_KEY} as string,",
-						"          {販売伝票明細-DISPLAY_KEY} as string,",
-						"          {販売伝票タイプ名称-DISPLAY_KEY} as string,",
-						"          {受注先コード-DISPLAY_KEY} as string,",
-						"          {受注先略称-DISPLAY_KEY} as string,",
-						"          {出荷先コード-DISPLAY_KEY} as string,",
-						"          {出荷先略称-DISPLAY_KEY} as string,",
-						"          {カスタマコード-DISPLAY_KEY} as string,",
-						"          {カスタマ略称-DISPLAY_KEY} as string,",
-						"          {請求先コード-DISPLAY_KEY} as string,",
-						"          {請求先略称-DISPLAY_KEY} as string,",
-						"          {支払人コード-DISPLAY_KEY} as string,",
-						"          {支払人略称-DISPLAY_KEY} as string,",
-						"          {営業員コード-DISPLAY_KEY} as string,",
-						"          {営業員名称-DISPLAY_KEY} as string,",
-						"          {運送業者コード-DISPLAY_KEY} as string,",
-						"          {運送業者略称-DISPLAY_KEY} as string,",
-						"          {OEMコード-DISPLAY_KEY} as string,",
-						"          {OEM名称1-DISPLAY_KEY} as string,",
-						"          {仕入先コード-DISPLAY_KEY} as string,",
-						"          {仕入先略称-DISPLAY_KEY} as string,",
-						"          {荷姿名-DISPLAY_KEY} as string,",
-						"          {商標コード-DISPLAY_KEY} as string,",
-						"          {商標名-DISPLAY_KEY} as string,",
-						"          {商品大分類コード-DISPLAY_KEY} as string,",
-						"          {商品大分類名-DISPLAY_KEY} as string,",
-						"          {製品群コード-DISPLAY_KEY} as string,",
-						"          {製品群名-DISPLAY_KEY} as string,",
-						"          {プラント-DISPLAY_KEY} as string,",
-						"          {プラント名称-DISPLAY_KEY} as string,",
-						"          {出荷ポイント-DISPLAY_KEY} as string,",
-						"          {出荷ポイント名称-DISPLAY_KEY} as string,",
-						"          {指定納期-DISPLAY_KEY} as date 'yyyy/MM/dd',",
-						"          {納入日付-DISPLAY_KEY} as date 'yyyy/MM/dd',",
-						"          {出荷予定日-DISPLAY_KEY} as date 'yyyy/MM/dd',",
-						"          {出荷転記日-DISPLAY_KEY} as date 'yyyy/MM/dd',",
-						"          {購買発注伝票-DISPLAY_KEY} as string,",
-						"          {請求伝票-DISPLAY_KEY} as string,",
-						"          {登録者-DISPLAY_KEY} as string,",
-						"          {販売組織-DISPLAY_KEY} as string,",
-						"          {販売組織名称-DISPLAY_KEY} as string,",
-						"          {流通チャネル-DISPLAY_KEY} as string,",
-						"          {流通チャネル名称-DISPLAY_KEY} as string,",
-						"          {製品部門-DISPLAY_KEY} as string,",
-						"          {製品部門名称-DISPLAY_KEY} as string,",
-						"          {購入通貨-DISPLAY_KEY} as string,",
-						"          {販売単位-DISPLAY_KEY} as string,",
-						"          {基本単位-DISPLAY_KEY} as string,",
-						"          {条件単位-DISPLAY_KEY} as string,",
-						"          {出荷数量単位-DISPLAY_KEY} as string,",
-						"          {請求数量単位-DISPLAY_KEY} as string,",
-						"          {在庫単位-DISPLAY_KEY} as string,",
-						"          {販売直接費（運賃以外）-DISPLAY_KEY} as decimal(10,0),",
-						"          {登録時刻-DISPLAY_KEY} as timestamp 'yyyy/MM/dd HH:mm:ss'",
+						"          id as integer,",
+						"          name as string,",
+						"          age as integer,",
+						"          update_at as date",
 						"     ),",
-						"     useSchema: false,",
-						"     allowSchemaDrift: false,",
+						"     allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     ignoreNoFilesFound: true,",
-						"     format: 'delimited',",
-						"     container: 'test-nsw',",
-						"     columnDelimiter: ',',",
-						"     escapeChar: '\\\"',",
-						"     quoteChar: '\\\"',",
-						"     encodingName: 'SHIFT-JIS',",
-						"     columnNamesAsHeader: true,",
-						"     wildcardPaths:[(concat('予算データ/', $latestDateTime))]) ~> csvFileRead",
-						"csvFileRead sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> dbTableRead",
+						"derivedNewUpdateAtColumn alterRow(deleteIf(!isNull(id)),",
+						"     insertIf(isNull(id))) ~> deleteInsertConditions",
+						"csvFileRead derive(csvYearMonth = left(right(fileName, 12), 6),",
+						"          csvUpdate_at = toDate(left(right(fileName, 12), 4) + '-' + left(right(fileName, 8), 2) + '-' + left(right(fileName, 6), 2), 'yyyy-MM-dd')) ~> derivedCsvYearMonthColumn",
+						"dbTableRead derive(dbYearMonth = toString(update_at, 'yyyyMM')) ~> derivedDbYearMonthColumn",
+						"derivedCsvYearMonthColumn, derivedDbYearMonthColumn union(byName: true)~> unionCsvDb",
+						"joinYearMonth filter(iif(isNull(id), isNull(id), yearMonth == dbYearMonth)) ~> deleteRecordFilter",
+						"unionCsvDb aggregate(yearMonth = first(csvYearMonth, true())) ~> aggregateCsvYearMonth",
+						"unionCsvDb, aggregateCsvYearMonth join(!isNull(yearMonth) || iif(isNull(id), !isNull(csvYearMonth), !isNull(dbYearMonth)),",
+						"     joinType:'cross',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> joinYearMonth",
+						"deleteRecordFilter derive(newUpdateAt = iif(isNull(id), csvUpdate_at, update_at),",
+						"          insertId = iif(isNull(id), newId, toShort(id))) ~> derivedNewUpdateAtColumn",
+						"deleteInsertConditions sink(allowSchemaDrift: true,",
+						"     validateSchema: true,",
 						"     input(",
-						"          sales_id as string,",
-						"          voucher_type as string,",
-						"          processing_date as string,",
-						"          sales_office as string,",
-						"          sales_office_name as string,",
-						"          sales_group as string,",
-						"          sales_group_name as string,",
-						"          sales_consumer as string,",
-						"          sales_item_group_cd as string,",
-						"          sales_item_group_name as string,",
-						"          item_id as string,",
-						"          item_name as string,",
-						"          sales_qty as decimal(12,2),",
-						"          sales_amount as decimal(15,2),",
-						"          marginal_profit as decimal(15,2),",
-						"          gross_profit as decimal(15,2),",
-						"          accounting_currency as string,",
-						"          shipping_name_cd as string,",
-						"          shipping_name as string,",
-						"          sales_unit_price as decimal(15,2),",
-						"          billing_qty_inventory_unit as decimal(12,2),",
-						"          fare as decimal(15,2),",
-						"          purchase_unit_price as decimal(15,2),",
-						"          direct_selling_costs as decimal(15,2),",
-						"          billing_price as decimal(15,2),",
-						"          variable_costs as decimal(15,2),",
-						"          shipment_qty as decimal(12,2),",
-						"          billing_qty as decimal(12,2),",
-						"          purchase_price as decimal(15,2),",
-						"          actual_cost as decimal(15,2),",
-						"          sales_volume as decimal(12,2),",
-						"          sales_price as decimal(15,2),",
-						"          transportation_cost as decimal(15,2),",
-						"          fixed_costs as decimal(15,2),",
-						"          created_date_time as string,",
-						"          billing_date as string,",
-						"          sales_document_details as string,",
-						"          voucher_type_name as string,",
-						"          customer_cd as string,",
-						"          customer_short_name as string,",
-						"          sales_ship_to_account_num as string,",
-						"          sales_ship_to_short_name as string,",
-						"          sales_end_user_account_num as string,",
-						"          sales_end_user_short_name as string,",
-						"          invoice_account as string,",
-						"          sales_invoice_short_name as string,",
-						"          payer_cd as string,",
-						"          payer_short_name as string,",
-						"          sales_person as string,",
-						"          sales_person_name as string,",
-						"          carrier_cd as string,",
-						"          carrier_name_alias as string,",
-						"          oem_cd as string,",
-						"          oem_name as string,",
-						"          sales_vend_account_num as string,",
-						"          sales_vend_name_alias as string,",
-						"          pack_style_name as string,",
-						"          trade_mark_cd as string,",
-						"          trade_mark_name as string,",
-						"          sales_item_class_cd as string,",
-						"          sales_item_class_name as string,",
-						"          product_item_group_cd as string,",
-						"          product_item_group_name as string,",
-						"          invent_site_id as string,",
-						"          invent_site_name as string,",
-						"          shipping_point as string,",
-						"          shipping_point_name as string,",
-						"          specified_delivery_date as date,",
-						"          delivery_date as date,",
-						"          estimated_ship_date as date,",
-						"          shipment_posting_date as date,",
-						"          purchase_order_document as string,",
-						"          billing_document as string,",
-						"          registrant as string,",
-						"          sales_organization as string,",
-						"          sales_organization_name as string,",
-						"          distribution_channels as string,",
-						"          distribution_channels_name as string,",
-						"          product_department as string,",
-						"          product_department_name as string,",
-						"          purchase_currency as string,",
-						"          sales_unit as string,",
-						"          base_unit as string,",
-						"          condition_unit as string,",
-						"          shipping_unit_of_measure as string,",
-						"          billing_unit_of_measure as string,",
-						"          inventory_unit as string,",
-						"          direct_selling_costs_excl_fare as decimal(15,2),",
-						"          registration_time as timestamp",
+						"          id as integer,",
+						"          name as string,",
+						"          age as integer,",
+						"          update_at as date",
 						"     ),",
-						"     deletable:false,",
+						"     deletable:true,",
 						"     insertable:true,",
 						"     updateable:false,",
 						"     upsertable:false,",
+						"     keys:['id'],",
 						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
 						"     saveOrder: 1,",
 						"     errorHandlingOption: 'stopOnFirstError',",
 						"     mapColumn(",
-						"          sales_id = {販売伝票},",
-						"          voucher_type = {販売伝票タイプ},",
-						"          processing_date = {整理年月},",
-						"          sales_office = {営業所},",
-						"          sales_office_name = {営業所名称},",
-						"          sales_group = {営業グループ},",
-						"          sales_group_name = {営業グループ名称},",
-						"          sales_consumer = {需要家},",
-						"          sales_item_group_cd = {商品群コード},",
-						"          sales_item_group_name = {商品群名},",
-						"          item_id = {品目コード},",
-						"          item_name = {品目テキスト},",
-						"          sales_qty = {売上（基本）数量},",
-						"          sales_amount = {売上（請求金額）},",
-						"          marginal_profit = {限界利益},",
-						"          gross_profit = {売上総利益},",
-						"          accounting_currency = {伝票通貨},",
-						"          shipping_name_cd = {出荷名コード},",
-						"          shipping_name = {出荷名},",
-						"          sales_unit_price = {販売単価},",
-						"          billing_qty_inventory_unit = {請求数量（在庫単位）},",
-						"          fare = {運賃},",
-						"          purchase_unit_price = {購入単価},",
-						"          direct_selling_costs = {販売直接費},",
-						"          billing_price = {請求単価},",
-						"          variable_costs = {変動製造費},",
-						"          shipment_qty = {出荷数量},",
-						"          billing_qty = {請求数量},",
-						"          purchase_price = {購入金額},",
-						"          actual_cost = {実績原価},",
-						"          sales_volume = {販売数量},",
-						"          sales_price = {販売価格},",
-						"          transportation_cost = {輸送費},",
-						"          fixed_costs = {固定製造費},",
-						"          created_date_time = {登録日-DISPLAY_KEY},",
-						"          billing_date = {請求日-DISPLAY_KEY},",
-						"          sales_document_details = {販売伝票明細-DISPLAY_KEY},",
-						"          voucher_type_name = {販売伝票タイプ名称-DISPLAY_KEY},",
-						"          customer_cd = {受注先コード-DISPLAY_KEY},",
-						"          customer_short_name = {受注先略称-DISPLAY_KEY},",
-						"          sales_ship_to_account_num = {出荷先コード-DISPLAY_KEY},",
-						"          sales_ship_to_short_name = {出荷先略称-DISPLAY_KEY},",
-						"          sales_end_user_account_num = {カスタマコード-DISPLAY_KEY},",
-						"          sales_end_user_short_name = {カスタマ略称-DISPLAY_KEY},",
-						"          invoice_account = {請求先コード-DISPLAY_KEY},",
-						"          sales_invoice_short_name = {請求先略称-DISPLAY_KEY},",
-						"          payer_cd = {支払人コード-DISPLAY_KEY},",
-						"          payer_short_name = {支払人略称-DISPLAY_KEY},",
-						"          sales_person = {営業員コード-DISPLAY_KEY},",
-						"          sales_person_name = {営業員名称-DISPLAY_KEY},",
-						"          carrier_cd = {運送業者コード-DISPLAY_KEY},",
-						"          carrier_name_alias = {運送業者略称-DISPLAY_KEY},",
-						"          oem_cd = {OEMコード-DISPLAY_KEY},",
-						"          oem_name = {OEM名称1-DISPLAY_KEY},",
-						"          sales_vend_account_num = {仕入先コード-DISPLAY_KEY},",
-						"          sales_vend_name_alias = {仕入先略称-DISPLAY_KEY},",
-						"          pack_style_name = {荷姿名-DISPLAY_KEY},",
-						"          trade_mark_cd = {商標コード-DISPLAY_KEY},",
-						"          trade_mark_name = {商標名-DISPLAY_KEY},",
-						"          sales_item_class_cd = {商品大分類コード-DISPLAY_KEY},",
-						"          sales_item_class_name = {商品大分類名-DISPLAY_KEY},",
-						"          product_item_group_cd = {製品群コード-DISPLAY_KEY},",
-						"          product_item_group_name = {製品群名-DISPLAY_KEY},",
-						"          invent_site_id = {プラント-DISPLAY_KEY},",
-						"          invent_site_name = {プラント名称-DISPLAY_KEY},",
-						"          shipping_point = {出荷ポイント-DISPLAY_KEY},",
-						"          shipping_point_name = {出荷ポイント名称-DISPLAY_KEY},",
-						"          specified_delivery_date = {指定納期-DISPLAY_KEY},",
-						"          delivery_date = {納入日付-DISPLAY_KEY},",
-						"          estimated_ship_date = {出荷予定日-DISPLAY_KEY},",
-						"          shipment_posting_date = {出荷転記日-DISPLAY_KEY},",
-						"          purchase_order_document = {購買発注伝票-DISPLAY_KEY},",
-						"          billing_document = {請求伝票-DISPLAY_KEY},",
-						"          registrant = {登録者-DISPLAY_KEY},",
-						"          sales_organization = {販売組織-DISPLAY_KEY},",
-						"          sales_organization_name = {販売組織名称-DISPLAY_KEY},",
-						"          distribution_channels = {流通チャネル-DISPLAY_KEY},",
-						"          distribution_channels_name = {流通チャネル名称-DISPLAY_KEY},",
-						"          product_department = {製品部門-DISPLAY_KEY},",
-						"          product_department_name = {製品部門名称-DISPLAY_KEY},",
-						"          purchase_currency = {購入通貨-DISPLAY_KEY},",
-						"          sales_unit = {販売単位-DISPLAY_KEY},",
-						"          base_unit = {基本単位-DISPLAY_KEY},",
-						"          condition_unit = {条件単位-DISPLAY_KEY},",
-						"          shipping_unit_of_measure = {出荷数量単位-DISPLAY_KEY},",
-						"          billing_unit_of_measure = {請求数量単位-DISPLAY_KEY},",
-						"          inventory_unit = {在庫単位-DISPLAY_KEY},",
-						"          direct_selling_costs_excl_fare = {販売直接費（運賃以外）-DISPLAY_KEY},",
-						"          registration_time = {登録時刻-DISPLAY_KEY}",
-						"     )) ~> csvDataInMiddleTable"
+						"          id = insertId,",
+						"          name,",
+						"          age,",
+						"          update_at = newUpdateAt",
+						"     )) ~> DeleteInsert"
 					]
 				}
 			},
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/csv_db_bulk_plstatement_middle_table')]",
+			"name": "[concat(parameters('factoryName'), '/csv_db_bulk_plstatement_temp_table')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -817,10 +309,14 @@
 							"name": "csvDataInMiddleTable"
 						}
 					],
-					"transformations": [],
+					"transformations": [
+						{
+							"name": "toDecimal"
+						}
+					],
 					"scriptLines": [
 						"parameters{",
-						"     latestDateTime as string ('plstatement_20251105053200.csv')",
+						"     latestDatetimeFileName as string ('plstatement_20251105053200.csv')",
 						"}",
 						"source(output(",
 						"          {日付} as date 'yyyy/MM/dd',",
@@ -932,35 +428,35 @@
 						"          {納品書区分} as string,",
 						"          {納品書区分名} as string,",
 						"          {締日} as integer,",
-						"          {作成日時} as timestamp 'yyyy/MM/dd HH:mm:ss',",
+						"          {作成日時} as timestamp 'yyyy/MM/dd HH:mm',",
 						"          {作成者} as string,",
 						"          {配送条件} as string,",
 						"          {配送条件-説明} as string,",
 						"          {支払条件} as string,",
 						"          {支払条件-説明} as string,",
 						"          {需要家} as string,",
-						"          {変更日時} as timestamp 'yyyy/MM/dd HH:mm:ss',",
+						"          {変更日時} as timestamp 'yyyy/MM/dd HH:mm',",
 						"          {更新者} as string,",
 						"          {損益負担部門} as string,",
-						"          {入数} as decimal(10,0),",
-						"          {数量} as decimal(10,0),",
+						"          {入数} as string,",
+						"          {数量} as string,",
 						"          {販売単位} as string,",
-						"          {契約単価数量} as decimal(10,0),",
+						"          {契約単価数量} as string,",
 						"          {契約単価単位} as string,",
-						"          {契約単価} as decimal(10,0),",
-						"          {正味金額} as decimal(10,0),",
-						"          {出荷数量} as decimal(10,0),",
-						"          {請求時数量} as decimal(10,0),",
-						"          {請求時契約単価数量} as decimal(10,0),",
-						"          {請求時契約単価} as decimal(10,0),",
-						"          {請求時正味金額} as decimal(10,0),",
-						"          {消費税額} as decimal(10,0),",
-						"          {税率} as decimal(10,0),",
-						"          {変動製造費（工場）} as decimal(10,0),",
-						"          {固定製造費（工場）} as decimal(10,0),",
-						"          {変動製造費（直納）} as decimal(10,0),",
-						"          {変動製造費（一物一価）} as decimal(10,0),",
-						"          {固定製造費（一物一価）} as decimal(10,0),",
+						"          {契約単価} as string,",
+						"          {正味金額} as string,",
+						"          {出荷数量} as string,",
+						"          {請求時数量} as string,",
+						"          {請求時契約単価数量} as string,",
+						"          {請求時契約単価} as string,",
+						"          {請求時正味金額} as string,",
+						"          {消費税額} as string,",
+						"          {税率} as string,",
+						"          {変動製造費（工場）} as string,",
+						"          {固定製造費（工場）} as string,",
+						"          {変動製造費（直納）} as string,",
+						"          {変動製造費（一物一価）} as string,",
+						"          {固定製造費（一物一価）} as string,",
 						"          {会計通貨} as string,",
 						"          {国／地域コード} as string,",
 						"          {国名} as string,",
@@ -971,14 +467,31 @@
 						"     validateSchema: false,",
 						"     ignoreNoFilesFound: true,",
 						"     format: 'delimited',",
-						"     container: 'test-nsw',",
+						"     container: 'sales-forecast-data',",
 						"     columnDelimiter: ',',",
 						"     escapeChar: '\\\"',",
 						"     quoteChar: '\\\"',",
 						"     encodingName: 'SHIFT-JIS',",
 						"     columnNamesAsHeader: true,",
-						"     wildcardPaths:[(concat('実績損益/', $latestDateTime))]) ~> csvFileRead",
-						"csvFileRead sink(allowSchemaDrift: true,",
+						"     wildcardPaths:[($latestDatetimeFileName)]) ~> csvFileRead",
+						"csvFileRead derive({入数} = toDecimal({入数}, 12, 2),",
+						"          {数量} = toDecimal({数量}, 12, 2),",
+						"          {契約単価数量} = toDecimal({契約単価数量}, 12, 2),",
+						"          {契約単価} = toDecimal({契約単価}, 15, 2),",
+						"          {正味金額} = toDecimal({正味金額}, 15, 2),",
+						"          {出荷数量} = toDecimal({出荷数量}, 12, 2),",
+						"          {請求時数量} = toDecimal({請求時数量}, 12, 2),",
+						"          {請求時契約単価数量} = toDecimal({請求時契約単価数量}, 12, 2),",
+						"          {請求時契約単価} = toDecimal({請求時契約単価}, 15, 2),",
+						"          {請求時正味金額} = toDecimal({請求時正味金額}, 15, 2),",
+						"          {消費税額} = toDecimal({消費税額}, 15, 2),",
+						"          {税率} = toDecimal({税率}, 5, 2),",
+						"          {変動製造費（工場）} = toDecimal({変動製造費（工場）}, 15, 2),",
+						"          {固定製造費（工場）} = toDecimal({固定製造費（工場）}, 15, 2),",
+						"          {変動製造費（直納）} = toDecimal({変動製造費（直納）}, 15, 2),",
+						"          {変動製造費（一物一価）} = toDecimal({変動製造費（一物一価）}, 15, 2),",
+						"          {固定製造費（一物一価）} = toDecimal({固定製造費（一物一価）}, 15, 2)) ~> toDecimal",
+						"toDecimal sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",
 						"          system_date as date,",
@@ -1283,12 +796,12 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/test_csv_to_db')]",
+			"name": "[concat(parameters('factoryName'), '/csv_db_bulk_budget_temp_table')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"folder": {
-					"name": "検証用"
+					"name": "予算データ"
 				},
 				"type": "MappingDataFlow",
 				"typeProperties": {
@@ -1299,127 +812,354 @@
 								"type": "LinkedServiceReference"
 							},
 							"name": "csvFileRead"
-						},
-						{
-							"dataset": {
-								"referenceName": "test_db_nsw_dataset",
-								"type": "DatasetReference"
-							},
-							"name": "dbTableRead"
 						}
 					],
 					"sinks": [
 						{
 							"dataset": {
-								"referenceName": "test_db_nsw_dataset",
+								"referenceName": "temp_budget",
 								"type": "DatasetReference"
 							},
-							"name": "DeleteInsert"
+							"name": "csvDataInMiddleTable"
 						}
 					],
 					"transformations": [
 						{
-							"name": "deleteInsertConditions"
-						},
-						{
-							"name": "derivedCsvYearMonthColumn"
-						},
-						{
-							"name": "derivedDbYearMonthColumn"
-						},
-						{
-							"name": "unionCsvDb"
-						},
-						{
-							"name": "deleteRecordFilter"
-						},
-						{
-							"name": "aggregateCsvYearMonth"
-						},
-						{
-							"name": "joinYearMonth"
-						},
-						{
-							"name": "derivedNewUpdateAtColumn"
+							"name": "toDecimal"
 						}
 					],
 					"scriptLines": [
+						"parameters{",
+						"     latestDatetimeFileName as string ('budget_20251105053200.csv')",
+						"}",
 						"source(output(",
-						"          name as string,",
-						"          age as integer",
+						"          {販売伝票} as string,",
+						"          {販売伝票タイプ} as string,",
+						"          {整理年月} as string,",
+						"          {営業所} as string,",
+						"          {営業所名称} as string,",
+						"          {営業グループ} as string,",
+						"          {営業グループ名称} as string,",
+						"          {需要家} as string,",
+						"          {商品群コード} as string,",
+						"          {商品群名} as string,",
+						"          {品目コード} as string,",
+						"          {品目テキスト} as string,",
+						"          {売上（基本）数量} as string,",
+						"          {売上（請求金額）} as string,",
+						"          {限界利益} as string,",
+						"          {売上総利益} as string,",
+						"          {伝票通貨} as string,",
+						"          {出荷名コード} as string,",
+						"          {出荷名} as string,",
+						"          {販売単価} as string,",
+						"          {請求数量（在庫単位）} as string,",
+						"          {運賃} as string,",
+						"          {購入単価} as string,",
+						"          {販売直接費} as string,",
+						"          {請求単価} as string,",
+						"          {変動製造費} as string,",
+						"          {出荷数量} as string,",
+						"          {請求数量} as string,",
+						"          {購入金額} as string,",
+						"          {実績原価} as string,",
+						"          {販売数量} as string,",
+						"          {販売価格} as string,",
+						"          {輸送費} as string,",
+						"          {固定製造費} as string,",
+						"          {登録日-DISPLAY_KEY} as string,",
+						"          {請求日-DISPLAY_KEY} as string,",
+						"          {販売伝票明細-DISPLAY_KEY} as string,",
+						"          {販売伝票タイプ名称-DISPLAY_KEY} as string,",
+						"          {受注先コード-DISPLAY_KEY} as string,",
+						"          {受注先略称-DISPLAY_KEY} as string,",
+						"          {出荷先コード-DISPLAY_KEY} as string,",
+						"          {出荷先略称-DISPLAY_KEY} as string,",
+						"          {カスタマコード-DISPLAY_KEY} as string,",
+						"          {カスタマ略称-DISPLAY_KEY} as string,",
+						"          {請求先コード-DISPLAY_KEY} as string,",
+						"          {請求先略称-DISPLAY_KEY} as string,",
+						"          {支払人コード-DISPLAY_KEY} as string,",
+						"          {支払人略称-DISPLAY_KEY} as string,",
+						"          {営業員コード-DISPLAY_KEY} as string,",
+						"          {営業員名称-DISPLAY_KEY} as string,",
+						"          {運送業者コード-DISPLAY_KEY} as string,",
+						"          {運送業者略称-DISPLAY_KEY} as string,",
+						"          {OEMコード-DISPLAY_KEY} as string,",
+						"          {OEM名称1-DISPLAY_KEY} as string,",
+						"          {仕入先コード-DISPLAY_KEY} as string,",
+						"          {仕入先略称-DISPLAY_KEY} as string,",
+						"          {荷姿名-DISPLAY_KEY} as string,",
+						"          {商標コード-DISPLAY_KEY} as string,",
+						"          {商標名-DISPLAY_KEY} as string,",
+						"          {商品大分類コード-DISPLAY_KEY} as string,",
+						"          {商品大分類名-DISPLAY_KEY} as string,",
+						"          {製品群コード-DISPLAY_KEY} as string,",
+						"          {製品群名-DISPLAY_KEY} as string,",
+						"          {プラント-DISPLAY_KEY} as string,",
+						"          {プラント名称-DISPLAY_KEY} as string,",
+						"          {出荷ポイント-DISPLAY_KEY} as string,",
+						"          {出荷ポイント名称-DISPLAY_KEY} as string,",
+						"          {指定納期-DISPLAY_KEY} as date 'yyyy/MM/dd',",
+						"          {納入日付-DISPLAY_KEY} as date 'yyyy/MM/dd',",
+						"          {出荷予定日-DISPLAY_KEY} as date 'yyyy/MM/dd',",
+						"          {出荷転記日-DISPLAY_KEY} as date 'yyyy/MM/dd',",
+						"          {購買発注伝票-DISPLAY_KEY} as string,",
+						"          {請求伝票-DISPLAY_KEY} as string,",
+						"          {登録者-DISPLAY_KEY} as string,",
+						"          {販売組織-DISPLAY_KEY} as string,",
+						"          {販売組織名称-DISPLAY_KEY} as string,",
+						"          {流通チャネル-DISPLAY_KEY} as string,",
+						"          {流通チャネル名称-DISPLAY_KEY} as string,",
+						"          {製品部門-DISPLAY_KEY} as string,",
+						"          {製品部門名称-DISPLAY_KEY} as string,",
+						"          {購入通貨-DISPLAY_KEY} as string,",
+						"          {販売単位-DISPLAY_KEY} as string,",
+						"          {基本単位-DISPLAY_KEY} as string,",
+						"          {条件単位-DISPLAY_KEY} as string,",
+						"          {出荷数量単位-DISPLAY_KEY} as string,",
+						"          {請求数量単位-DISPLAY_KEY} as string,",
+						"          {在庫単位-DISPLAY_KEY} as string,",
+						"          {販売直接費（運賃以外）-DISPLAY_KEY} as string,",
+						"          {登録時刻-DISPLAY_KEY} as timestamp 'yyyy/MM/dd HH:mm:ss'",
 						"     ),",
 						"     useSchema: false,",
-						"     allowSchemaDrift: true,",
+						"     allowSchemaDrift: false,",
 						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false,",
-						"     purgeFiles: true,",
-						"     rowUrlColumn: 'fileName',",
+						"     ignoreNoFilesFound: true,",
 						"     format: 'delimited',",
-						"     container: 'test-nsw',",
+						"     container: 'sales-forecast-data',",
 						"     columnDelimiter: ',',",
-						"     escapeChar: '\\\\',",
+						"     escapeChar: '\\\"',",
 						"     quoteChar: '\\\"',",
+						"     encodingName: 'SHIFT-JIS',",
 						"     columnNamesAsHeader: true,",
-						"     wildcardPaths:['test_nsw_1/test*.csv']) ~> csvFileRead",
-						"source(output(",
-						"          id as integer,",
-						"          name as string,",
-						"          age as integer,",
-						"          update_at as date",
-						"     ),",
-						"     allowSchemaDrift: true,",
+						"     wildcardPaths:[($latestDatetimeFileName)]) ~> csvFileRead",
+						"csvFileRead derive({売上（基本）数量} = toDecimal({売上（基本）数量}, 12, 2),",
+						"          {売上（請求金額）} = toDecimal({売上（請求金額）}, 15, 2),",
+						"          {限界利益} = toDecimal({限界利益}, 15, 2),",
+						"          {売上総利益} = toDecimal({売上総利益}, 15, 2),",
+						"          {販売単価} = toDecimal({販売単価}, 15, 2),",
+						"          {請求数量（在庫単位）} = toDecimal({請求数量（在庫単位）}, 12, 2),",
+						"          {運賃} = toDecimal({運賃}, 15, 2),",
+						"          {購入単価} = toDecimal({購入単価}, 15, 2),",
+						"          {販売直接費} = toDecimal({販売直接費}, 15, 2),",
+						"          {請求単価} = toDecimal({請求単価}, 15, 2),",
+						"          {変動製造費} = toDecimal({変動製造費}, 15, 2),",
+						"          {出荷数量} = toDecimal(({出荷数量}), 12, 2),",
+						"          {請求数量} = toDecimal({請求数量}, 12, 2),",
+						"          {購入金額} = toDecimal({購入金額}, 15, 2),",
+						"          {実績原価} = toDecimal({実績原価}, 15, 2),",
+						"          {販売数量} = toDecimal({販売数量}, 12, 2),",
+						"          {販売価格} = toDecimal({販売価格}, 15, 2),",
+						"          {輸送費} = toDecimal({輸送費}, 15, 2),",
+						"          {固定製造費} = toDecimal({固定製造費}, 15, 2),",
+						"          {販売直接費（運賃以外）-DISPLAY_KEY} = toDecimal({販売直接費（運賃以外）-DISPLAY_KEY}, 15, 2)) ~> toDecimal",
+						"toDecimal sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     isolationLevel: 'READ_UNCOMMITTED',",
-						"     format: 'table') ~> dbTableRead",
-						"derivedNewUpdateAtColumn alterRow(deleteIf(!isNull(id)),",
-						"     insertIf(isNull(id))) ~> deleteInsertConditions",
-						"csvFileRead derive(csvYearMonth = left(right(fileName, 12), 6),",
-						"          csvUpdate_at = toDate(left(right(fileName, 12), 4) + '-' + left(right(fileName, 8), 2) + '-' + left(right(fileName, 6), 2), 'yyyy-MM-dd')) ~> derivedCsvYearMonthColumn",
-						"dbTableRead derive(dbYearMonth = toString(update_at, 'yyyyMM')) ~> derivedDbYearMonthColumn",
-						"derivedCsvYearMonthColumn, derivedDbYearMonthColumn union(byName: true)~> unionCsvDb",
-						"joinYearMonth filter(iif(isNull(id), isNull(id), yearMonth == dbYearMonth)) ~> deleteRecordFilter",
-						"unionCsvDb aggregate(yearMonth = first(csvYearMonth, true())) ~> aggregateCsvYearMonth",
-						"unionCsvDb, aggregateCsvYearMonth join(!isNull(yearMonth) || iif(isNull(id), !isNull(csvYearMonth), !isNull(dbYearMonth)),",
-						"     joinType:'cross',",
-						"     matchType:'exact',",
-						"     ignoreSpaces: false,",
-						"     broadcast: 'auto')~> joinYearMonth",
-						"deleteRecordFilter derive(newUpdateAt = iif(isNull(id), csvUpdate_at, update_at)) ~> derivedNewUpdateAtColumn",
-						"deleteInsertConditions sink(allowSchemaDrift: true,",
-						"     validateSchema: true,",
 						"     input(",
-						"          id as integer,",
-						"          name as string,",
-						"          age as integer,",
-						"          update_at as date",
+						"          sales_id as string,",
+						"          voucher_type as string,",
+						"          processing_date as string,",
+						"          sales_office as string,",
+						"          sales_office_name as string,",
+						"          sales_group as string,",
+						"          sales_group_name as string,",
+						"          sales_consumer as string,",
+						"          sales_item_group_cd as string,",
+						"          sales_item_group_name as string,",
+						"          item_id as string,",
+						"          item_name as string,",
+						"          sales_qty as decimal(12,2),",
+						"          sales_amount as decimal(15,2),",
+						"          marginal_profit as decimal(15,2),",
+						"          gross_profit as decimal(15,2),",
+						"          accounting_currency as string,",
+						"          shipping_name_cd as string,",
+						"          shipping_name as string,",
+						"          sales_unit_price as decimal(15,2),",
+						"          billing_qty_inventory_unit as decimal(12,2),",
+						"          fare as decimal(15,2),",
+						"          purchase_unit_price as decimal(15,2),",
+						"          direct_selling_costs as decimal(15,2),",
+						"          billing_price as decimal(15,2),",
+						"          variable_costs as decimal(15,2),",
+						"          shipment_qty as decimal(12,2),",
+						"          billing_qty as decimal(12,2),",
+						"          purchase_price as decimal(15,2),",
+						"          actual_cost as decimal(15,2),",
+						"          sales_volume as decimal(12,2),",
+						"          sales_price as decimal(15,2),",
+						"          transportation_cost as decimal(15,2),",
+						"          fixed_costs as decimal(15,2),",
+						"          created_date_time as string,",
+						"          billing_date as string,",
+						"          sales_document_details as string,",
+						"          voucher_type_name as string,",
+						"          customer_cd as string,",
+						"          customer_short_name as string,",
+						"          sales_ship_to_account_num as string,",
+						"          sales_ship_to_short_name as string,",
+						"          sales_end_user_account_num as string,",
+						"          sales_end_user_short_name as string,",
+						"          invoice_account as string,",
+						"          sales_invoice_short_name as string,",
+						"          payer_cd as string,",
+						"          payer_short_name as string,",
+						"          sales_person as string,",
+						"          sales_person_name as string,",
+						"          carrier_cd as string,",
+						"          carrier_name_alias as string,",
+						"          oem_cd as string,",
+						"          oem_name as string,",
+						"          sales_vend_account_num as string,",
+						"          sales_vend_name_alias as string,",
+						"          pack_style_name as string,",
+						"          trade_mark_cd as string,",
+						"          trade_mark_name as string,",
+						"          sales_item_class_cd as string,",
+						"          sales_item_class_name as string,",
+						"          product_item_group_cd as string,",
+						"          product_item_group_name as string,",
+						"          invent_site_id as string,",
+						"          invent_site_name as string,",
+						"          shipping_point as string,",
+						"          shipping_point_name as string,",
+						"          specified_delivery_date as date,",
+						"          delivery_date as date,",
+						"          estimated_ship_date as date,",
+						"          shipment_posting_date as date,",
+						"          purchase_order_document as string,",
+						"          billing_document as string,",
+						"          registrant as string,",
+						"          sales_organization as string,",
+						"          sales_organization_name as string,",
+						"          distribution_channels as string,",
+						"          distribution_channels_name as string,",
+						"          product_department as string,",
+						"          product_department_name as string,",
+						"          purchase_currency as string,",
+						"          sales_unit as string,",
+						"          base_unit as string,",
+						"          condition_unit as string,",
+						"          shipping_unit_of_measure as string,",
+						"          billing_unit_of_measure as string,",
+						"          inventory_unit as string,",
+						"          direct_selling_costs_excl_fare as decimal(15,2),",
+						"          registration_time as timestamp",
 						"     ),",
-						"     deletable:true,",
+						"     deletable:false,",
 						"     insertable:true,",
 						"     updateable:false,",
 						"     upsertable:false,",
-						"     keys:['update_at'],",
 						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
 						"     saveOrder: 1,",
 						"     errorHandlingOption: 'stopOnFirstError',",
 						"     mapColumn(",
-						"          name,",
-						"          age,",
-						"          update_at = newUpdateAt",
-						"     )) ~> DeleteInsert"
+						"          sales_id = {販売伝票},",
+						"          voucher_type = {販売伝票タイプ},",
+						"          processing_date = {整理年月},",
+						"          sales_office = {営業所},",
+						"          sales_office_name = {営業所名称},",
+						"          sales_group = {営業グループ},",
+						"          sales_group_name = {営業グループ名称},",
+						"          sales_consumer = {需要家},",
+						"          sales_item_group_cd = {商品群コード},",
+						"          sales_item_group_name = {商品群名},",
+						"          item_id = {品目コード},",
+						"          item_name = {品目テキスト},",
+						"          sales_qty = {売上（基本）数量},",
+						"          sales_amount = {売上（請求金額）},",
+						"          marginal_profit = {限界利益},",
+						"          gross_profit = {売上総利益},",
+						"          accounting_currency = {伝票通貨},",
+						"          shipping_name_cd = {出荷名コード},",
+						"          shipping_name = {出荷名},",
+						"          sales_unit_price = {販売単価},",
+						"          billing_qty_inventory_unit = {請求数量（在庫単位）},",
+						"          fare = {運賃},",
+						"          purchase_unit_price = {購入単価},",
+						"          direct_selling_costs = {販売直接費},",
+						"          billing_price = {請求単価},",
+						"          variable_costs = {変動製造費},",
+						"          shipment_qty = {出荷数量},",
+						"          billing_qty = {請求数量},",
+						"          purchase_price = {購入金額},",
+						"          actual_cost = {実績原価},",
+						"          sales_volume = {販売数量},",
+						"          sales_price = {販売価格},",
+						"          transportation_cost = {輸送費},",
+						"          fixed_costs = {固定製造費},",
+						"          created_date_time = {登録日-DISPLAY_KEY},",
+						"          billing_date = {請求日-DISPLAY_KEY},",
+						"          sales_document_details = {販売伝票明細-DISPLAY_KEY},",
+						"          voucher_type_name = {販売伝票タイプ名称-DISPLAY_KEY},",
+						"          customer_cd = {受注先コード-DISPLAY_KEY},",
+						"          customer_short_name = {受注先略称-DISPLAY_KEY},",
+						"          sales_ship_to_account_num = {出荷先コード-DISPLAY_KEY},",
+						"          sales_ship_to_short_name = {出荷先略称-DISPLAY_KEY},",
+						"          sales_end_user_account_num = {カスタマコード-DISPLAY_KEY},",
+						"          sales_end_user_short_name = {カスタマ略称-DISPLAY_KEY},",
+						"          invoice_account = {請求先コード-DISPLAY_KEY},",
+						"          sales_invoice_short_name = {請求先略称-DISPLAY_KEY},",
+						"          payer_cd = {支払人コード-DISPLAY_KEY},",
+						"          payer_short_name = {支払人略称-DISPLAY_KEY},",
+						"          sales_person = {営業員コード-DISPLAY_KEY},",
+						"          sales_person_name = {営業員名称-DISPLAY_KEY},",
+						"          carrier_cd = {運送業者コード-DISPLAY_KEY},",
+						"          carrier_name_alias = {運送業者略称-DISPLAY_KEY},",
+						"          oem_cd = {OEMコード-DISPLAY_KEY},",
+						"          oem_name = {OEM名称1-DISPLAY_KEY},",
+						"          sales_vend_account_num = {仕入先コード-DISPLAY_KEY},",
+						"          sales_vend_name_alias = {仕入先略称-DISPLAY_KEY},",
+						"          pack_style_name = {荷姿名-DISPLAY_KEY},",
+						"          trade_mark_cd = {商標コード-DISPLAY_KEY},",
+						"          trade_mark_name = {商標名-DISPLAY_KEY},",
+						"          sales_item_class_cd = {商品大分類コード-DISPLAY_KEY},",
+						"          sales_item_class_name = {商品大分類名-DISPLAY_KEY},",
+						"          product_item_group_cd = {製品群コード-DISPLAY_KEY},",
+						"          product_item_group_name = {製品群名-DISPLAY_KEY},",
+						"          invent_site_id = {プラント-DISPLAY_KEY},",
+						"          invent_site_name = {プラント名称-DISPLAY_KEY},",
+						"          shipping_point = {出荷ポイント-DISPLAY_KEY},",
+						"          shipping_point_name = {出荷ポイント名称-DISPLAY_KEY},",
+						"          specified_delivery_date = {指定納期-DISPLAY_KEY},",
+						"          delivery_date = {納入日付-DISPLAY_KEY},",
+						"          estimated_ship_date = {出荷予定日-DISPLAY_KEY},",
+						"          shipment_posting_date = {出荷転記日-DISPLAY_KEY},",
+						"          purchase_order_document = {購買発注伝票-DISPLAY_KEY},",
+						"          billing_document = {請求伝票-DISPLAY_KEY},",
+						"          registrant = {登録者-DISPLAY_KEY},",
+						"          sales_organization = {販売組織-DISPLAY_KEY},",
+						"          sales_organization_name = {販売組織名称-DISPLAY_KEY},",
+						"          distribution_channels = {流通チャネル-DISPLAY_KEY},",
+						"          distribution_channels_name = {流通チャネル名称-DISPLAY_KEY},",
+						"          product_department = {製品部門-DISPLAY_KEY},",
+						"          product_department_name = {製品部門名称-DISPLAY_KEY},",
+						"          purchase_currency = {購入通貨-DISPLAY_KEY},",
+						"          sales_unit = {販売単位-DISPLAY_KEY},",
+						"          base_unit = {基本単位-DISPLAY_KEY},",
+						"          condition_unit = {条件単位-DISPLAY_KEY},",
+						"          shipping_unit_of_measure = {出荷数量単位-DISPLAY_KEY},",
+						"          billing_unit_of_measure = {請求数量単位-DISPLAY_KEY},",
+						"          inventory_unit = {在庫単位-DISPLAY_KEY},",
+						"          direct_selling_costs_excl_fare = {販売直接費（運賃以外）-DISPLAY_KEY},",
+						"          registration_time = {登録時刻-DISPLAY_KEY}",
+						"     )) ~> csvDataInMiddleTable"
 					]
 				}
 			},
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/test_not_identity_csv_to_db')]",
+			"name": "[concat(parameters('factoryName'), '/csv_db_bulk_backlog_temp_table')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"folder": {
-					"name": "検証用"
+					"name": "受注残"
 				},
 				"type": "MappingDataFlow",
 				"typeProperties": {
@@ -1430,536 +1170,250 @@
 								"type": "LinkedServiceReference"
 							},
 							"name": "csvFileRead"
-						},
-						{
-							"dataset": {
-								"referenceName": "test_not_identity_db_nsw_dataset",
-								"type": "DatasetReference"
-							},
-							"name": "dbTableRead"
 						}
 					],
 					"sinks": [
 						{
 							"dataset": {
-								"referenceName": "test_not_identity_db_nsw_dataset",
+								"referenceName": "temp_backlog",
 								"type": "DatasetReference"
 							},
-							"name": "DeleteInsert"
+							"name": "csvDataInMiddleTable",
+							"rejectedDataLinkedService": {
+								"referenceName": "test_db_nsw_link_service",
+								"type": "LinkedServiceReference"
+							}
 						}
 					],
 					"transformations": [
 						{
-							"name": "deleteInsertConditions"
-						},
-						{
-							"name": "derivedCsvYearMonthColumn"
-						},
-						{
-							"name": "derivedDbYearMonthColumn"
-						},
-						{
-							"name": "unionCsvDb"
-						},
-						{
-							"name": "deleteRecordFilter"
-						},
-						{
-							"name": "aggregateCsvYearMonth"
-						},
-						{
-							"name": "joinYearMonth"
-						},
-						{
-							"name": "derivedNewUpdateAtColumn"
+							"name": "toDecimal"
 						}
 					],
 					"scriptLines": [
+						"parameters{",
+						"     latestDatetimeFileName as string ('backlog_202510_202512_20251105053200.csv')",
+						"}",
 						"source(output(",
-						"          newId as short,",
-						"          name as string,",
-						"          age as short",
+						"          {処理年月} as string,",
+						"          {販売注文} as string,",
+						"          {明細行番号} as integer,",
+						"          {伝票タイプ} as string,",
+						"          {顧客} as string,",
+						"          {略称} as string,",
+						"          {出荷先コード} as string,",
+						"          {出荷先-略称} as string,",
+						"          {回収先ID} as string,",
+						"          {回収先-略称} as string,",
+						"          {仕入先} as string,",
+						"          {仕入先-検索名} as string,",
+						"          {営業所} as string,",
+						"          {営業所名} as string,",
+						"          {営業所グループ} as string,",
+						"          {営業所グループ名} as string,",
+						"          {カスタマー} as string,",
+						"          {カスタマー略称} as string,",
+						"          {請求先/元 ID} as string,",
+						"          {請求先-略称} as string,",
+						"          {請求先-名前} as string,",
+						"          {営業員} as string,",
+						"          {営業員名} as string,",
+						"          {需要家} as string,",
+						"          {運送業者} as string,",
+						"          {運送業者-検索名} as string,",
+						"          {品目番号} as string,",
+						"          {テキスト} as string,",
+						"          {荷姿名} as string,",
+						"          {出荷名コード} as string,",
+						"          {出荷名名称} as string,",
+						"          {商標コード} as string,",
+						"          {商標名} as string,",
+						"          {商品大分類コード} as string,",
+						"          {商品大分類名} as string,",
+						"          {製品群コード} as string,",
+						"          {製品群名} as string,",
+						"          {商品群コード} as string,",
+						"          {商品群名} as string,",
+						"          {サイト} as string,",
+						"          {サイト名} as string,",
+						"          {倉庫} as string,",
+						"          {倉庫名} as string,",
+						"          {契約単位数量} as string,",
+						"          {契約単価単位} as string,",
+						"          {販売-数量} as string,",
+						"          {販売-単位} as string,",
+						"          {販売-金額} as string,",
+						"          {請求書-契約単位数量} as string,",
+						"          {請求書-契約単価単位} as string,",
+						"          {請求書-金額} as string,",
+						"          {請求書-台貫金額(諸費用)} as string,",
+						"          {受注残金額} as string,",
+						"          {会計通貨} as string,",
+						"          {請求書-計上日} as date 'yyyy/MM/dd',",
+						"          {整理年月} as string,",
+						"          {作成者} as string,",
+						"          {作成日時} as timestamp 'yyyy/MM/dd HH:mm:ss',",
+						"          {出荷予定日} as date 'yyyy/MM/dd',",
+						"          {入荷希望日} as date 'yyyy/MM/dd'",
 						"     ),",
 						"     useSchema: false,",
-						"     allowSchemaDrift: true,",
+						"     allowSchemaDrift: false,",
 						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false,",
-						"     purgeFiles: true,",
-						"     rowUrlColumn: 'fileName',",
+						"     ignoreNoFilesFound: true,",
 						"     format: 'delimited',",
-						"     container: 'test-nsw',",
+						"     container: 'sales-forecast-data',",
 						"     columnDelimiter: ',',",
-						"     escapeChar: '\\\\',",
+						"     escapeChar: '\\\"',",
 						"     quoteChar: '\\\"',",
+						"     encodingName: 'SHIFT-JIS',",
 						"     columnNamesAsHeader: true,",
-						"     wildcardPaths:['test_nsw_1/test*.csv']) ~> csvFileRead",
-						"source(output(",
-						"          id as integer,",
-						"          name as string,",
-						"          age as integer,",
-						"          update_at as date",
-						"     ),",
-						"     allowSchemaDrift: true,",
+						"     wildcardPaths:[($latestDatetimeFileName)]) ~> csvFileRead",
+						"csvFileRead derive({契約単位数量} = toDecimal({契約単位数量}, 12, 2),",
+						"          {販売-数量} = toDecimal({販売-数量}, 12, 2),",
+						"          {販売-金額} = toDecimal({販売-金額}, 15, 2),",
+						"          {請求書-契約単位数量} = toDecimal({請求書-契約単位数量}, 12, 2),",
+						"          {請求書-金額} = toDecimal({請求書-金額}, 15, 2),",
+						"          {請求書-台貫金額(諸費用)} = toDecimal({請求書-台貫金額(諸費用)}, 15, 2),",
+						"          {受注残金額} = toDecimal({受注残金額}, 15, 2)) ~> toDecimal",
+						"toDecimal sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     isolationLevel: 'READ_UNCOMMITTED',",
-						"     format: 'table') ~> dbTableRead",
-						"derivedNewUpdateAtColumn alterRow(deleteIf(!isNull(id)),",
-						"     insertIf(isNull(id))) ~> deleteInsertConditions",
-						"csvFileRead derive(csvYearMonth = left(right(fileName, 12), 6),",
-						"          csvUpdate_at = toDate(left(right(fileName, 12), 4) + '-' + left(right(fileName, 8), 2) + '-' + left(right(fileName, 6), 2), 'yyyy-MM-dd')) ~> derivedCsvYearMonthColumn",
-						"dbTableRead derive(dbYearMonth = toString(update_at, 'yyyyMM')) ~> derivedDbYearMonthColumn",
-						"derivedCsvYearMonthColumn, derivedDbYearMonthColumn union(byName: true)~> unionCsvDb",
-						"joinYearMonth filter(iif(isNull(id), isNull(id), yearMonth == dbYearMonth)) ~> deleteRecordFilter",
-						"unionCsvDb aggregate(yearMonth = first(csvYearMonth, true())) ~> aggregateCsvYearMonth",
-						"unionCsvDb, aggregateCsvYearMonth join(!isNull(yearMonth) || iif(isNull(id), !isNull(csvYearMonth), !isNull(dbYearMonth)),",
-						"     joinType:'cross',",
-						"     matchType:'exact',",
-						"     ignoreSpaces: false,",
-						"     broadcast: 'auto')~> joinYearMonth",
-						"deleteRecordFilter derive(newUpdateAt = iif(isNull(id), csvUpdate_at, update_at),",
-						"          insertId = iif(isNull(id), newId, toShort(id))) ~> derivedNewUpdateAtColumn",
-						"deleteInsertConditions sink(allowSchemaDrift: true,",
-						"     validateSchema: true,",
 						"     input(",
-						"          id as integer,",
-						"          name as string,",
-						"          age as integer,",
-						"          update_at as date",
+						"          system_date as string,",
+						"          sales_id as string,",
+						"          line_num as integer,",
+						"          voucher_type as string,",
+						"          cust_account as string,",
+						"          cust_short_name as string,",
+						"          sales_ship_to_account_num as string,",
+						"          sales_ship_to_short_name as string,",
+						"          cust_collections as string,",
+						"          sales_cust_collection_short_name as string,",
+						"          sales_vend_account_num as string,",
+						"          sales_vend_name_alias as string,",
+						"          sales_office as string,",
+						"          sales_office_name as string,",
+						"          sales_group as string,",
+						"          sales_group_name as string,",
+						"          sales_end_user_account_num as string,",
+						"          sales_end_user_short_name as string,",
+						"          invoice_account as string,",
+						"          sales_invoice_short_name as string,",
+						"          sales_invoice_name as string,",
+						"          sales_person as string,",
+						"          sales_person_name as string,",
+						"          sales_consumer as string,",
+						"          carrier_cd as string,",
+						"          carrier_name_alias as string,",
+						"          item_id as string,",
+						"          item_name as string,",
+						"          pack_style_name as string,",
+						"          shipping_name_code as string,",
+						"          shipping_name as string,",
+						"          trade_mark_code as string,",
+						"          trade_mark_name as string,",
+						"          sales_item_class_code as string,",
+						"          sales_item_class_name as string,",
+						"          product_item_group_code as string,",
+						"          product_item_group_name as string,",
+						"          sales_item_group_code as string,",
+						"          sales_item_group_name as string,",
+						"          invent_site_id as string,",
+						"          invent_site_name as string,",
+						"          invent_location_id as string,",
+						"          invent_location_name as string,",
+						"          contract_unit_qty as decimal(12,2),",
+						"          contract_unit_price_uom as string,",
+						"          sales_qty as decimal(12,2),",
+						"          sales_unit as string,",
+						"          sales_amount as decimal(15,2),",
+						"          invoice_contract_unit_qty as decimal(12,2),",
+						"          invoice_contract_unit_price_uom as string,",
+						"          invoice_amount as decimal(15,2),",
+						"          invoice_additional_costs as decimal(15,2),",
+						"          backlog_amount as decimal(15,2),",
+						"          accounting_currency as string,",
+						"          invoice_date as date,",
+						"          processing_date as string,",
+						"          created_by as string,",
+						"          created_date_time as timestamp,",
+						"          shipping_date_requested as date,",
+						"          receipt_date_requested as date",
 						"     ),",
-						"     deletable:true,",
+						"     deletable:false,",
 						"     insertable:true,",
 						"     updateable:false,",
 						"     upsertable:false,",
-						"     keys:['id'],",
 						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
 						"     saveOrder: 1,",
 						"     errorHandlingOption: 'stopOnFirstError',",
 						"     mapColumn(",
-						"          id = insertId,",
-						"          name,",
-						"          age,",
-						"          update_at = newUpdateAt",
-						"     )) ~> DeleteInsert"
+						"          system_date = {処理年月},",
+						"          sales_id = {販売注文},",
+						"          line_num = {明細行番号},",
+						"          voucher_type = {伝票タイプ},",
+						"          cust_account = {顧客},",
+						"          cust_short_name = {略称},",
+						"          sales_ship_to_account_num = {出荷先コード},",
+						"          sales_ship_to_short_name = {出荷先-略称},",
+						"          cust_collections = {回収先ID},",
+						"          sales_cust_collection_short_name = {回収先-略称},",
+						"          sales_vend_account_num = {仕入先},",
+						"          sales_vend_name_alias = {仕入先-検索名},",
+						"          sales_office = {営業所},",
+						"          sales_office_name = {営業所名},",
+						"          sales_group = {営業所グループ},",
+						"          sales_group_name = {営業所グループ名},",
+						"          sales_end_user_account_num = {カスタマー},",
+						"          sales_end_user_short_name = {カスタマー略称},",
+						"          invoice_account = {請求先/元 ID},",
+						"          sales_invoice_short_name = {請求先-略称},",
+						"          sales_invoice_name = {請求先-名前},",
+						"          sales_person = {営業員},",
+						"          sales_person_name = {営業員名},",
+						"          sales_consumer = {需要家},",
+						"          carrier_cd = {運送業者},",
+						"          carrier_name_alias = {運送業者-検索名},",
+						"          item_id = {品目番号},",
+						"          item_name = {テキスト},",
+						"          pack_style_name = {荷姿名},",
+						"          shipping_name_code = {出荷名コード},",
+						"          shipping_name = {出荷名名称},",
+						"          trade_mark_code = {商標コード},",
+						"          trade_mark_name = {商標名},",
+						"          sales_item_class_code = {商品大分類コード},",
+						"          sales_item_class_name = {商品大分類名},",
+						"          product_item_group_code = {製品群コード},",
+						"          product_item_group_name = {製品群名},",
+						"          sales_item_group_code = {商品群コード},",
+						"          sales_item_group_name = {商品群名},",
+						"          invent_site_id = {サイト},",
+						"          invent_site_name = {サイト名},",
+						"          invent_location_id = {倉庫},",
+						"          invent_location_name = {倉庫名},",
+						"          contract_unit_qty = {契約単位数量},",
+						"          contract_unit_price_uom = {契約単価単位},",
+						"          sales_qty = {販売-数量},",
+						"          sales_unit = {販売-単位},",
+						"          sales_amount = {販売-金額},",
+						"          invoice_contract_unit_qty = {請求書-契約単位数量},",
+						"          invoice_contract_unit_price_uom = {請求書-契約単価単位},",
+						"          invoice_amount = {請求書-金額},",
+						"          invoice_additional_costs = {請求書-台貫金額(諸費用)},",
+						"          backlog_amount = {受注残金額},",
+						"          accounting_currency = {会計通貨},",
+						"          invoice_date = {請求書-計上日},",
+						"          processing_date = {整理年月},",
+						"          created_by = {作成者},",
+						"          created_date_time = {作成日時},",
+						"          shipping_date_requested = {出荷予定日},",
+						"          receipt_date_requested = {入荷希望日}",
+						"     )) ~> csvDataInMiddleTable"
 					]
 				}
 			},
 			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/backlog')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "CsvDataInMiddleTable",
-						"description": "CSV ファイルから読み込んだデータを cache に保存します。",
-						"type": "ExecuteDataFlow",
-						"dependsOn": [
-							{
-								"activity": "ForEachGetLatestDatetime",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataflow": {
-								"referenceName": "csv_db_bulk_backlog_middle_table",
-								"type": "DataFlowReference",
-								"parameters": {
-									"latestDateTime": {
-										"value": "'@{variables('latestDatetimeFileName')}'",
-										"type": "Expression"
-									}
-								},
-								"datasetParameters": {
-									"csvFileRead": {},
-									"csvDataInMiddleTable": {}
-								}
-							},
-							"staging": {},
-							"compute": {
-								"coreCount": 8,
-								"computeType": "General"
-							},
-							"traceLevel": "Fine"
-						}
-					},
-					{
-						"name": "ExitCsvFile",
-						"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
-						"type": "IfCondition",
-						"dependsOn": [
-							{
-								"activity": "CsvDataInMiddleTable",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"expression": {
-								"value": "@greater(activity('CsvDataInMiddleTable').output.runStatus.metrics.csvDataInMiddleTable.sources.csvFileRead.details.fileReadCount[0], 0)",
-								"type": "Expression"
-							},
-							"ifTrueActivities": [
-								{
-									"name": "DeleteInsertCsvDataAndGroupByFileName",
-									"description": "CSV ファイルから読み込んだデータを DELETE INSERT します",
-									"type": "Script",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"linkedServiceName": {
-										"referenceName": "test_db_nsw_link_service",
-										"type": "LinkedServiceReference"
-									},
-									"typeProperties": {
-										"scripts": [
-											{
-												"type": "Query",
-												"text": "BEGIN TRY\n\t\t\n\tBEGIN TRANSACTION;\n\n\t-- 対象テーブルの内、年月が前月、当月、来月、当月より 2 年前のデータのみ削除\n\tDELETE FROM backlog\n\tWHERE\n\t\tsystem_date IN\n\t\t(\n\t\t\tSELECT\n\t\t\t\tsystem_date\n\t\t\tFROM\n\t\t\t\ttemp_backlog\n\t\t\tGROUP BY\n\t\t\t    system_date\n\t\t)\n\t\tOR\n\t\tsystem_date <= FORMAT(DATEADD(YEAR, -2, GETDATE() AT TIME ZONE 'UTC' AT TIME ZONE 'Tokyo Standard Time'), 'yyyyMM');\n\n\t-- CSV ファイルから読み込んだデータを対象テーブルに INSERT\n\tINSERT INTO backlog\n\t(\n\t\tsystem_date,\n\t\tsales_id,\n\t\tline_num,\n\t\tvoucher_type,\n\t\tcust_account,\n\t\tcust_short_name,\n\t\tsales_ship_to_account_num,\n\t\tsales_ship_to_short_name,\n\t\tcust_collections,\n\t\tsales_cust_collection_short_name,\n\t\tsales_vend_account_num,\n\t\tsales_vend_name_alias,\n\t\tsales_office,\n\t\tsales_office_name,\n\t\tsales_group,\n\t\tsales_group_name,\n\t\tsales_end_user_account_num,\n\t\tsales_end_user_short_name,\n\t\tinvoice_account,\n\t\tsales_invoice_short_name,\n\t\tsales_invoice_name,\n\t\tsales_person,\n\t\tsales_person_name,\n\t\tsales_consumer,\n\t\tcarrier_cd,\n\t\tcarrier_name_alias,\n\t\titem_id,\n\t\titem_name,\n\t\tpack_style_name,\n\t\tshipping_name_code,\n\t\tshipping_name,\n\t\ttrade_mark_code,\n\t\ttrade_mark_name,\n\t\tsales_item_class_code,\n\t\tsales_item_class_name,\n\t\tproduct_item_group_code,\n\t\tproduct_item_group_name,\n\t\tsales_item_group_code,\n\t\tsales_item_group_name,\n\t\tinvent_site_id,\n\t\tinvent_site_name,\n\t\tinvent_location_id,\n\t\tinvent_location_name,\n\t\tcontract_unit_qty,\n\t\tcontract_unit_price_uom,\n\t\tsales_qty,\n\t\tsales_unit,\n\t\tsales_amount,\n\t\tinvoice_contract_unit_qty,\n\t\tinvoice_contract_unit_price_uom,\n\t\tinvoice_amount,\n\t\tinvoice_additional_costs,\n\t\tbacklog_amount,\n\t\taccounting_currency,\n\t\tinvoice_date,\n\t\tprocessing_date,\n\t\tcreated_by,\n\t\tcreated_date_time,\n\t\tshipping_date_requested,\n\t\treceipt_date_requested\n\t)\n\tSELECT\n\t\tsystem_date,\n\t\tsales_id,\n\t\tline_num,\n\t\tvoucher_type,\n\t\tcust_account,\n\t\tcust_short_name,\n\t\tsales_ship_to_account_num,\n\t\tsales_ship_to_short_name,\n\t\tcust_collections,\n\t\tsales_cust_collection_short_name,\n\t\tsales_vend_account_num,\n\t\tsales_vend_name_alias,\n\t\tsales_office,\n\t\tsales_office_name,\n\t\tsales_group,\n\t\tsales_group_name,\n\t\tsales_end_user_account_num,\n\t\tsales_end_user_short_name,\n\t\tinvoice_account,\n\t\tsales_invoice_short_name,\n\t\tsales_invoice_name,\n\t\tsales_person,\n\t\tsales_person_name,\n\t\tsales_consumer,\n\t\tcarrier_cd,\n\t\tcarrier_name_alias,\n\t\titem_id,\n\t\titem_name,\n\t\tpack_style_name,\n\t\tshipping_name_code,\n\t\tshipping_name,\n\t\ttrade_mark_code,\n\t\ttrade_mark_name,\n\t\tsales_item_class_code,\n\t\tsales_item_class_name,\n\t\tproduct_item_group_code,\n\t\tproduct_item_group_name,\n\t\tsales_item_group_code,\n\t\tsales_item_group_name,\n\t\tinvent_site_id,\n\t\tinvent_site_name,\n\t\tinvent_location_id,\n\t\tinvent_location_name,\n\t\tcontract_unit_qty,\n\t\tcontract_unit_price_uom,\n\t\tsales_qty,\n\t\tsales_unit,\n\t\tsales_amount,\n\t\tinvoice_contract_unit_qty,\n\t\tinvoice_contract_unit_price_uom,\n\t\tinvoice_amount,\n\t\tinvoice_additional_costs,\n\t\tbacklog_amount,\n\t\taccounting_currency,\n\t\tinvoice_date,\n\t\tprocessing_date,\n\t\tcreated_by,\n\t\tcreated_date_time,\n\t\tshipping_date_requested,\n\t\treceipt_date_requested\n\tFROM\n\t\ttemp_backlog\n\n\tCOMMIT TRANSACTION;\n\nEND TRY\n\nBEGIN CATCH\n\n\tROLLBACK TRANSACTION;\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
-											}
-										],
-										"scriptBlockExecutionTimeout": "02:00:00"
-									}
-								},
-								{
-									"name": "TruncateMiddelTableAfterCsvFileDelete",
-									"description": "中間テーブルのテーブルデータを全削除します。\n次のアクティビティで CSV ファイルを削除します。",
-									"type": "Script",
-									"dependsOn": [
-										{
-											"activity": "DeleteInsertCsvDataAndGroupByFileName",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"linkedServiceName": {
-										"referenceName": "test_db_nsw_link_service",
-										"type": "LinkedServiceReference"
-									},
-									"typeProperties": {
-										"scripts": [
-											{
-												"type": "Query",
-												"text": "BEGIN TRY\r\n\r\n    -- 中間テーブルに格納されているデータを削除\r\n    TRUNCATE TABLE temp_backlog;\r\n\r\nEND TRY\r\n\r\nBEGIN CATCH\r\n\r\n\t-- ADF に異常終了を伝えるため\r\n\tTHROW;\r\n\r\nEND CATCH"
-											}
-										],
-										"scriptBlockExecutionTimeout": "02:00:00"
-									}
-								},
-								{
-									"name": "TruncateMiddelTableNotAfterCsvFileDelete",
-									"description": "中間テーブルのテーブルデータを全削除します。\n次のアクティビティで CSV ファイルを削除しません",
-									"type": "Script",
-									"dependsOn": [
-										{
-											"activity": "DeleteInsertCsvDataAndGroupByFileName",
-											"dependencyConditions": [
-												"Failed"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"linkedServiceName": {
-										"referenceName": "test_db_nsw_link_service",
-										"type": "LinkedServiceReference"
-									},
-									"typeProperties": {
-										"scripts": [
-											{
-												"type": "Query",
-												"text": "BEGIN TRY\r\n\r\n    -- 中間テーブルに格納されているデータを削除\r\n    TRUNCATE TABLE temp_backlog\r\n\r\nEND TRY\r\n\r\nBEGIN CATCH\r\n\r\n\t-- ADF に異常終了を伝えるため\r\n\tTHROW;\r\n\r\nEND CATCH"
-											}
-										],
-										"scriptBlockExecutionTimeout": "02:00:00"
-									}
-								},
-								{
-									"name": "DeleteCsvFile",
-									"description": "対象のフォルダ配下に存在するアイテムの内、プレフィックスが \"backlog_\" の CSV ファイルのみ削除します。",
-									"type": "Delete",
-									"dependsOn": [
-										{
-											"activity": "TruncateMiddelTableAfterCsvFileDelete",
-											"dependencyConditions": [
-												"Completed"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"dataset": {
-											"referenceName": "blob_storage_order_received_rest",
-											"type": "DatasetReference",
-											"parameters": {}
-										},
-										"enableLogging": false,
-										"storeSettings": {
-											"type": "AzureBlobStorageReadSettings",
-											"recursive": true,
-											"wildcardFileName": "backlog_*.csv",
-											"enablePartitionDiscovery": false
-										}
-									}
-								}
-							]
-						}
-					},
-					{
-						"name": "TruncateMiddelTableIfExitMiddelTableData",
-						"description": "中間テーブルにレコードが存在する場合にのみ、中間テーブルのテーブルデータを全削除します。",
-						"type": "Script",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"linkedServiceName": {
-							"referenceName": "test_db_nsw_link_service",
-							"type": "LinkedServiceReference"
-						},
-						"typeProperties": {
-							"scripts": [
-								{
-									"type": "Query",
-									"text": "BEGIN TRY\n\n    DECLARE @RecordCount INT;\n\n\tSELECT @RecordCount = COUNT(sales_id)\n\tFROM temp_backlog;\n\n\t-- 中間テーブルにレコードが存在する場合\n\tIF @RecordCount > 0\n\tBEGIN\n\t\t-- 中間テーブルに格納されているデータを削除\n\t\tTRUNCATE TABLE temp_backlog;\n\tEND\n\nEND TRY\n\nBEGIN CATCH\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
-								}
-							],
-							"scriptBlockExecutionTimeout": "02:00:00"
-						}
-					},
-					{
-						"name": "GetFileNameList",
-						"description": "対象のフォルダ配下に存在するアイテム一覧を取得します。",
-						"type": "GetMetadata",
-						"dependsOn": [
-							{
-								"activity": "TruncateMiddelTableIfExitMiddelTableData",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "blob_storage_order_received_rest",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"fieldList": [
-								"childItems"
-							],
-							"storeSettings": {
-								"type": "AzureBlobStorageReadSettings",
-								"recursive": true,
-								"enablePartitionDiscovery": false
-							},
-							"formatSettings": {
-								"type": "BinaryReadSettings"
-							}
-						}
-					},
-					{
-						"name": "FilterCsvFile",
-						"description": "取得したアイテムの内、プレフィックスが \"backlog_\" のCSV ファイルのみを抽出します。",
-						"type": "Filter",
-						"dependsOn": [
-							{
-								"activity": "GetFileNameList",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('GetFileNameList').output.childItems",
-								"type": "Expression"
-							},
-							"condition": {
-								"value": "@and(startswith(item().name, 'backlog'), endswith(item().name, 'csv'))",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "ForEachGetLatestDatetime",
-						"description": "フィルタリングで残った CSV ファイルの数だけループします。",
-						"type": "ForEach",
-						"dependsOn": [
-							{
-								"activity": "FilterCsvFile",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('FilterCsvFile').output.value",
-								"type": "Expression"
-							},
-							"isSequential": true,
-							"activities": [
-								{
-									"name": "LatestDatetimeFileNameIsEmpty",
-									"description": "latestDatetimeFileName の値が empty かどうか判断します。",
-									"type": "IfCondition",
-									"dependsOn": [],
-									"userProperties": [],
-									"typeProperties": {
-										"expression": {
-											"value": "@empty(variables('latestDatetimeFileName'))",
-											"type": "Expression"
-										},
-										"ifFalseActivities": [
-											{
-												"name": "SetTempLatestDatetimeFileName",
-												"description": "tempLatestDatetimeFileName に latestDatetimeFileName の値を設定します。",
-												"type": "SetVariable",
-												"dependsOn": [],
-												"policy": {
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"variableName": "tempLatestDatetimeFileName",
-													"value": {
-														"value": "@variables('latestDatetimeFileName')",
-														"type": "Expression"
-													}
-												}
-											},
-											{
-												"name": "SetLatestDatetimeFileName",
-												"description": "ForEach に渡されたファイル名の日時と tempLatestDatetimeFileName の日時を比較し、最新の日時のファイル名のみを保持します。",
-												"type": "SetVariable",
-												"dependsOn": [
-													{
-														"activity": "SetTempLatestDatetimeFileName",
-														"dependencyConditions": [
-															"Succeeded"
-														]
-													}
-												],
-												"policy": {
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"variableName": "latestDatetimeFileName",
-													"value": {
-														"value": "@if(greater(substring(item().name, 22, 14), substring(variables('tempLatestDatetimeFileName'), 22, 14)), item().name, variables('tempLatestDatetimeFileName'))",
-														"type": "Expression"
-													}
-												}
-											}
-										],
-										"ifTrueActivities": [
-											{
-												"name": "SetFileName",
-												"description": "latestDatetimeFileName に ForEach に渡されたファイル名を設定します。",
-												"type": "SetVariable",
-												"dependsOn": [],
-												"policy": {
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"variableName": "latestDatetimeFileName",
-													"value": {
-														"value": "@item().name",
-														"type": "Expression"
-													}
-												}
-											}
-										]
-									}
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"variables": {
-					"latestDatetimeFileName": {
-						"type": "String"
-					},
-					"tempLatestDatetimeFileName": {
-						"type": "String"
-					}
-				},
-				"folder": {
-					"name": "受注残/CSV データを中間テーブルに保存"
-				},
-				"annotations": [],
-				"lastPublishTime": "2025-10-09T04:54:59Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/csv_db_bulk_backlog_middle_table')]"
-			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/budget')]",
@@ -1968,9 +1422,9 @@
 			"properties": {
 				"activities": [
 					{
-						"name": "CsvDataInMiddleTable",
-						"description": "CSV ファイルから読み込んだデータを中間テーブルに保存します。",
-						"type": "ExecuteDataFlow",
+						"name": "ExitCsvFile",
+						"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
+						"type": "IfCondition",
 						"dependsOn": [
 							{
 								"activity": "ForEachGetLatestDatetime",
@@ -1979,50 +1433,10 @@
 								]
 							}
 						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataflow": {
-								"referenceName": "csv_db_bulk_budget_middle_table",
-								"type": "DataFlowReference",
-								"parameters": {
-									"latestDateTime": "'budget_20251105053200.csv'"
-								},
-								"datasetParameters": {
-									"csvFileRead": {},
-									"csvDataInMiddleTable": {}
-								}
-							},
-							"staging": {},
-							"compute": {
-								"coreCount": 8,
-								"computeType": "General"
-							},
-							"traceLevel": "Fine"
-						}
-					},
-					{
-						"name": "ExitCsvFile",
-						"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
-						"type": "IfCondition",
-						"dependsOn": [
-							{
-								"activity": "CsvDataInMiddleTable",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
 						"userProperties": [],
 						"typeProperties": {
 							"expression": {
-								"value": "@greater(activity('CsvDataInMiddleTable').output.runStatus.metrics.csvDataInMiddleTable.sources.csvFileRead.details.fileReadCount[0], 0)",
+								"value": "@greater(activity('FilterCsvFile').output.FilteredItemsCount, 0)",
 								"type": "Expression"
 							},
 							"ifTrueActivities": [
@@ -2030,7 +1444,14 @@
 									"name": "DeleteInsertCsvDataAndGroupByFileName",
 									"description": "CSV ファイルから読み込んだデータを DELETE INSERT します",
 									"type": "Script",
-									"dependsOn": [],
+									"dependsOn": [
+										{
+											"activity": "CsvDataInMiddleTable",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
 									"policy": {
 										"timeout": "0.12:00:00",
 										"retry": 0,
@@ -2143,7 +1564,7 @@
 									"userProperties": [],
 									"typeProperties": {
 										"dataset": {
-											"referenceName": "binary_budget",
+											"referenceName": "binary_common",
 											"type": "DatasetReference",
 											"parameters": {}
 										},
@@ -2154,6 +1575,39 @@
 											"wildcardFileName": "budget_*.csv",
 											"enablePartitionDiscovery": false
 										}
+									}
+								},
+								{
+									"name": "CsvDataInMiddleTable",
+									"description": "CSV ファイルから読み込んだデータを中間テーブルに保存します。",
+									"type": "ExecuteDataFlow",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataflow": {
+											"referenceName": "csv_db_bulk_budget_temp_table",
+											"type": "DataFlowReference",
+											"parameters": {
+												"latestDatetimeFileName": "'budget_20251105053200.csv'"
+											},
+											"datasetParameters": {
+												"csvFileRead": {},
+												"csvDataInMiddleTable": {}
+											}
+										},
+										"staging": {},
+										"compute": {
+											"coreCount": 8,
+											"computeType": "General"
+										},
+										"traceLevel": "Fine"
 									}
 								}
 							]
@@ -2208,7 +1662,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"dataset": {
-								"referenceName": "binary_budget",
+								"referenceName": "binary_common",
 								"type": "DatasetReference",
 								"parameters": {}
 							},
@@ -2369,7 +1823,7 @@
 				"lastPublishTime": "2025-10-09T04:54:59Z"
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/csv_db_bulk_budget_middle_table')]"
+				"[concat(variables('factoryId'), '/dataflows/csv_db_bulk_budget_temp_table')]"
 			]
 		},
 		{
@@ -2519,9 +1973,9 @@
 			"properties": {
 				"activities": [
 					{
-						"name": "CsvDataInMiddleTable",
-						"description": "CSV ファイルから読み込んだデータを中間テーブルに保存します。",
-						"type": "ExecuteDataFlow",
+						"name": "ExitCsvFile",
+						"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
+						"type": "IfCondition",
 						"dependsOn": [
 							{
 								"activity": "ForEachGetLatestDatetime",
@@ -2530,50 +1984,10 @@
 								]
 							}
 						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataflow": {
-								"referenceName": "csv_db_bulk_plstatement_middle_table",
-								"type": "DataFlowReference",
-								"parameters": {
-									"latestDateTime": "'plstatement_20251105053200.csv'"
-								},
-								"datasetParameters": {
-									"csvFileRead": {},
-									"csvDataInMiddleTable": {}
-								}
-							},
-							"staging": {},
-							"compute": {
-								"coreCount": 8,
-								"computeType": "General"
-							},
-							"traceLevel": "Fine"
-						}
-					},
-					{
-						"name": "ExitCsvFile",
-						"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
-						"type": "IfCondition",
-						"dependsOn": [
-							{
-								"activity": "CsvDataInMiddleTable",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
 						"userProperties": [],
 						"typeProperties": {
 							"expression": {
-								"value": "@greater(activity('CsvDataInMiddleTable').output.runStatus.metrics.csvDataInMiddleTable.sources.csvFileRead.details.fileReadCount[0], 0)",
+								"value": "@greater(activity('FilterCsvFile').output.FilteredItemsCount, 0)",
 								"type": "Expression"
 							},
 							"ifTrueActivities": [
@@ -2581,7 +1995,14 @@
 									"name": "DeleteInsertCsvDataAndGroupByFileName",
 									"description": "CSV ファイルから読み込んだデータを DELETE INSERT します",
 									"type": "Script",
-									"dependsOn": [],
+									"dependsOn": [
+										{
+											"activity": "CsvDataInMiddleTable",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
 									"policy": {
 										"timeout": "0.12:00:00",
 										"retry": 0,
@@ -2694,7 +2115,7 @@
 									"userProperties": [],
 									"typeProperties": {
 										"dataset": {
-											"referenceName": "binary_plstatement",
+											"referenceName": "binary_common",
 											"type": "DatasetReference",
 											"parameters": {}
 										},
@@ -2705,6 +2126,39 @@
 											"wildcardFileName": "plstatement_*.csv",
 											"enablePartitionDiscovery": false
 										}
+									}
+								},
+								{
+									"name": "CsvDataInMiddleTable",
+									"description": "CSV ファイルから読み込んだデータを中間テーブルに保存します。",
+									"type": "ExecuteDataFlow",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataflow": {
+											"referenceName": "csv_db_bulk_plstatement_temp_table",
+											"type": "DataFlowReference",
+											"parameters": {
+												"latestDatetimeFileName": "'plstatement_20251105053200.csv'"
+											},
+											"datasetParameters": {
+												"csvFileRead": {},
+												"csvDataInMiddleTable": {}
+											}
+										},
+										"staging": {},
+										"compute": {
+											"coreCount": 8,
+											"computeType": "General"
+										},
+										"traceLevel": "Fine"
 									}
 								}
 							]
@@ -2759,7 +2213,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"dataset": {
-								"referenceName": "binary_plstatement",
+								"referenceName": "binary_common",
 								"type": "DatasetReference",
 								"parameters": {}
 							},
@@ -2870,7 +2324,7 @@
 												"typeProperties": {
 													"variableName": "latestDatetimeFileName",
 													"value": {
-														"value": "@if(greater(substring(item().name, 7, 14), substring(variables('tempLatestDatetimeFileName'), 7, 14)), item().name, variables('tempLatestDatetimeFileName'))",
+														"value": "@if(greater(substring(item().name, 12, 14), substring(variables('tempLatestDatetimeFileName'), 12, 14)), item().name, variables('tempLatestDatetimeFileName'))",
 														"type": "Expression"
 													}
 												}
@@ -2920,7 +2374,7 @@
 				"lastPublishTime": "2025-10-09T04:54:59Z"
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/csv_db_bulk_plstatement_middle_table')]"
+				"[concat(variables('factoryId'), '/dataflows/csv_db_bulk_plstatement_temp_table')]"
 			]
 		},
 		{
@@ -3327,7 +2781,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Started",
+				"runtimeState": "Stopped",
 				"pipelines": [
 					{
 						"pipelineReference": {
@@ -3343,8 +2797,7 @@
 						"frequency": "Day",
 						"interval": 1,
 						"startTime": "2025-11-21T16:55:00",
-						"timeZone": "Tokyo Standard Time",
-						"schedule": {}
+						"timeZone": "Tokyo Standard Time"
 					}
 				}
 			},
