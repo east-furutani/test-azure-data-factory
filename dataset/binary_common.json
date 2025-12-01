@@ -1,0 +1,20 @@
+{
+	"name": "binary_common",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "test_blob_storage_nsw",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "共通"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"container": "sales-forecast-data"
+			}
+		}
+	}
+}

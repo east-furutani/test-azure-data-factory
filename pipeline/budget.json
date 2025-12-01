@@ -3,9 +3,9 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "CsvDataInMiddleTable",
-				"description": "CSV ファイルから読み込んだデータを中間テーブルに保存します。",
-				"type": "ExecuteDataFlow",
+				"name": "ExitCsvFile",
+				"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
+				"type": "IfCondition",
 				"dependsOn": [
 					{
 						"activity": "ForEachGetLatestDatetime",
@@ -14,45 +14,10 @@
 						]
 					}
 				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"dataflow": {
-						"referenceName": "csv_db_bulk_budget_middle_table",
-						"type": "DataFlowReference",
-						"parameters": {
-							"latestDateTime": "'budget_20251105053200.csv'"
-						}
-					},
-					"compute": {
-						"coreCount": 8,
-						"computeType": "General"
-					},
-					"traceLevel": "Fine"
-				}
-			},
-			{
-				"name": "ExitCsvFile",
-				"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
-				"type": "IfCondition",
-				"dependsOn": [
-					{
-						"activity": "CsvDataInMiddleTable",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
-						"value": "@greater(activity('CsvDataInMiddleTable').output.runStatus.metrics.csvDataInMiddleTable.sources.csvFileRead.details.fileReadCount[0], 0)",
+						"value": "@greater(activity('FilterCsvFile').output.FilteredItemsCount, 0)",
 						"type": "Expression"
 					},
 					"ifTrueActivities": [
@@ -60,7 +25,14 @@
 							"name": "DeleteInsertCsvDataAndGroupByFileName",
 							"description": "CSV ファイルから読み込んだデータを DELETE INSERT します",
 							"type": "Script",
-							"dependsOn": [],
+							"dependsOn": [
+								{
+									"activity": "CsvDataInMiddleTable",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
 							"policy": {
 								"timeout": "0.12:00:00",
 								"retry": 0,
@@ -173,7 +145,7 @@
 							"userProperties": [],
 							"typeProperties": {
 								"dataset": {
-									"referenceName": "binary_budget",
+									"referenceName": "binary_common",
 									"type": "DatasetReference"
 								},
 								"enableLogging": false,
@@ -183,6 +155,34 @@
 									"wildcardFileName": "budget_*.csv",
 									"enablePartitionDiscovery": false
 								}
+							}
+						},
+						{
+							"name": "CsvDataInMiddleTable",
+							"description": "CSV ファイルから読み込んだデータを中間テーブルに保存します。",
+							"type": "ExecuteDataFlow",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataflow": {
+									"referenceName": "csv_db_bulk_budget_temp_table",
+									"type": "DataFlowReference",
+									"parameters": {
+										"latestDatetimeFileName": "'budget_20251105053200.csv'"
+									}
+								},
+								"compute": {
+									"coreCount": 8,
+									"computeType": "General"
+								},
+								"traceLevel": "Fine"
 							}
 						}
 					]
@@ -237,7 +237,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataset": {
-						"referenceName": "binary_budget",
+						"referenceName": "binary_common",
 						"type": "DatasetReference"
 					},
 					"fieldList": [

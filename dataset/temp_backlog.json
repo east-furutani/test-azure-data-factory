@@ -1,9 +1,12 @@
 {
-	"name": "AzureSqlBacklogMiddleTable",
+	"name": "temp_backlog",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "test_db_nsw_link_service",
 			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "受注残"
 		},
 		"annotations": [],
 		"type": "AzureSqlTable",
