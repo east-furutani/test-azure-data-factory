@@ -115,6 +115,307 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlOrderReceivedRestDiff')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "test_db_nsw_link_service",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "process_date",
+						"type": "char"
+					},
+					{
+						"name": "sales_order",
+						"type": "varchar"
+					},
+					{
+						"name": "detail_row_number",
+						"type": "real",
+						"precision": 7
+					},
+					{
+						"name": "slip_type",
+						"type": "nvarchar"
+					},
+					{
+						"name": "client",
+						"type": "char"
+					},
+					{
+						"name": "abbreviation",
+						"type": "nvarchar"
+					},
+					{
+						"name": "shipping_destination",
+						"type": "char"
+					},
+					{
+						"name": "shipping_destination_abbreviation",
+						"type": "nvarchar"
+					},
+					{
+						"name": "collection_destination_id",
+						"type": "char"
+					},
+					{
+						"name": "collection_destination_abbreviation",
+						"type": "nvarchar"
+					},
+					{
+						"name": "supplier",
+						"type": "char"
+					},
+					{
+						"name": "supplier_search_name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "sales_office",
+						"type": "char"
+					},
+					{
+						"name": "sales_office_name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "sales_office_group",
+						"type": "char"
+					},
+					{
+						"name": "sales_office_group_name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "customer",
+						"type": "char"
+					},
+					{
+						"name": "customer_abbreviation",
+						"type": "nvarchar"
+					},
+					{
+						"name": "billing_address_or_old_id",
+						"type": "char"
+					},
+					{
+						"name": "billing_address_abbreviation",
+						"type": "nvarchar"
+					},
+					{
+						"name": "billing_address_name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "sales_person",
+						"type": "char"
+					},
+					{
+						"name": "sales_person_name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "consumer",
+						"type": "nvarchar"
+					},
+					{
+						"name": "carrier",
+						"type": "char"
+					},
+					{
+						"name": "carrier_search_name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "item_number",
+						"type": "nvarchar"
+					},
+					{
+						"name": "text",
+						"type": "char"
+					},
+					{
+						"name": "packing_style_name",
+						"type": "char"
+					},
+					{
+						"name": "shipping_name_code",
+						"type": "nvarchar"
+					},
+					{
+						"name": "shipping_destination_name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "trademark_code",
+						"type": "varchar"
+					},
+					{
+						"name": "trademark_name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "goods_big_classification_code",
+						"type": "char"
+					},
+					{
+						"name": "goods_big_classification_name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "product_group_code",
+						"type": "char"
+					},
+					{
+						"name": "product_group_name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "goods_group_code",
+						"type": "char"
+					},
+					{
+						"name": "goods_group_name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "site",
+						"type": "char"
+					},
+					{
+						"name": "site_name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "warehouse",
+						"type": "char"
+					},
+					{
+						"name": "warehouse_name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "contract_unit_quantity",
+						"type": "real",
+						"precision": 7
+					},
+					{
+						"name": "contract_price_unit",
+						"type": "nvarchar"
+					},
+					{
+						"name": "sale_quantity",
+						"type": "real",
+						"precision": 7
+					},
+					{
+						"name": "sale_unit",
+						"type": "nvarchar"
+					},
+					{
+						"name": "sale_amount",
+						"type": "real",
+						"precision": 7
+					},
+					{
+						"name": "invoice_contract_unit_quantity",
+						"type": "real",
+						"precision": 7
+					},
+					{
+						"name": "invoice_contract_price_unit",
+						"type": "nvarchar"
+					},
+					{
+						"name": "invoice_amount",
+						"type": "real",
+						"precision": 7
+					},
+					{
+						"name": "invoice_mimscellaneous_expenses",
+						"type": "real",
+						"precision": 7
+					},
+					{
+						"name": "orders_remaining_amount",
+						"type": "real",
+						"precision": 7
+					},
+					{
+						"name": "accountant_currency",
+						"type": "varchar"
+					},
+					{
+						"name": "invoice_recording_date",
+						"type": "date"
+					},
+					{
+						"name": "sorting_date",
+						"type": "char"
+					},
+					{
+						"name": "author",
+						"type": "varchar"
+					},
+					{
+						"name": "create_at",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					},
+					{
+						"name": "shipping_scheduled_date",
+						"type": "date"
+					},
+					{
+						"name": "arrival_desired_date",
+						"type": "date"
+					},
+					{
+						"name": "file_name",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "order_received_rest_diff"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/test_db_nsw_link_service')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/binary_common')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "test_blob_storage_nsw",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "共通"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"container": "sales-forecast-data"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/test_blob_storage_nsw')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/temp_backlog')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -390,282 +691,6 @@
 				"typeProperties": {
 					"schema": "dbo",
 					"table": "temp_backlog"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/test_db_nsw_link_service')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/AzureSqlOrderReceivedRestDiff')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "test_db_nsw_link_service",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [
-					{
-						"name": "process_date",
-						"type": "char"
-					},
-					{
-						"name": "sales_order",
-						"type": "varchar"
-					},
-					{
-						"name": "detail_row_number",
-						"type": "real",
-						"precision": 7
-					},
-					{
-						"name": "slip_type",
-						"type": "nvarchar"
-					},
-					{
-						"name": "client",
-						"type": "char"
-					},
-					{
-						"name": "abbreviation",
-						"type": "nvarchar"
-					},
-					{
-						"name": "shipping_destination",
-						"type": "char"
-					},
-					{
-						"name": "shipping_destination_abbreviation",
-						"type": "nvarchar"
-					},
-					{
-						"name": "collection_destination_id",
-						"type": "char"
-					},
-					{
-						"name": "collection_destination_abbreviation",
-						"type": "nvarchar"
-					},
-					{
-						"name": "supplier",
-						"type": "char"
-					},
-					{
-						"name": "supplier_search_name",
-						"type": "nvarchar"
-					},
-					{
-						"name": "sales_office",
-						"type": "char"
-					},
-					{
-						"name": "sales_office_name",
-						"type": "nvarchar"
-					},
-					{
-						"name": "sales_office_group",
-						"type": "char"
-					},
-					{
-						"name": "sales_office_group_name",
-						"type": "nvarchar"
-					},
-					{
-						"name": "customer",
-						"type": "char"
-					},
-					{
-						"name": "customer_abbreviation",
-						"type": "nvarchar"
-					},
-					{
-						"name": "billing_address_or_old_id",
-						"type": "char"
-					},
-					{
-						"name": "billing_address_abbreviation",
-						"type": "nvarchar"
-					},
-					{
-						"name": "billing_address_name",
-						"type": "nvarchar"
-					},
-					{
-						"name": "sales_person",
-						"type": "char"
-					},
-					{
-						"name": "sales_person_name",
-						"type": "nvarchar"
-					},
-					{
-						"name": "consumer",
-						"type": "nvarchar"
-					},
-					{
-						"name": "carrier",
-						"type": "char"
-					},
-					{
-						"name": "carrier_search_name",
-						"type": "nvarchar"
-					},
-					{
-						"name": "item_number",
-						"type": "nvarchar"
-					},
-					{
-						"name": "text",
-						"type": "char"
-					},
-					{
-						"name": "packing_style_name",
-						"type": "char"
-					},
-					{
-						"name": "shipping_name_code",
-						"type": "nvarchar"
-					},
-					{
-						"name": "shipping_destination_name",
-						"type": "nvarchar"
-					},
-					{
-						"name": "trademark_code",
-						"type": "varchar"
-					},
-					{
-						"name": "trademark_name",
-						"type": "nvarchar"
-					},
-					{
-						"name": "goods_big_classification_code",
-						"type": "char"
-					},
-					{
-						"name": "goods_big_classification_name",
-						"type": "nvarchar"
-					},
-					{
-						"name": "product_group_code",
-						"type": "char"
-					},
-					{
-						"name": "product_group_name",
-						"type": "nvarchar"
-					},
-					{
-						"name": "goods_group_code",
-						"type": "char"
-					},
-					{
-						"name": "goods_group_name",
-						"type": "nvarchar"
-					},
-					{
-						"name": "site",
-						"type": "char"
-					},
-					{
-						"name": "site_name",
-						"type": "nvarchar"
-					},
-					{
-						"name": "warehouse",
-						"type": "char"
-					},
-					{
-						"name": "warehouse_name",
-						"type": "nvarchar"
-					},
-					{
-						"name": "contract_unit_quantity",
-						"type": "real",
-						"precision": 7
-					},
-					{
-						"name": "contract_price_unit",
-						"type": "nvarchar"
-					},
-					{
-						"name": "sale_quantity",
-						"type": "real",
-						"precision": 7
-					},
-					{
-						"name": "sale_unit",
-						"type": "nvarchar"
-					},
-					{
-						"name": "sale_amount",
-						"type": "real",
-						"precision": 7
-					},
-					{
-						"name": "invoice_contract_unit_quantity",
-						"type": "real",
-						"precision": 7
-					},
-					{
-						"name": "invoice_contract_price_unit",
-						"type": "nvarchar"
-					},
-					{
-						"name": "invoice_amount",
-						"type": "real",
-						"precision": 7
-					},
-					{
-						"name": "invoice_mimscellaneous_expenses",
-						"type": "real",
-						"precision": 7
-					},
-					{
-						"name": "orders_remaining_amount",
-						"type": "real",
-						"precision": 7
-					},
-					{
-						"name": "accountant_currency",
-						"type": "varchar"
-					},
-					{
-						"name": "invoice_recording_date",
-						"type": "date"
-					},
-					{
-						"name": "sorting_date",
-						"type": "char"
-					},
-					{
-						"name": "author",
-						"type": "varchar"
-					},
-					{
-						"name": "create_at",
-						"type": "datetime",
-						"precision": 23,
-						"scale": 3
-					},
-					{
-						"name": "shipping_scheduled_date",
-						"type": "date"
-					},
-					{
-						"name": "arrival_desired_date",
-						"type": "date"
-					},
-					{
-						"name": "file_name",
-						"type": "nvarchar"
-					}
-				],
-				"typeProperties": {
-					"schema": "dbo",
-					"table": "order_received_rest_diff"
 				}
 			},
 			"dependsOn": [
@@ -2152,446 +2177,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/binary_common')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "test_blob_storage_nsw",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "共通"
-				},
-				"annotations": [],
-				"type": "Binary",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"container": "sales-forecast-data"
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/test_blob_storage_nsw')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/backlog')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "ExitCsvFile",
-						"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
-						"type": "IfCondition",
-						"dependsOn": [
-							{
-								"activity": "ForEachGetLatestDatetime",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"expression": {
-								"value": "@greater(activity('FilterCsvFile').output.FilteredItemsCount, 0)",
-								"type": "Expression"
-							},
-							"ifTrueActivities": [
-								{
-									"name": "DeleteInsertCsvDataAndGroupByFileName",
-									"description": "CSV ファイルから読み込んだデータを DELETE INSERT します",
-									"type": "Script",
-									"dependsOn": [
-										{
-											"activity": "CsvDataInMiddleTable",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"linkedServiceName": {
-										"referenceName": "test_db_nsw_link_service",
-										"type": "LinkedServiceReference"
-									},
-									"typeProperties": {
-										"scripts": [
-											{
-												"type": "Query",
-												"text": "BEGIN TRY\n\t\t\n\tBEGIN TRANSACTION;\n\n\t-- 対象テーブルの内、年月が前月、当月、来月、当月より 2 年前のデータのみ削除\n\tDELETE FROM backlog\n\tWHERE\n\t\tsystem_date IN\n\t\t(\n\t\t\tSELECT\n\t\t\t\tsystem_date\n\t\t\tFROM\n\t\t\t\ttemp_backlog\n\t\t\tGROUP BY\n\t\t\t    system_date\n\t\t)\n\t\tOR\n\t\tsystem_date <= FORMAT(DATEADD(YEAR, -2, GETDATE() AT TIME ZONE 'UTC' AT TIME ZONE 'Tokyo Standard Time'), 'yyyyMM');\n\n\t-- CSV ファイルから読み込んだデータを対象テーブルに INSERT\n\tINSERT INTO backlog\n\t(\n\t\tsystem_date,\n\t\tsales_id,\n\t\tline_num,\n\t\tvoucher_type,\n\t\tcust_account,\n\t\tcust_short_name,\n\t\tsales_ship_to_account_num,\n\t\tsales_ship_to_short_name,\n\t\tcust_collections,\n\t\tsales_cust_collection_short_name,\n\t\tsales_vend_account_num,\n\t\tsales_vend_name_alias,\n\t\tsales_office,\n\t\tsales_office_name,\n\t\tsales_group,\n\t\tsales_group_name,\n\t\tsales_end_user_account_num,\n\t\tsales_end_user_short_name,\n\t\tinvoice_account,\n\t\tsales_invoice_short_name,\n\t\tsales_invoice_name,\n\t\tsales_person,\n\t\tsales_person_name,\n\t\tsales_consumer,\n\t\tcarrier_cd,\n\t\tcarrier_name_alias,\n\t\titem_id,\n\t\titem_name,\n\t\tpack_style_name,\n\t\tshipping_name_code,\n\t\tshipping_name,\n\t\ttrade_mark_code,\n\t\ttrade_mark_name,\n\t\tsales_item_class_code,\n\t\tsales_item_class_name,\n\t\tproduct_item_group_code,\n\t\tproduct_item_group_name,\n\t\tsales_item_group_code,\n\t\tsales_item_group_name,\n\t\tinvent_site_id,\n\t\tinvent_site_name,\n\t\tinvent_location_id,\n\t\tinvent_location_name,\n\t\tcontract_unit_qty,\n\t\tcontract_unit_price_uom,\n\t\tsales_qty,\n\t\tsales_unit,\n\t\tsales_amount,\n\t\tinvoice_contract_unit_qty,\n\t\tinvoice_contract_unit_price_uom,\n\t\tinvoice_amount,\n\t\tinvoice_additional_costs,\n\t\tbacklog_amount,\n\t\taccounting_currency,\n\t\tinvoice_date,\n\t\tprocessing_date,\n\t\tcreated_by,\n\t\tcreated_date_time,\n\t\tshipping_date_requested,\n\t\treceipt_date_requested\n\t)\n\tSELECT\n\t\tsystem_date,\n\t\tsales_id,\n\t\tline_num,\n\t\tvoucher_type,\n\t\tcust_account,\n\t\tcust_short_name,\n\t\tsales_ship_to_account_num,\n\t\tsales_ship_to_short_name,\n\t\tcust_collections,\n\t\tsales_cust_collection_short_name,\n\t\tsales_vend_account_num,\n\t\tsales_vend_name_alias,\n\t\tsales_office,\n\t\tsales_office_name,\n\t\tsales_group,\n\t\tsales_group_name,\n\t\tsales_end_user_account_num,\n\t\tsales_end_user_short_name,\n\t\tinvoice_account,\n\t\tsales_invoice_short_name,\n\t\tsales_invoice_name,\n\t\tsales_person,\n\t\tsales_person_name,\n\t\tsales_consumer,\n\t\tcarrier_cd,\n\t\tcarrier_name_alias,\n\t\titem_id,\n\t\titem_name,\n\t\tpack_style_name,\n\t\tshipping_name_code,\n\t\tshipping_name,\n\t\ttrade_mark_code,\n\t\ttrade_mark_name,\n\t\tsales_item_class_code,\n\t\tsales_item_class_name,\n\t\tproduct_item_group_code,\n\t\tproduct_item_group_name,\n\t\tsales_item_group_code,\n\t\tsales_item_group_name,\n\t\tinvent_site_id,\n\t\tinvent_site_name,\n\t\tinvent_location_id,\n\t\tinvent_location_name,\n\t\tcontract_unit_qty,\n\t\tcontract_unit_price_uom,\n\t\tsales_qty,\n\t\tsales_unit,\n\t\tsales_amount,\n\t\tinvoice_contract_unit_qty,\n\t\tinvoice_contract_unit_price_uom,\n\t\tinvoice_amount,\n\t\tinvoice_additional_costs,\n\t\tbacklog_amount,\n\t\taccounting_currency,\n\t\tinvoice_date,\n\t\tprocessing_date,\n\t\tcreated_by,\n\t\tcreated_date_time,\n\t\tshipping_date_requested,\n\t\treceipt_date_requested\n\tFROM\n\t\ttemp_backlog\n\n\tCOMMIT TRANSACTION;\n\nEND TRY\n\nBEGIN CATCH\n\n\tROLLBACK TRANSACTION;\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
-											}
-										],
-										"scriptBlockExecutionTimeout": "02:00:00"
-									}
-								},
-								{
-									"name": "TruncateMiddelTableAfterCsvFileDelete",
-									"description": "中間テーブルのテーブルデータを全削除します。\n次のアクティビティで CSV ファイルを削除します。",
-									"type": "Script",
-									"dependsOn": [
-										{
-											"activity": "DeleteInsertCsvDataAndGroupByFileName",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"linkedServiceName": {
-										"referenceName": "test_db_nsw_link_service",
-										"type": "LinkedServiceReference"
-									},
-									"typeProperties": {
-										"scripts": [
-											{
-												"type": "Query",
-												"text": "BEGIN TRY\r\n\r\n    -- 中間テーブルに格納されているデータを削除\r\n    TRUNCATE TABLE temp_backlog;\r\n\r\nEND TRY\r\n\r\nBEGIN CATCH\r\n\r\n\t-- ADF に異常終了を伝えるため\r\n\tTHROW;\r\n\r\nEND CATCH"
-											}
-										],
-										"scriptBlockExecutionTimeout": "02:00:00"
-									}
-								},
-								{
-									"name": "TruncateMiddelTableNotAfterCsvFileDelete",
-									"description": "中間テーブルのテーブルデータを全削除します。\n次のアクティビティで CSV ファイルを削除しません",
-									"type": "Script",
-									"dependsOn": [
-										{
-											"activity": "DeleteInsertCsvDataAndGroupByFileName",
-											"dependencyConditions": [
-												"Failed"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"linkedServiceName": {
-										"referenceName": "test_db_nsw_link_service",
-										"type": "LinkedServiceReference"
-									},
-									"typeProperties": {
-										"scripts": [
-											{
-												"type": "Query",
-												"text": "BEGIN TRY\r\n\r\n    -- 中間テーブルに格納されているデータを削除\r\n    TRUNCATE TABLE temp_backlog\r\n\r\nEND TRY\r\n\r\nBEGIN CATCH\r\n\r\n\t-- ADF に異常終了を伝えるため\r\n\tTHROW;\r\n\r\nEND CATCH"
-											}
-										],
-										"scriptBlockExecutionTimeout": "02:00:00"
-									}
-								},
-								{
-									"name": "DeleteCsvFile",
-									"description": "対象のフォルダ配下に存在するアイテムの内、プレフィックスが \"backlog_\" の CSV ファイルのみ削除します。",
-									"type": "Delete",
-									"dependsOn": [
-										{
-											"activity": "TruncateMiddelTableAfterCsvFileDelete",
-											"dependencyConditions": [
-												"Completed"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"dataset": {
-											"referenceName": "binary_common",
-											"type": "DatasetReference",
-											"parameters": {}
-										},
-										"enableLogging": false,
-										"storeSettings": {
-											"type": "AzureBlobStorageReadSettings",
-											"recursive": true,
-											"wildcardFileName": "backlog_*.csv",
-											"enablePartitionDiscovery": false
-										}
-									}
-								},
-								{
-									"name": "CsvDataInMiddleTable",
-									"description": "CSV ファイルから読み込んだデータを cache に保存します。",
-									"type": "ExecuteDataFlow",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"dataflow": {
-											"referenceName": "csv_db_bulk_backlog_temp_table",
-											"type": "DataFlowReference",
-											"parameters": {
-												"latestDatetimeFileName": {
-													"value": "'@{variables('latestDatetimeFileName')}'",
-													"type": "Expression"
-												}
-											},
-											"datasetParameters": {
-												"csvFileRead": {},
-												"csvDataInMiddleTable": {}
-											}
-										},
-										"staging": {},
-										"compute": {
-											"coreCount": 8,
-											"computeType": "General"
-										},
-										"traceLevel": "Fine"
-									}
-								}
-							]
-						}
-					},
-					{
-						"name": "TruncateMiddelTableIfExitMiddelTableData",
-						"description": "中間テーブルにレコードが存在する場合にのみ、中間テーブルのテーブルデータを全削除します。",
-						"type": "Script",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"linkedServiceName": {
-							"referenceName": "test_db_nsw_link_service",
-							"type": "LinkedServiceReference"
-						},
-						"typeProperties": {
-							"scripts": [
-								{
-									"type": "Query",
-									"text": "BEGIN TRY\n\n    DECLARE @RecordCount INT;\n\n\tSELECT @RecordCount = COUNT(sales_id)\n\tFROM temp_backlog;\n\n\t-- 中間テーブルにレコードが存在する場合\n\tIF @RecordCount > 0\n\tBEGIN\n\t\t-- 中間テーブルに格納されているデータを削除\n\t\tTRUNCATE TABLE temp_backlog;\n\tEND\n\nEND TRY\n\nBEGIN CATCH\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
-								}
-							],
-							"scriptBlockExecutionTimeout": "02:00:00"
-						}
-					},
-					{
-						"name": "GetFileNameList",
-						"description": "対象のフォルダ配下に存在するアイテム一覧を取得します。",
-						"type": "GetMetadata",
-						"dependsOn": [
-							{
-								"activity": "TruncateMiddelTableIfExitMiddelTableData",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "binary_common",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"fieldList": [
-								"childItems"
-							],
-							"storeSettings": {
-								"type": "AzureBlobStorageReadSettings",
-								"recursive": true,
-								"enablePartitionDiscovery": false
-							},
-							"formatSettings": {
-								"type": "BinaryReadSettings"
-							}
-						}
-					},
-					{
-						"name": "FilterCsvFile",
-						"description": "取得したアイテムの内、プレフィックスが \"backlog_\" のCSV ファイルのみを抽出します。",
-						"type": "Filter",
-						"dependsOn": [
-							{
-								"activity": "GetFileNameList",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('GetFileNameList').output.childItems",
-								"type": "Expression"
-							},
-							"condition": {
-								"value": "@and(startswith(item().name, 'backlog'), endswith(item().name, 'csv'))",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "ForEachGetLatestDatetime",
-						"description": "フィルタリングで残った CSV ファイルの数だけループします。",
-						"type": "ForEach",
-						"dependsOn": [
-							{
-								"activity": "FilterCsvFile",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('FilterCsvFile').output.value",
-								"type": "Expression"
-							},
-							"isSequential": true,
-							"activities": [
-								{
-									"name": "LatestDatetimeFileNameIsEmpty",
-									"description": "latestDatetimeFileName の値が empty かどうか判断します。",
-									"type": "IfCondition",
-									"dependsOn": [],
-									"userProperties": [],
-									"typeProperties": {
-										"expression": {
-											"value": "@empty(variables('latestDatetimeFileName'))",
-											"type": "Expression"
-										},
-										"ifFalseActivities": [
-											{
-												"name": "SetTempLatestDatetimeFileName",
-												"description": "tempLatestDatetimeFileName に latestDatetimeFileName の値を設定します。",
-												"type": "SetVariable",
-												"dependsOn": [],
-												"policy": {
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"variableName": "tempLatestDatetimeFileName",
-													"value": {
-														"value": "@variables('latestDatetimeFileName')",
-														"type": "Expression"
-													}
-												}
-											},
-											{
-												"name": "SetLatestDatetimeFileName",
-												"description": "ForEach に渡されたファイル名の日時と tempLatestDatetimeFileName の日時を比較し、最新の日時のファイル名のみを保持します。",
-												"type": "SetVariable",
-												"dependsOn": [
-													{
-														"activity": "SetTempLatestDatetimeFileName",
-														"dependencyConditions": [
-															"Succeeded"
-														]
-													}
-												],
-												"policy": {
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"variableName": "latestDatetimeFileName",
-													"value": {
-														"value": "@if(greater(substring(item().name, 22, 14), substring(variables('tempLatestDatetimeFileName'), 22, 14)), item().name, variables('tempLatestDatetimeFileName'))",
-														"type": "Expression"
-													}
-												}
-											}
-										],
-										"ifTrueActivities": [
-											{
-												"name": "SetFileName",
-												"description": "latestDatetimeFileName に ForEach に渡されたファイル名を設定します。",
-												"type": "SetVariable",
-												"dependsOn": [],
-												"policy": {
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"variableName": "latestDatetimeFileName",
-													"value": {
-														"value": "@item().name",
-														"type": "Expression"
-													}
-												}
-											}
-										]
-									}
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"variables": {
-					"latestDatetimeFileName": {
-						"type": "String"
-					},
-					"tempLatestDatetimeFileName": {
-						"type": "String"
-					}
-				},
-				"folder": {
-					"name": "受注残"
-				},
-				"annotations": [],
-				"lastPublishTime": "2025-10-09T04:54:59Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/test_db_nsw_link_service')]",
-				"[concat(variables('factoryId'), '/datasets/binary_common')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/csv_file_delete_order_received_rest')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -3381,6 +2966,272 @@
 				"[concat(variables('factoryId'), '/linkedServices/test_db_nsw_link_service')]",
 				"[concat(variables('factoryId'), '/dataflows/csv_cache_bulk')]",
 				"[concat(variables('factoryId'), '/datasets/test_blob_storage_nsw')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/csv_db_bulk_backlog_temp_table')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "受注残"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"linkedService": {
+								"referenceName": "test_blob_storage_nsw",
+								"type": "LinkedServiceReference"
+							},
+							"name": "csvFileRead"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "temp_backlog",
+								"type": "DatasetReference"
+							},
+							"name": "csvDataInMiddleTable",
+							"rejectedDataLinkedService": {
+								"referenceName": "test_db_nsw_link_service",
+								"type": "LinkedServiceReference"
+							}
+						}
+					],
+					"transformations": [
+						{
+							"name": "toDecimal"
+						}
+					],
+					"scriptLines": [
+						"parameters{",
+						"     latestDatetimeFileName as string ('backlog_202510_202512_20251105053200.csv')",
+						"}",
+						"source(output(",
+						"          {処理年月} as string,",
+						"          {販売注文} as string,",
+						"          {明細行番号} as integer,",
+						"          {伝票タイプ} as string,",
+						"          {顧客} as string,",
+						"          {略称} as string,",
+						"          {出荷先コード} as string,",
+						"          {出荷先-略称} as string,",
+						"          {回収先ID} as string,",
+						"          {回収先-略称} as string,",
+						"          {仕入先} as string,",
+						"          {仕入先-検索名} as string,",
+						"          {営業所} as string,",
+						"          {営業所名} as string,",
+						"          {営業所グループ} as string,",
+						"          {営業所グループ名} as string,",
+						"          {カスタマー} as string,",
+						"          {カスタマー略称} as string,",
+						"          {請求先/元 ID} as string,",
+						"          {請求先-略称} as string,",
+						"          {請求先-名前} as string,",
+						"          {営業員} as string,",
+						"          {営業員名} as string,",
+						"          {需要家} as string,",
+						"          {運送業者} as string,",
+						"          {運送業者-検索名} as string,",
+						"          {品目番号} as string,",
+						"          {テキスト} as string,",
+						"          {荷姿名} as string,",
+						"          {出荷名コード} as string,",
+						"          {出荷名名称} as string,",
+						"          {商標コード} as string,",
+						"          {商標名} as string,",
+						"          {商品大分類コード} as string,",
+						"          {商品大分類名} as string,",
+						"          {製品群コード} as string,",
+						"          {製品群名} as string,",
+						"          {商品群コード} as string,",
+						"          {商品群名} as string,",
+						"          {サイト} as string,",
+						"          {サイト名} as string,",
+						"          {倉庫} as string,",
+						"          {倉庫名} as string,",
+						"          {契約単位数量} as string,",
+						"          {契約単価単位} as string,",
+						"          {販売-数量} as string,",
+						"          {販売-単位} as string,",
+						"          {販売-金額} as string,",
+						"          {請求書-契約単位数量} as string,",
+						"          {請求書-契約単価単位} as string,",
+						"          {請求書-金額} as string,",
+						"          {請求書-台貫金額(諸費用)} as string,",
+						"          {受注残金額} as string,",
+						"          {会計通貨} as string,",
+						"          {請求書-計上日} as date 'yyyy/MM/dd',",
+						"          {整理年月} as string,",
+						"          {作成者} as string,",
+						"          {作成日時} as timestamp 'yyyy/MM/dd HH:mm:ss',",
+						"          {出荷予定日} as date 'yyyy/MM/dd',",
+						"          {入荷希望日} as date 'yyyy/MM/dd'",
+						"     ),",
+						"     useSchema: false,",
+						"     allowSchemaDrift: false,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: true,",
+						"     format: 'delimited',",
+						"     container: 'sales-forecast-data',",
+						"     columnDelimiter: ',',",
+						"     escapeChar: '\\\"',",
+						"     quoteChar: '\\\"',",
+						"     encodingName: 'SHIFT-JIS',",
+						"     columnNamesAsHeader: true,",
+						"     wildcardPaths:[($latestDatetimeFileName)]) ~> csvFileRead",
+						"csvFileRead derive({契約単位数量} = toDecimal({契約単位数量}, 12, 2),",
+						"          {販売-数量} = toDecimal({販売-数量}, 12, 2),",
+						"          {販売-金額} = toDecimal({販売-金額}, 15, 2),",
+						"          {請求書-契約単位数量} = toDecimal({請求書-契約単位数量}, 12, 2),",
+						"          {請求書-金額} = toDecimal({請求書-金額}, 15, 2),",
+						"          {請求書-台貫金額(諸費用)} = toDecimal({請求書-台貫金額(諸費用)}, 15, 2),",
+						"          {受注残金額} = toDecimal({受注残金額}, 15, 2)) ~> toDecimal",
+						"toDecimal sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          system_date as string,",
+						"          sales_id as string,",
+						"          line_num as integer,",
+						"          voucher_type as string,",
+						"          cust_account as string,",
+						"          cust_short_name as string,",
+						"          sales_ship_to_account_num as string,",
+						"          sales_ship_to_short_name as string,",
+						"          cust_collections as string,",
+						"          sales_cust_collection_short_name as string,",
+						"          sales_vend_account_num as string,",
+						"          sales_vend_name_alias as string,",
+						"          sales_office as string,",
+						"          sales_office_name as string,",
+						"          sales_group as string,",
+						"          sales_group_name as string,",
+						"          sales_end_user_account_num as string,",
+						"          sales_end_user_short_name as string,",
+						"          invoice_account as string,",
+						"          sales_invoice_short_name as string,",
+						"          sales_invoice_name as string,",
+						"          sales_person as string,",
+						"          sales_person_name as string,",
+						"          sales_consumer as string,",
+						"          carrier_cd as string,",
+						"          carrier_name_alias as string,",
+						"          item_id as string,",
+						"          item_name as string,",
+						"          pack_style_name as string,",
+						"          shipping_name_code as string,",
+						"          shipping_name as string,",
+						"          trade_mark_code as string,",
+						"          trade_mark_name as string,",
+						"          sales_item_class_code as string,",
+						"          sales_item_class_name as string,",
+						"          product_item_group_code as string,",
+						"          product_item_group_name as string,",
+						"          sales_item_group_code as string,",
+						"          sales_item_group_name as string,",
+						"          invent_site_id as string,",
+						"          invent_site_name as string,",
+						"          invent_location_id as string,",
+						"          invent_location_name as string,",
+						"          contract_unit_qty as decimal(12,2),",
+						"          contract_unit_price_uom as string,",
+						"          sales_qty as decimal(12,2),",
+						"          sales_unit as string,",
+						"          sales_amount as decimal(15,2),",
+						"          invoice_contract_unit_qty as decimal(12,2),",
+						"          invoice_contract_unit_price_uom as string,",
+						"          invoice_amount as decimal(15,2),",
+						"          invoice_additional_costs as decimal(15,2),",
+						"          backlog_amount as decimal(15,2),",
+						"          accounting_currency as string,",
+						"          invoice_date as date,",
+						"          processing_date as string,",
+						"          created_by as string,",
+						"          created_date_time as timestamp,",
+						"          shipping_date_requested as date,",
+						"          receipt_date_requested as date",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     saveOrder: 1,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          system_date = {処理年月},",
+						"          sales_id = {販売注文},",
+						"          line_num = {明細行番号},",
+						"          voucher_type = {伝票タイプ},",
+						"          cust_account = {顧客},",
+						"          cust_short_name = {略称},",
+						"          sales_ship_to_account_num = {出荷先コード},",
+						"          sales_ship_to_short_name = {出荷先-略称},",
+						"          cust_collections = {回収先ID},",
+						"          sales_cust_collection_short_name = {回収先-略称},",
+						"          sales_vend_account_num = {仕入先},",
+						"          sales_vend_name_alias = {仕入先-検索名},",
+						"          sales_office = {営業所},",
+						"          sales_office_name = {営業所名},",
+						"          sales_group = {営業所グループ},",
+						"          sales_group_name = {営業所グループ名},",
+						"          sales_end_user_account_num = {カスタマー},",
+						"          sales_end_user_short_name = {カスタマー略称},",
+						"          invoice_account = {請求先/元 ID},",
+						"          sales_invoice_short_name = {請求先-略称},",
+						"          sales_invoice_name = {請求先-名前},",
+						"          sales_person = {営業員},",
+						"          sales_person_name = {営業員名},",
+						"          sales_consumer = {需要家},",
+						"          carrier_cd = {運送業者},",
+						"          carrier_name_alias = {運送業者-検索名},",
+						"          item_id = {品目番号},",
+						"          item_name = {テキスト},",
+						"          pack_style_name = {荷姿名},",
+						"          shipping_name_code = {出荷名コード},",
+						"          shipping_name = {出荷名名称},",
+						"          trade_mark_code = {商標コード},",
+						"          trade_mark_name = {商標名},",
+						"          sales_item_class_code = {商品大分類コード},",
+						"          sales_item_class_name = {商品大分類名},",
+						"          product_item_group_code = {製品群コード},",
+						"          product_item_group_name = {製品群名},",
+						"          sales_item_group_code = {商品群コード},",
+						"          sales_item_group_name = {商品群名},",
+						"          invent_site_id = {サイト},",
+						"          invent_site_name = {サイト名},",
+						"          invent_location_id = {倉庫},",
+						"          invent_location_name = {倉庫名},",
+						"          contract_unit_qty = {契約単位数量},",
+						"          contract_unit_price_uom = {契約単価単位},",
+						"          sales_qty = {販売-数量},",
+						"          sales_unit = {販売-単位},",
+						"          sales_amount = {販売-金額},",
+						"          invoice_contract_unit_qty = {請求書-契約単位数量},",
+						"          invoice_contract_unit_price_uom = {請求書-契約単価単位},",
+						"          invoice_amount = {請求書-金額},",
+						"          invoice_additional_costs = {請求書-台貫金額(諸費用)},",
+						"          backlog_amount = {受注残金額},",
+						"          accounting_currency = {会計通貨},",
+						"          invoice_date = {請求書-計上日},",
+						"          processing_date = {整理年月},",
+						"          created_by = {作成者},",
+						"          created_date_time = {作成日時},",
+						"          shipping_date_requested = {出荷予定日},",
+						"          receipt_date_requested = {入荷希望日}",
+						"     )) ~> csvDataInMiddleTable"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/test_blob_storage_nsw')]",
+				"[concat(variables('factoryId'), '/datasets/temp_backlog')]",
+				"[concat(variables('factoryId'), '/linkedServices/test_db_nsw_link_service')]"
 			]
 		}
 	]
