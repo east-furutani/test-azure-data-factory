@@ -175,7 +175,10 @@
 									"referenceName": "csv_db_bulk_plstatement_temp_table",
 									"type": "DataFlowReference",
 									"parameters": {
-										"latestDatetimeFileName": "'plstatement_20251105053200.csv'"
+										"latestDatetimeFileName": {
+											"value": "'@{variables('latestDatetimeFileName')}'",
+											"type": "Expression"
+										}
 									}
 								},
 								"compute": {
