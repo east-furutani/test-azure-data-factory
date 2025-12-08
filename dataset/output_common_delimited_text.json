@@ -1,0 +1,599 @@
+{
+	"name": "output_common_delimited_text",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "test_blob_storage_nsw",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"fileName": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "共通"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"container": "sales-forecast-data"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\"",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "���t",
+				"type": "String"
+			},
+			{
+				"name": "�̔�����",
+				"type": "String"
+			},
+			{
+				"name": "���׍s�ԍ�2",
+				"type": "String"
+			},
+			{
+				"name": "�@�l�R�[�h",
+				"type": "String"
+			},
+			{
+				"name": "�R�s�[��ID",
+				"type": "String"
+			},
+			{
+				"name": "�`�[�^�C�v",
+				"type": "String"
+			},
+			{
+				"name": "�c�Ə�",
+				"type": "String"
+			},
+			{
+				"name": "�c�Ə���",
+				"type": "String"
+			},
+			{
+				"name": "�c�ƃO���[�v",
+				"type": "String"
+			},
+			{
+				"name": "�c�ƃO���[�v��",
+				"type": "String"
+			},
+			{
+				"name": "�ڋq",
+				"type": "String"
+			},
+			{
+				"name": "����11",
+				"type": "String"
+			},
+			{
+				"name": "�d�b�ԍ�",
+				"type": "String"
+			},
+			{
+				"name": "�o�א�",
+				"type": "String"
+			},
+			{
+				"name": "�o�א�-����14",
+				"type": "String"
+			},
+			{
+				"name": "�o�א�-���O",
+				"type": "String"
+			},
+			{
+				"name": "�o�א�-���O2",
+				"type": "String"
+			},
+			{
+				"name": "�o�א�-����17",
+				"type": "String"
+			},
+			{
+				"name": "�o�א�-���O���l",
+				"type": "String"
+			},
+			{
+				"name": "�o�א�-�s���{��",
+				"type": "String"
+			},
+			{
+				"name": "�o�א�-�s����",
+				"type": "String"
+			},
+			{
+				"name": "�o�א�-�Z��",
+				"type": "String"
+			},
+			{
+				"name": "�o�א�-������",
+				"type": "String"
+			},
+			{
+				"name": "�o�א�-�Z�����l",
+				"type": "String"
+			},
+			{
+				"name": "�o�א�-���l1",
+				"type": "String"
+			},
+			{
+				"name": "�o�א�-���l2",
+				"type": "String"
+			},
+			{
+				"name": "�o�א�-���l3",
+				"type": "String"
+			},
+			{
+				"name": "�o�א�-�d�b�ԍ�",
+				"type": "String"
+			},
+			{
+				"name": "�J�X�^�}�[",
+				"type": "String"
+			},
+			{
+				"name": "�J�X�^�}�[-����",
+				"type": "String"
+			},
+			{
+				"name": "������/��ID",
+				"type": "String"
+			},
+			{
+				"name": "������-����31",
+				"type": "String"
+			},
+			{
+				"name": "������-���O",
+				"type": "String"
+			},
+			{
+				"name": "������-���O2",
+				"type": "String"
+			},
+			{
+				"name": "������-����34",
+				"type": "String"
+			},
+			{
+				"name": "������-���O���l",
+				"type": "String"
+			},
+			{
+				"name": "������-�X�֔ԍ�",
+				"type": "String"
+			},
+			{
+				"name": "������-�s���{��",
+				"type": "String"
+			},
+			{
+				"name": "������-�s����",
+				"type": "String"
+			},
+			{
+				"name": "������-�Z��",
+				"type": "String"
+			},
+			{
+				"name": "������-������",
+				"type": "String"
+			},
+			{
+				"name": "������-�Z�����l",
+				"type": "String"
+			},
+			{
+				"name": "������-���l1",
+				"type": "String"
+			},
+			{
+				"name": "������-���l2",
+				"type": "String"
+			},
+			{
+				"name": "������-���l3",
+				"type": "String"
+			},
+			{
+				"name": "�����ID",
+				"type": "String"
+			},
+			{
+				"name": "�����-����",
+				"type": "String"
+			},
+			{
+				"name": "�c�ƈ�",
+				"type": "String"
+			},
+			{
+				"name": "�c�ƈ���",
+				"type": "String"
+			},
+			{
+				"name": "�^���Ǝ�",
+				"type": "String"
+			},
+			{
+				"name": "�^���Ǝ�-������",
+				"type": "String"
+			},
+			{
+				"name": "OEM�R�[�h",
+				"type": "String"
+			},
+			{
+				"name": "OEM-���O",
+				"type": "String"
+			},
+			{
+				"name": "OEM-���O2",
+				"type": "String"
+			},
+			{
+				"name": "OEM-�s���{��",
+				"type": "String"
+			},
+			{
+				"name": "OEM-�s����",
+				"type": "String"
+			},
+			{
+				"name": "OEM-�Z��",
+				"type": "String"
+			},
+			{
+				"name": "OEM-������",
+				"type": "String"
+			},
+			{
+				"name": "OEM-�Z�����l",
+				"type": "String"
+			},
+			{
+				"name": "OEM-���l1",
+				"type": "String"
+			},
+			{
+				"name": "OEM-���l2",
+				"type": "String"
+			},
+			{
+				"name": "OEM-���l3",
+				"type": "String"
+			},
+			{
+				"name": "�d����",
+				"type": "String"
+			},
+			{
+				"name": "�d����-������",
+				"type": "String"
+			},
+			{
+				"name": "�ڋq�̗v��",
+				"type": "String"
+			},
+			{
+				"name": "�����u���b�N",
+				"type": "String"
+			},
+			{
+				"name": "�i�ڔԍ�",
+				"type": "String"
+			},
+			{
+				"name": "�e�L�X�g",
+				"type": "String"
+			},
+			{
+				"name": "�׎p",
+				"type": "String"
+			},
+			{
+				"name": "�o�ז��R�[�h",
+				"type": "String"
+			},
+			{
+				"name": "�o�ז�",
+				"type": "String"
+			},
+			{
+				"name": "���W�R�[�h",
+				"type": "String"
+			},
+			{
+				"name": "���W��",
+				"type": "String"
+			},
+			{
+				"name": "���i�啪�ރR�[�h",
+				"type": "String"
+			},
+			{
+				"name": "���i�啪�ޖ�",
+				"type": "String"
+			},
+			{
+				"name": "���i�Q�R�[�h75",
+				"type": "String"
+			},
+			{
+				"name": "���i�Q��76",
+				"type": "String"
+			},
+			{
+				"name": "���i�Q�R�[�h77",
+				"type": "String"
+			},
+			{
+				"name": "���i�Q��78",
+				"type": "String"
+			},
+			{
+				"name": "�z���^�C�v",
+				"type": "String"
+			},
+			{
+				"name": "��ы敪",
+				"type": "String"
+			},
+			{
+				"name": "���i�^�C�v",
+				"type": "String"
+			},
+			{
+				"name": "�����敪",
+				"type": "String"
+			},
+			{
+				"name": "�T�C�g",
+				"type": "String"
+			},
+			{
+				"name": "�T�C�g��",
+				"type": "String"
+			},
+			{
+				"name": "�q��",
+				"type": "String"
+			},
+			{
+				"name": "�q�ɖ�",
+				"type": "String"
+			},
+			{
+				"name": "���׊�]��",
+				"type": "String"
+			},
+			{
+				"name": "�o�ח\\���",
+				"type": "String"
+			},
+			{
+				"name": "�o�ד�",
+				"type": "String"
+			},
+			{
+				"name": "�����X�e�[�^�X90",
+				"type": "String"
+			},
+			{
+				"name": "�דn���@",
+				"type": "String"
+			},
+			{
+				"name": "�דn���@-���",
+				"type": "String"
+			},
+			{
+				"name": "�ڍ׃X�e�[�^�X",
+				"type": "String"
+			},
+			{
+				"name": "�J�X�^�}�[�䒠�폜",
+				"type": "String"
+			},
+			{
+				"name": "�J�X�^�}�[�䒠�폜���R",
+				"type": "String"
+			},
+			{
+				"name": "�������ԍ�",
+				"type": "String"
+			},
+			{
+				"name": "������-�s�X�e�[�^�X",
+				"type": "String"
+			},
+			{
+				"name": "�s�b�L���O ���[�g",
+				"type": "String"
+			},
+			{
+				"name": "�݌ɒ���",
+				"type": "String"
+			},
+			{
+				"name": "�����X�e�[�^�X100",
+				"type": "String"
+			},
+			{
+				"name": "�̔�����-�s�X�e�[�^�X",
+				"type": "String"
+			},
+			{
+				"name": "��ъ����敪",
+				"type": "String"
+			},
+			{
+				"name": "������103",
+				"type": "String"
+			},
+			{
+				"name": "���׍s�ԍ�104",
+				"type": "String"
+			},
+			{
+				"name": "������105",
+				"type": "String"
+			},
+			{
+				"name": "�[�i���敪",
+				"type": "String"
+			},
+			{
+				"name": "�[�i���敪��",
+				"type": "String"
+			},
+			{
+				"name": "����108",
+				"type": "String"
+			},
+			{
+				"name": "�쐬����",
+				"type": "String"
+			},
+			{
+				"name": "�쐬��",
+				"type": "String"
+			},
+			{
+				"name": "�z�����",
+				"type": "String"
+			},
+			{
+				"name": "�z�����-���",
+				"type": "String"
+			},
+			{
+				"name": "�x�����",
+				"type": "String"
+			},
+			{
+				"name": "�x�����-���",
+				"type": "String"
+			},
+			{
+				"name": "���v��",
+				"type": "String"
+			},
+			{
+				"name": "�ύX����",
+				"type": "String"
+			},
+			{
+				"name": "�X�V��",
+				"type": "String"
+			},
+			{
+				"name": "���v���S����",
+				"type": "String"
+			},
+			{
+				"name": "����119",
+				"type": "String"
+			},
+			{
+				"name": "����120",
+				"type": "String"
+			},
+			{
+				"name": "�̔��P��",
+				"type": "String"
+			},
+			{
+				"name": "�_��P������",
+				"type": "String"
+			},
+			{
+				"name": "�_��P���P��",
+				"type": "String"
+			},
+			{
+				"name": "�_��P��",
+				"type": "String"
+			},
+			{
+				"name": "������z",
+				"type": "String"
+			},
+			{
+				"name": "�o�א���",
+				"type": "String"
+			},
+			{
+				"name": "����������",
+				"type": "String"
+			},
+			{
+				"name": "�������_��P������",
+				"type": "String"
+			},
+			{
+				"name": "�������_��P��",
+				"type": "String"
+			},
+			{
+				"name": "������������z",
+				"type": "String"
+			},
+			{
+				"name": "����Ŋz",
+				"type": "String"
+			},
+			{
+				"name": "�ŗ�",
+				"type": "String"
+			},
+			{
+				"name": "�ϓ�������i�H��j",
+				"type": "String"
+			},
+			{
+				"name": "�Œ萻����i�H��j",
+				"type": "String"
+			},
+			{
+				"name": "�ϓ�������i���[�j",
+				"type": "String"
+			},
+			{
+				"name": "�ϓ�������i�ꕨ�ꉿ�j",
+				"type": "String"
+			},
+			{
+				"name": "�Œ萻����i�ꕨ�ꉿ�j",
+				"type": "String"
+			},
+			{
+				"name": "��v�ʉ�",
+				"type": "String"
+			},
+			{
+				"name": "���^�n��R�[�h",
+				"type": "String"
+			},
+			{
+				"name": "����140",
+				"type": "String"
+			},
+			{
+				"name": "�����N��",
+				"type": "String"
+			}
+		]
+	}
+}
