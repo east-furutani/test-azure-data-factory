@@ -18,6 +18,11 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
+				"fileName": {
+					"value": "@dataset().fileName",
+					"type": "Expression"
+				},
+				"folderPath": "output",
 				"container": "sales-forecast-data"
 			},
 			"columnDelimiter": ",",
