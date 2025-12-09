@@ -161,7 +161,14 @@
 							"name": "CsvDataInMiddleTable",
 							"description": "CSV ファイルから読み込んだデータを中間テーブルに保存します。",
 							"type": "ExecuteDataFlow",
-							"dependsOn": [],
+							"dependsOn": [
+								{
+									"activity": "CsvCopyAlterEncoding",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
 							"policy": {
 								"timeout": "0.12:00:00",
 								"retry": 0,
@@ -186,6 +193,1822 @@
 									"computeType": "General"
 								},
 								"traceLevel": "Fine"
+							}
+						},
+						{
+							"name": "CsvCopyAlterEncoding",
+							"description": "エンコーディングを Shift-Jis → UTF-8 に変更したうえで、処理対象の CSV ファイルを別フォルダにコピーします。",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "DelimitedTextSource",
+									"storeSettings": {
+										"type": "AzureBlobStorageReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings"
+									}
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobStorageWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"name": "日付",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "日付",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "販売注文",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "販売注文",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "明細行番号",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "明細行番号",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "法人コード",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "法人コード",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "コピー元ID",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "コピー元ID",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "伝票タイプ",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "伝票タイプ",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "営業所",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "営業所",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "営業所名",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "営業所名",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "営業グループ",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "営業グループ",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "営業グループ名",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "営業グループ名",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "顧客",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "顧客",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "略称",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "略称",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "電話番号",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "電話番号",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷先",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷先",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷先-略称",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷先-略称",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷先-名前",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷先-名前",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷先-名前2",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷先-名前2",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷先-所属",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷先-所属",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷先-名前備考",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷先-名前備考",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷先-都道府県",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷先-都道府県",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷先-市町村",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷先-市町村",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷先-住所",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷先-住所",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷先-建物名",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷先-建物名",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷先-住所備考",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷先-住所備考",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷先-備考1",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷先-備考1",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷先-備考2",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷先-備考2",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷先-備考3",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷先-備考3",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷先-電話番号",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷先-電話番号",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "カスタマー",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "カスタマー",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "カスタマー-略称",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "カスタマー-略称",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求先/元ID",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求先/元ID",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求先-略称",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求先-略称",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求先-名前",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求先-名前",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求先-名前2",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求先-名前2",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求先-所属",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求先-所属",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求先-名前備考",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求先-名前備考",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求先-郵便番号",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求先-郵便番号",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求先-都道府県",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求先-都道府県",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求先-市町村",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求先-市町村",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求先-住所",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求先-住所",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求先-建物名",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求先-建物名",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求先-住所備考",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求先-住所備考",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求先-備考1",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求先-備考1",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求先-備考2",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求先-備考2",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求先-備考3",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求先-備考3",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "回収先ID",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "回収先ID",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "回収先-略称",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "回収先-略称",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "営業員",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "営業員",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "営業員名",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "営業員名",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "運送業者",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "運送業者",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "運送業者-検索名",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "運送業者-検索名",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "OEMコード",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "OEMコード",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "OEM-名前",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "OEM-名前",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "OEM-名前2",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "OEM-名前2",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "OEM-都道府県",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "OEM-都道府県",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "OEM-市町村",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "OEM-市町村",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "OEM-住所",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "OEM-住所",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "OEM-建物名",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "OEM-建物名",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "OEM-住所備考",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "OEM-住所備考",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "OEM-備考1",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "OEM-備考1",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "OEM-備考2",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "OEM-備考2",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "OEM-備考3",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "OEM-備考3",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "仕入先",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "仕入先",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "仕入先-検索名",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "仕入先-検索名",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "顧客の要求",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "顧客の要求",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求ブロック",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求ブロック",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "品目番号",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "品目番号",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "テキスト",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "テキスト",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "荷姿",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "荷姿",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷名コード",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷名コード",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷名",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷名",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "商標コード",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "商標コード",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "商標名",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "商標名",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "商品大分類コード",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "商品大分類コード",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "商品大分類名",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "商品大分類名",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "製品群コード",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "製品群コード",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "製品群名",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "製品群名",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "商品群コード",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "商品群コード",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "商品群名",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "商品群名",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "配送タイプ",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "配送タイプ",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "台貫区分",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "台貫区分",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "製品タイプ",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "製品タイプ",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "訂正区分",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "訂正区分",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "サイト",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "サイト",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "サイト名",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "サイト名",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "倉庫",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "倉庫",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "倉庫名",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "倉庫名",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "入荷希望日",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "入荷希望日",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷予定日",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷予定日",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷日",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷日",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "処理ステータス",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "処理ステータス",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "荷渡方法",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "荷渡方法",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "荷渡方法-説明",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "荷渡方法-説明",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "詳細ステータス",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "詳細ステータス",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "カスタマー台帳削除",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "カスタマー台帳削除",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "カスタマー台帳削除理由",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "カスタマー台帳削除理由",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "発注書番号",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "発注書番号",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "発注書-行ステータス",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "発注書-行ステータス",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "ピッキング ルート",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "ピッキング ルート",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "在庫注文",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "在庫注文",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "処理ステータス2",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "処理ステータス2",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "販売注文-行ステータス",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "販売注文-行ステータス",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "台貫完了区分",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "台貫完了区分",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求書",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求書",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "明細行番号2",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "明細行番号2",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求日",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求日",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "納品書区分",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "納品書区分",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "納品書区分名",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "納品書区分名",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "締日",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "締日",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "作成日時",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "作成日時",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "作成者",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "作成者",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "配送条件",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "配送条件",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "配送条件-説明",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "配送条件-説明",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "支払条件",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "支払条件",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "支払条件-説明",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "支払条件-説明",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "需要家",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "需要家",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "変更日時",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "変更日時",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "更新者",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "更新者",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "損益負担部門",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "損益負担部門",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "入数",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "入数",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "数量",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "数量",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "販売単位",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "販売単位",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "契約単価数量",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "契約単価数量",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "契約単価単位",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "契約単価単位",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "契約単価",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "契約単価",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "正味金額",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "正味金額",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "出荷数量",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "出荷数量",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求時数量",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求時数量",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求時契約単価数量",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求時契約単価数量",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求時契約単価",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求時契約単価",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求時正味金額",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求時正味金額",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "消費税額",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "消費税額",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "税率",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "税率",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "変動製造費（工場）",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "変動製造費（工場）",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "固定製造費（工場）",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "固定製造費（工場）",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "変動製造費（直納）",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "変動製造費（直納）",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "変動製造費（一物一価）",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "変動製造費（一物一価）",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "固定製造費（一物一価）",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "固定製造費（一物一価）",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "会計通貨",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "会計通貨",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "国／地域コード",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "国／地域コード",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "国名",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "国名",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"name": "請求年月",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "請求年月",
+												"type": "String",
+												"physicalType": "String"
+											}
+										}
+									],
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "input_common_delimited_text",
+									"type": "DatasetReference",
+									"parameters": {
+										"fileName": {
+											"value": "@variables('latestDatetimeFileName')",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "output_common_delimited_text",
+									"type": "DatasetReference",
+									"parameters": {
+										"fileName": {
+											"value": "@variables('latestDatetimeFileName')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "DeleteCsvFile2",
+							"description": "コピー先のフォルダに存在する処理対象の CSV ファイルを削除します。",
+							"type": "Delete",
+							"dependsOn": [
+								{
+									"activity": "DeleteCsvFile",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "output_common_delimited_text",
+									"type": "DatasetReference",
+									"parameters": {
+										"fileName": {
+											"value": "@variables('latestDatetimeFileName')",
+											"type": "Expression"
+										}
+									}
+								},
+								"enableLogging": false,
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								}
 							}
 						}
 					]
