@@ -27,7 +27,7 @@
 			"columnDelimiter": ",",
 			"encodingName": "SHIFT-JIS",
 			"escapeChar": "\"",
-			"firstRowAsHeader": true,
+			"firstRowAsHeader": false,
 			"quoteChar": "\""
 		},
 		"schema": [
