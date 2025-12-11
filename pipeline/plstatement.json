@@ -242,8 +242,7 @@
 												"ordinal": 1
 											},
 											"sink": {
-												"name": "Column1",
-												"type": "String",
+												"name": "日付",
 												"physicalType": "String"
 											}
 										},
@@ -253,8 +252,7 @@
 												"ordinal": 2
 											},
 											"sink": {
-												"name": "Column2",
-												"type": "String",
+												"name": "販売注文",
 												"physicalType": "String"
 											}
 										},
@@ -264,8 +262,7 @@
 												"ordinal": 3
 											},
 											"sink": {
-												"name": "Column3",
-												"type": "String",
+												"name": "明細行番号",
 												"physicalType": "String"
 											}
 										},
@@ -275,8 +272,7 @@
 												"ordinal": 4
 											},
 											"sink": {
-												"name": "Column4",
-												"type": "String",
+												"name": "法人コード",
 												"physicalType": "String"
 											}
 										},
@@ -286,8 +282,7 @@
 												"ordinal": 5
 											},
 											"sink": {
-												"name": "Column5",
-												"type": "String",
+												"name": "コピー元ID",
 												"physicalType": "String"
 											}
 										},
@@ -297,8 +292,7 @@
 												"ordinal": 6
 											},
 											"sink": {
-												"name": "Column6",
-												"type": "String",
+												"name": "伝票タイプ",
 												"physicalType": "String"
 											}
 										},
@@ -308,8 +302,7 @@
 												"ordinal": 7
 											},
 											"sink": {
-												"name": "Column7",
-												"type": "String",
+												"name": "営業所",
 												"physicalType": "String"
 											}
 										},
@@ -319,8 +312,7 @@
 												"ordinal": 8
 											},
 											"sink": {
-												"name": "Column8",
-												"type": "String",
+												"name": "営業所名",
 												"physicalType": "String"
 											}
 										},
@@ -330,8 +322,7 @@
 												"ordinal": 9
 											},
 											"sink": {
-												"name": "Column9",
-												"type": "String",
+												"name": "営業グループ",
 												"physicalType": "String"
 											}
 										},
@@ -341,8 +332,7 @@
 												"ordinal": 10
 											},
 											"sink": {
-												"name": "Column10",
-												"type": "String",
+												"name": "営業グループ名",
 												"physicalType": "String"
 											}
 										},
@@ -352,8 +342,7 @@
 												"ordinal": 11
 											},
 											"sink": {
-												"name": "Column11",
-												"type": "String",
+												"name": "顧客",
 												"physicalType": "String"
 											}
 										},
@@ -363,8 +352,7 @@
 												"ordinal": 12
 											},
 											"sink": {
-												"name": "Column12",
-												"type": "String",
+												"name": "略称",
 												"physicalType": "String"
 											}
 										},
@@ -374,8 +362,7 @@
 												"ordinal": 13
 											},
 											"sink": {
-												"name": "Column13",
-												"type": "String",
+												"name": "電話番号",
 												"physicalType": "String"
 											}
 										},
@@ -385,8 +372,7 @@
 												"ordinal": 14
 											},
 											"sink": {
-												"name": "Column14",
-												"type": "String",
+												"name": "出荷先",
 												"physicalType": "String"
 											}
 										},
@@ -396,8 +382,7 @@
 												"ordinal": 15
 											},
 											"sink": {
-												"name": "Column15",
-												"type": "String",
+												"name": "出荷先-略称",
 												"physicalType": "String"
 											}
 										},
@@ -407,8 +392,7 @@
 												"ordinal": 16
 											},
 											"sink": {
-												"name": "Column16",
-												"type": "String",
+												"name": "出荷先-名前",
 												"physicalType": "String"
 											}
 										},
@@ -418,8 +402,7 @@
 												"ordinal": 17
 											},
 											"sink": {
-												"name": "Column17",
-												"type": "String",
+												"name": "出荷先-名前2",
 												"physicalType": "String"
 											}
 										},
@@ -429,8 +412,7 @@
 												"ordinal": 18
 											},
 											"sink": {
-												"name": "Column18",
-												"type": "String",
+												"name": "出荷先-所属",
 												"physicalType": "String"
 											}
 										},
@@ -440,8 +422,7 @@
 												"ordinal": 19
 											},
 											"sink": {
-												"name": "Column19",
-												"type": "String",
+												"name": "出荷先-名前備考",
 												"physicalType": "String"
 											}
 										},
@@ -451,8 +432,7 @@
 												"ordinal": 20
 											},
 											"sink": {
-												"name": "Column20",
-												"type": "String",
+												"name": "出荷先-都道府県",
 												"physicalType": "String"
 											}
 										},
@@ -462,8 +442,7 @@
 												"ordinal": 21
 											},
 											"sink": {
-												"name": "Column21",
-												"type": "String",
+												"name": "出荷先-市町村",
 												"physicalType": "String"
 											}
 										},
@@ -473,8 +452,7 @@
 												"ordinal": 22
 											},
 											"sink": {
-												"name": "Column22",
-												"type": "String",
+												"name": "出荷先-住所",
 												"physicalType": "String"
 											}
 										},
@@ -484,8 +462,7 @@
 												"ordinal": 23
 											},
 											"sink": {
-												"name": "Column23",
-												"type": "String",
+												"name": "出荷先-建物名",
 												"physicalType": "String"
 											}
 										},
@@ -495,8 +472,7 @@
 												"ordinal": 24
 											},
 											"sink": {
-												"name": "Column24",
-												"type": "String",
+												"name": "出荷先-住所備考",
 												"physicalType": "String"
 											}
 										},
@@ -506,8 +482,7 @@
 												"ordinal": 25
 											},
 											"sink": {
-												"name": "Column25",
-												"type": "String",
+												"name": "出荷先-備考1",
 												"physicalType": "String"
 											}
 										},
@@ -517,8 +492,7 @@
 												"ordinal": 26
 											},
 											"sink": {
-												"name": "Column26",
-												"type": "String",
+												"name": "出荷先-備考2",
 												"physicalType": "String"
 											}
 										},
@@ -528,8 +502,7 @@
 												"ordinal": 27
 											},
 											"sink": {
-												"name": "Column27",
-												"type": "String",
+												"name": "出荷先-備考3",
 												"physicalType": "String"
 											}
 										},
@@ -539,8 +512,7 @@
 												"ordinal": 28
 											},
 											"sink": {
-												"name": "Column28",
-												"type": "String",
+												"name": "出荷先-電話番号",
 												"physicalType": "String"
 											}
 										},
@@ -550,8 +522,7 @@
 												"ordinal": 29
 											},
 											"sink": {
-												"name": "Column29",
-												"type": "String",
+												"name": "カスタマー",
 												"physicalType": "String"
 											}
 										},
@@ -561,8 +532,7 @@
 												"ordinal": 30
 											},
 											"sink": {
-												"name": "Column30",
-												"type": "String",
+												"name": "カスタマー-略称",
 												"physicalType": "String"
 											}
 										},
@@ -572,8 +542,7 @@
 												"ordinal": 31
 											},
 											"sink": {
-												"name": "Column31",
-												"type": "String",
+												"name": "請求先/元ID",
 												"physicalType": "String"
 											}
 										},
@@ -583,8 +552,7 @@
 												"ordinal": 32
 											},
 											"sink": {
-												"name": "Column32",
-												"type": "String",
+												"name": "請求先-略称",
 												"physicalType": "String"
 											}
 										},
@@ -594,8 +562,7 @@
 												"ordinal": 33
 											},
 											"sink": {
-												"name": "Column33",
-												"type": "String",
+												"name": "請求先-名前",
 												"physicalType": "String"
 											}
 										},
@@ -605,8 +572,7 @@
 												"ordinal": 34
 											},
 											"sink": {
-												"name": "Column34",
-												"type": "String",
+												"name": "請求先-名前2",
 												"physicalType": "String"
 											}
 										},
@@ -616,8 +582,7 @@
 												"ordinal": 35
 											},
 											"sink": {
-												"name": "Column35",
-												"type": "String",
+												"name": "請求先-所属",
 												"physicalType": "String"
 											}
 										},
@@ -627,8 +592,7 @@
 												"ordinal": 36
 											},
 											"sink": {
-												"name": "Column36",
-												"type": "String",
+												"name": "請求先-名前備考",
 												"physicalType": "String"
 											}
 										},
@@ -638,8 +602,7 @@
 												"ordinal": 37
 											},
 											"sink": {
-												"name": "Column37",
-												"type": "String",
+												"name": "請求先-郵便番号",
 												"physicalType": "String"
 											}
 										},
@@ -649,8 +612,7 @@
 												"ordinal": 38
 											},
 											"sink": {
-												"name": "Column38",
-												"type": "String",
+												"name": "請求先-都道府県",
 												"physicalType": "String"
 											}
 										},
@@ -660,8 +622,7 @@
 												"ordinal": 39
 											},
 											"sink": {
-												"name": "Column39",
-												"type": "String",
+												"name": "請求先-市町村",
 												"physicalType": "String"
 											}
 										},
@@ -671,8 +632,7 @@
 												"ordinal": 40
 											},
 											"sink": {
-												"name": "Column40",
-												"type": "String",
+												"name": "請求先-住所",
 												"physicalType": "String"
 											}
 										},
@@ -682,8 +642,7 @@
 												"ordinal": 41
 											},
 											"sink": {
-												"name": "Column41",
-												"type": "String",
+												"name": "請求先-建物名",
 												"physicalType": "String"
 											}
 										},
@@ -693,8 +652,7 @@
 												"ordinal": 42
 											},
 											"sink": {
-												"name": "Column42",
-												"type": "String",
+												"name": "請求先-住所備考",
 												"physicalType": "String"
 											}
 										},
@@ -704,8 +662,7 @@
 												"ordinal": 43
 											},
 											"sink": {
-												"name": "Column43",
-												"type": "String",
+												"name": "請求先-備考1",
 												"physicalType": "String"
 											}
 										},
@@ -715,8 +672,7 @@
 												"ordinal": 44
 											},
 											"sink": {
-												"name": "Column44",
-												"type": "String",
+												"name": "請求先-備考2",
 												"physicalType": "String"
 											}
 										},
@@ -726,8 +682,7 @@
 												"ordinal": 45
 											},
 											"sink": {
-												"name": "Column45",
-												"type": "String",
+												"name": "請求先-備考3",
 												"physicalType": "String"
 											}
 										},
@@ -737,8 +692,7 @@
 												"ordinal": 46
 											},
 											"sink": {
-												"name": "Column46",
-												"type": "String",
+												"name": "回収先-略称",
 												"physicalType": "String"
 											}
 										},
@@ -748,8 +702,7 @@
 												"ordinal": 47
 											},
 											"sink": {
-												"name": "Column47",
-												"type": "String",
+												"name": "営業員",
 												"physicalType": "String"
 											}
 										},
@@ -759,8 +712,7 @@
 												"ordinal": 48
 											},
 											"sink": {
-												"name": "Column48",
-												"type": "String",
+												"name": "営業員名",
 												"physicalType": "String"
 											}
 										},
@@ -770,8 +722,7 @@
 												"ordinal": 49
 											},
 											"sink": {
-												"name": "Column49",
-												"type": "String",
+												"name": "運送業者",
 												"physicalType": "String"
 											}
 										},
@@ -781,8 +732,7 @@
 												"ordinal": 50
 											},
 											"sink": {
-												"name": "Column50",
-												"type": "String",
+												"name": "運送業者-検索名",
 												"physicalType": "String"
 											}
 										},
@@ -792,8 +742,7 @@
 												"ordinal": 51
 											},
 											"sink": {
-												"name": "Column51",
-												"type": "String",
+												"name": "OEMコード",
 												"physicalType": "String"
 											}
 										},
@@ -803,8 +752,7 @@
 												"ordinal": 52
 											},
 											"sink": {
-												"name": "Column52",
-												"type": "String",
+												"name": "OEM-名前",
 												"physicalType": "String"
 											}
 										},
@@ -814,8 +762,7 @@
 												"ordinal": 53
 											},
 											"sink": {
-												"name": "Column53",
-												"type": "String",
+												"name": "OEM-名前2",
 												"physicalType": "String"
 											}
 										},
@@ -825,8 +772,7 @@
 												"ordinal": 54
 											},
 											"sink": {
-												"name": "Column54",
-												"type": "String",
+												"name": "OEM-都道府県",
 												"physicalType": "String"
 											}
 										},
@@ -836,8 +782,7 @@
 												"ordinal": 55
 											},
 											"sink": {
-												"name": "Column55",
-												"type": "String",
+												"name": "OEM-市町村",
 												"physicalType": "String"
 											}
 										},
@@ -847,8 +792,7 @@
 												"ordinal": 56
 											},
 											"sink": {
-												"name": "Column56",
-												"type": "String",
+												"name": "OEM-住所",
 												"physicalType": "String"
 											}
 										},
@@ -858,8 +802,7 @@
 												"ordinal": 57
 											},
 											"sink": {
-												"name": "Column57",
-												"type": "String",
+												"name": "OEM-建物名",
 												"physicalType": "String"
 											}
 										},
@@ -869,8 +812,7 @@
 												"ordinal": 58
 											},
 											"sink": {
-												"name": "Column58",
-												"type": "String",
+												"name": "OEM-住所備考",
 												"physicalType": "String"
 											}
 										},
@@ -880,8 +822,7 @@
 												"ordinal": 59
 											},
 											"sink": {
-												"name": "Column59",
-												"type": "String",
+												"name": "OEM-備考1",
 												"physicalType": "String"
 											}
 										},
@@ -891,8 +832,7 @@
 												"ordinal": 60
 											},
 											"sink": {
-												"name": "Column60",
-												"type": "String",
+												"name": "OEM-備考2",
 												"physicalType": "String"
 											}
 										},
@@ -902,8 +842,7 @@
 												"ordinal": 61
 											},
 											"sink": {
-												"name": "Column61",
-												"type": "String",
+												"name": "OEM-備考3",
 												"physicalType": "String"
 											}
 										},
