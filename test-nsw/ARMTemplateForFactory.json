@@ -1152,422 +1152,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/plstatement')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "ExitCsvFile",
-						"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
-						"type": "IfCondition",
-						"dependsOn": [
-							{
-								"activity": "ForEachGetLatestDatetime",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"expression": {
-								"value": "@greater(activity('FilterCsvFile').output.FilteredItemsCount, 0)",
-								"type": "Expression"
-							},
-							"ifTrueActivities": [
-								{
-									"name": "DeleteInsertCsvDataAndGroupByFileName",
-									"description": "CSV ファイルから読み込んだデータを DELETE INSERT します",
-									"type": "Script",
-									"dependsOn": [
-										{
-											"activity": "CsvDataInMiddleTable",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"linkedServiceName": {
-										"referenceName": "test_db_nsw_link_service",
-										"type": "LinkedServiceReference"
-									},
-									"typeProperties": {
-										"scripts": [
-											{
-												"type": "Query",
-												"text": "BEGIN TRY\n\t\t\n\tBEGIN TRANSACTION;\n\n\t-- 対象テーブルの内、年月が前月、当月、来月、当月より 2 年前のデータのみ削除\n\tDELETE FROM plstatement\n\tWHERE\n\t\tbillinig_date IN\n\t\t(\n\t\t\tSELECT\n\t\t\t\tbillinig_date\n\t\t\tFROM\n\t\t\t\ttemp_plstatement\n\t\t\tGROUP BY\n\t\t\t    billinig_date\n\t\t)\n\t\tOR\n\t\tbillinig_date <= FORMAT(DATEADD(YEAR, -2, GETDATE() AT TIME ZONE 'UTC' AT TIME ZONE 'Tokyo Standard Time'), 'yyyyMM');\n\n\t-- CSV ファイルから読み込んだデータを対象テーブルに INSERT\n\tINSERT INTO plstatement\n\t(\n\t\tsystem_date,\n\t    sales_id,\n\t    line_num,\n\t    corporate_code,\n\t    source_id,\n\t    voucher_type,\n\t    sales_office,\n\t    sales_office_name,\n\t    sales_group,\n\t    sales_group_name,\n\t    cust_account,\n\t    cust_short_name,\n\t    phone_number,\n\t    sales_ship_to_account_num,\n\t    sales_ship_to_short_name,\n\t    sales_ship_to_name,\n\t    sales_ship_to_name2,\n\t    sales_ship_to_belonging,\n\t    sales_ship_to_name_notes,\n\t    sales_ship_to_prefectures,\n\t    sales_ship_to_municipality,\n\t    sales_ship_to_address,\n\t    sales_ship_to_building_name,\n\t    sales_ship_to_address_notes,\n\t    sales_ship_to_remarks1,\n\t    sales_ship_to_remarks2,\n\t    sales_ship_to_remarks3,\n\t    sales_ship_to_phone_num,\n\t    sales_end_user_account_num,\n\t    sales_end_user_short_name,\n\t    invoice_account,\n\t    sales_invoice_short_name,\n\t    sales_invoice_name,\n\t    sales_invoice_name2,\n\t    sales_invoice_belonging,\n\t    sales_invoice_name_notes,\n\t    sales_invoice_post_code,\n\t    sales_invoice_prefectures,\n\t    sales_invoice_municipality,\n\t    sales_invoice_address,\n\t    sales_invoice_building_name,\n\t    sales_invoice_address_notes,\n\t    sales_invoice_remarks1,\n\t    sales_invoice_remarks2,\n\t    sales_invoice_remarks3,\n\t    cust_collections,\n\t    sales_cust_collection_short_name,\n\t    sales_person,\n\t    sales_person_name,\n\t    carrier_cd,\n\t    carrier_name_alias,\n\t    oem_cd,\n\t    oem_name,\n\t    oem_name2,\n\t    oem_prefectures,\n\t    oem_municipality,\n\t    oem_address,\n\t    oem_building_name,\n\t    oem_address_notes,\n\t    oem_remarks1,\n\t    oem_remarks2,\n\t    oem_remarks3,\n\t    sales_vend_account_num,\n\t    sales_vend_name_alias,\n\t    customer_requirements,\n\t    billing_block,\n\t    item_id,\n\t    item_name,\n\t    pack_style_name,\n\t    shipping_name_code,\n\t    shipping_name,\n\t    trade_mark_code,\n\t    trade_mark_name,\n\t    sales_item_class_code,\n\t    sales_item_class_name,\n\t    product_item_group_code,\n\t    product_item_group_name,\n\t    sales_item_group_code,\n\t    sales_item_group_name,\n\t    shipping_type,\n\t    truck_scale_type,\n\t    product_type,\n\t    correction_category,\n\t    invent_site_id,\n\t    invent_site_name,\n\t    invent_location_id,\n\t    invent_location_name,\n\t    receipt_date_requested,\n\t    shipping_date_requested,\n\t    shipping_date,\n\t    sales_status,\n\t    delivery_method,\n\t    delivery_method_description,\n\t    detailed_status,\n\t    customer_delete_flag,\n\t    customer_delete_reason,\n\t    purchase_order_number,\n\t    purchase_order_status,\n\t    picking_route,\n\t    inventory_order,\n\t    picking_status,\n\t    line_status,\n\t    truck_scale_completion_flag,\n\t    invoice,\n\t    invoice_line_num,\n\t    invoice_date,\n\t    delivery_note_category,\n\t    delivery_note_category_name,\n\t    closing_date,\n\t    created_date_time,\n\t    created_by,\n\t    shipping_terms,\n\t    shipping_terms_description,\n\t    payment_terms,\n\t    payment_terms_description,\n\t    sales_consumer,\n\t    updated_date_time,\n\t    updated_by,\n\t    profit_and_loss_department,\n\t    qty_per_pack,\n\t    sales_qty,\n\t    sales_unit,\n\t    contract_unit_qty,\n\t    contract_unit_price_uom,\n\t    contract_unit_price,\n\t    net_amount,\n\t    shipping_qty,\n\t    invoice_qty,\n\t    invoice_unit_qty,\n\t    invoice_contract_unit_price,\n\t    invoice_net_amount,\n\t    consumption_tax,\n\t    tax_rate,\n\t    factory_variable_costs,\n\t    factory_fixed_costs,\n\t    direct_delivery_variable_costs,\n\t    one_price_variable_costs,\n\t    one_price_fixed_costs,\n\t    accounting_currency,\n\t    countryregionid,\n\t    country,\n\t    billinig_date\n\t)\n\tSELECT\n\t\tsystem_date,\n\t    sales_id,\n\t    line_num,\n\t    corporate_code,\n\t    source_id,\n\t    voucher_type,\n\t    sales_office,\n\t    sales_office_name,\n\t    sales_group,\n\t    sales_group_name,\n\t    cust_account,\n\t    cust_short_name,\n\t    phone_number,\n\t    sales_ship_to_account_num,\n\t    sales_ship_to_short_name,\n\t    sales_ship_to_name,\n\t    sales_ship_to_name2,\n\t    sales_ship_to_belonging,\n\t    sales_ship_to_name_notes,\n\t    sales_ship_to_prefectures,\n\t    sales_ship_to_municipality,\n\t    sales_ship_to_address,\n\t    sales_ship_to_building_name,\n\t    sales_ship_to_address_notes,\n\t    sales_ship_to_remarks1,\n\t    sales_ship_to_remarks2,\n\t    sales_ship_to_remarks3,\n\t    sales_ship_to_phone_num,\n\t    sales_end_user_account_num,\n\t    sales_end_user_short_name,\n\t    invoice_account,\n\t    sales_invoice_short_name,\n\t    sales_invoice_name,\n\t    sales_invoice_name2,\n\t    sales_invoice_belonging,\n\t    sales_invoice_name_notes,\n\t    sales_invoice_post_code,\n\t    sales_invoice_prefectures,\n\t    sales_invoice_municipality,\n\t    sales_invoice_address,\n\t    sales_invoice_building_name,\n\t    sales_invoice_address_notes,\n\t    sales_invoice_remarks1,\n\t    sales_invoice_remarks2,\n\t    sales_invoice_remarks3,\n\t    cust_collections,\n\t    sales_cust_collection_short_name,\n\t    sales_person,\n\t    sales_person_name,\n\t    carrier_cd,\n\t    carrier_name_alias,\n\t    oem_cd,\n\t    oem_name,\n\t    oem_name2,\n\t    oem_prefectures,\n\t    oem_municipality,\n\t    oem_address,\n\t    oem_building_name,\n\t    oem_address_notes,\n\t    oem_remarks1,\n\t    oem_remarks2,\n\t    oem_remarks3,\n\t    sales_vend_account_num,\n\t    sales_vend_name_alias,\n\t    customer_requirements,\n\t    billing_block,\n\t    item_id,\n\t    item_name,\n\t    pack_style_name,\n\t    shipping_name_code,\n\t    shipping_name,\n\t    trade_mark_code,\n\t    trade_mark_name,\n\t    sales_item_class_code,\n\t    sales_item_class_name,\n\t    product_item_group_code,\n\t    product_item_group_name,\n\t    sales_item_group_code,\n\t    sales_item_group_name,\n\t    shipping_type,\n\t    truck_scale_type,\n\t    product_type,\n\t    correction_category,\n\t    invent_site_id,\n\t    invent_site_name,\n\t    invent_location_id,\n\t    invent_location_name,\n\t    receipt_date_requested,\n\t    shipping_date_requested,\n\t    shipping_date,\n\t    sales_status,\n\t    delivery_method,\n\t    delivery_method_description,\n\t    detailed_status,\n\t    customer_delete_flag,\n\t    customer_delete_reason,\n\t    purchase_order_number,\n\t    purchase_order_status,\n\t    picking_route,\n\t    inventory_order,\n\t    picking_status,\n\t    line_status,\n\t    truck_scale_completion_flag,\n\t    invoice,\n\t    invoice_line_num,\n\t    invoice_date,\n\t    delivery_note_category,\n\t    delivery_note_category_name,\n\t    closing_date,\n\t    created_date_time,\n\t    created_by,\n\t    shipping_terms,\n\t    shipping_terms_description,\n\t    payment_terms,\n\t    payment_terms_description,\n\t    sales_consumer,\n\t    updated_date_time,\n\t    updated_by,\n\t    profit_and_loss_department,\n\t    qty_per_pack,\n\t    sales_qty,\n\t    sales_unit,\n\t    contract_unit_qty,\n\t    contract_unit_price_uom,\n\t    contract_unit_price,\n\t    net_amount,\n\t    shipping_qty,\n\t    invoice_qty,\n\t    invoice_unit_qty,\n\t    invoice_contract_unit_price,\n\t    invoice_net_amount,\n\t    consumption_tax,\n\t    tax_rate,\n\t    factory_variable_costs,\n\t    factory_fixed_costs,\n\t    direct_delivery_variable_costs,\n\t    one_price_variable_costs,\n\t    one_price_fixed_costs,\n\t    accounting_currency,\n\t    countryregionid,\n\t    country,\n\t    billinig_date\n\tFROM\n\t\ttemp_plstatement\n\n\tCOMMIT TRANSACTION;\n\nEND TRY\n\nBEGIN CATCH\n\n\tROLLBACK TRANSACTION;\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
-											}
-										],
-										"scriptBlockExecutionTimeout": "02:00:00"
-									}
-								},
-								{
-									"name": "TruncateMiddelTableAfterCsvFileDelete",
-									"description": "中間テーブルのテーブルデータを全削除します。\n次のアクティビティで CSV ファイルを削除します。",
-									"type": "Script",
-									"dependsOn": [
-										{
-											"activity": "DeleteInsertCsvDataAndGroupByFileName",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"linkedServiceName": {
-										"referenceName": "test_db_nsw_link_service",
-										"type": "LinkedServiceReference"
-									},
-									"typeProperties": {
-										"scripts": [
-											{
-												"type": "Query",
-												"text": "BEGIN TRY\r\n\r\n    -- 中間テーブルに格納されているデータを削除\r\n    TRUNCATE TABLE temp_plstatement;\r\n\r\nEND TRY\r\n\r\nBEGIN CATCH\r\n\r\n\t-- ADF に異常終了を伝えるため\r\n\tTHROW;\r\n\r\nEND CATCH"
-											}
-										],
-										"scriptBlockExecutionTimeout": "02:00:00"
-									}
-								},
-								{
-									"name": "TruncateMiddelTableNotAfterCsvFileDelete",
-									"description": "中間テーブルのテーブルデータを全削除します。\n次のアクティビティで CSV ファイルを削除しません",
-									"type": "Script",
-									"dependsOn": [
-										{
-											"activity": "DeleteInsertCsvDataAndGroupByFileName",
-											"dependencyConditions": [
-												"Failed"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"linkedServiceName": {
-										"referenceName": "test_db_nsw_link_service",
-										"type": "LinkedServiceReference"
-									},
-									"typeProperties": {
-										"scripts": [
-											{
-												"type": "Query",
-												"text": "BEGIN TRY\r\n\r\n    -- 中間テーブルに格納されているデータを削除\r\n    TRUNCATE TABLE temp_plstatement;\r\n\r\nEND TRY\r\n\r\nBEGIN CATCH\r\n\r\n\t-- ADF に異常終了を伝えるため\r\n\tTHROW;\r\n\r\nEND CATCH"
-											}
-										],
-										"scriptBlockExecutionTimeout": "02:00:00"
-									}
-								},
-								{
-									"name": "DeleteCsvFile",
-									"description": "対象のフォルダ配下に存在するアイテムの内、プレフィックスが \"plstatement_\" の CSV ファイルのみ削除します。",
-									"type": "Delete",
-									"dependsOn": [
-										{
-											"activity": "TruncateMiddelTableAfterCsvFileDelete",
-											"dependencyConditions": [
-												"Completed"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"dataset": {
-											"referenceName": "binary_common",
-											"type": "DatasetReference",
-											"parameters": {}
-										},
-										"enableLogging": false,
-										"storeSettings": {
-											"type": "AzureBlobStorageReadSettings",
-											"recursive": true,
-											"wildcardFileName": "plstatement_*.csv",
-											"enablePartitionDiscovery": false
-										}
-									}
-								},
-								{
-									"name": "CsvDataInMiddleTable",
-									"description": "CSV ファイルから読み込んだデータを中間テーブルに保存します。",
-									"type": "ExecuteDataFlow",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"dataflow": {
-											"referenceName": "csv_db_bulk_plstatement_temp_table",
-											"type": "DataFlowReference",
-											"parameters": {
-												"latestDatetimeFileName": {
-													"value": "'@{variables('latestDatetimeFileName')}'",
-													"type": "Expression"
-												}
-											},
-											"datasetParameters": {
-												"csvFileRead": {},
-												"csvDataInMiddleTable": {}
-											}
-										},
-										"staging": {},
-										"compute": {
-											"coreCount": 8,
-											"computeType": "General"
-										},
-										"traceLevel": "Fine"
-									}
-								}
-							]
-						}
-					},
-					{
-						"name": "TruncateMiddelTableIfExitMiddelTableData",
-						"description": "中間テーブルにレコードが存在する場合にのみ、中間テーブルのテーブルデータを全削除します。",
-						"type": "Script",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"linkedServiceName": {
-							"referenceName": "test_db_nsw_link_service",
-							"type": "LinkedServiceReference"
-						},
-						"typeProperties": {
-							"scripts": [
-								{
-									"type": "Query",
-									"text": "BEGIN TRY\n\n    DECLARE @RecordCount INT;\n\n\tSELECT @RecordCount = COUNT(sales_id)\n\tFROM temp_plstatement;\n\n\t-- 中間テーブルにレコードが存在する場合\n\tIF @RecordCount > 0\n\tBEGIN\n\t\t-- 中間テーブルに格納されているデータを削除\n\t\tTRUNCATE TABLE temp_plstatement;\n\tEND\n\nEND TRY\n\nBEGIN CATCH\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
-								}
-							],
-							"scriptBlockExecutionTimeout": "02:00:00"
-						}
-					},
-					{
-						"name": "GetFileNameList",
-						"description": "対象のフォルダ配下に存在するアイテム一覧を取得します。",
-						"type": "GetMetadata",
-						"dependsOn": [
-							{
-								"activity": "TruncateMiddelTableIfExitMiddelTableData",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "binary_common",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"fieldList": [
-								"childItems"
-							],
-							"storeSettings": {
-								"type": "AzureBlobStorageReadSettings",
-								"recursive": true,
-								"enablePartitionDiscovery": false
-							},
-							"formatSettings": {
-								"type": "BinaryReadSettings"
-							}
-						}
-					},
-					{
-						"name": "FilterCsvFile",
-						"description": "取得したアイテムの内、プレフィックスが \"plstatement_\" のCSV ファイルのみを抽出します。",
-						"type": "Filter",
-						"dependsOn": [
-							{
-								"activity": "GetFileNameList",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('GetFileNameList').output.childItems",
-								"type": "Expression"
-							},
-							"condition": {
-								"value": "@and(startswith(item().name, 'plstatement'), endswith(item().name, 'csv'))",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "ForEachGetLatestDatetime",
-						"description": "フィルタリングで残った CSV ファイルの数だけループします。",
-						"type": "ForEach",
-						"dependsOn": [
-							{
-								"activity": "FilterCsvFile",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('FilterCsvFile').output.value",
-								"type": "Expression"
-							},
-							"isSequential": true,
-							"activities": [
-								{
-									"name": "LatestDatetimeFileNameIsEmpty",
-									"description": "latestDatetimeFileName の値が empty かどうか判断します。",
-									"type": "IfCondition",
-									"dependsOn": [],
-									"userProperties": [],
-									"typeProperties": {
-										"expression": {
-											"value": "@empty(variables('latestDatetimeFileName'))",
-											"type": "Expression"
-										},
-										"ifFalseActivities": [
-											{
-												"name": "SetTempLatestDatetimeFileName",
-												"description": "tempLatestDatetimeFileName に latestDatetimeFileName の値を設定します。",
-												"type": "SetVariable",
-												"dependsOn": [],
-												"policy": {
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"variableName": "tempLatestDatetimeFileName",
-													"value": {
-														"value": "@variables('latestDatetimeFileName')",
-														"type": "Expression"
-													}
-												}
-											},
-											{
-												"name": "SetLatestDatetimeFileName",
-												"description": "ForEach に渡されたファイル名の日時と tempLatestDatetimeFileName の日時を比較し、最新の日時のファイル名のみを保持します。",
-												"type": "SetVariable",
-												"dependsOn": [
-													{
-														"activity": "SetTempLatestDatetimeFileName",
-														"dependencyConditions": [
-															"Succeeded"
-														]
-													}
-												],
-												"policy": {
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"variableName": "latestDatetimeFileName",
-													"value": {
-														"value": "@if(greater(substring(item().name, 12, 14), substring(variables('tempLatestDatetimeFileName'), 12, 14)), item().name, variables('tempLatestDatetimeFileName'))",
-														"type": "Expression"
-													}
-												}
-											}
-										],
-										"ifTrueActivities": [
-											{
-												"name": "SetFileName",
-												"description": "latestDatetimeFileName に ForEach に渡されたファイル名を設定します。",
-												"type": "SetVariable",
-												"dependsOn": [],
-												"policy": {
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"variableName": "latestDatetimeFileName",
-													"value": {
-														"value": "@item().name",
-														"type": "Expression"
-													}
-												}
-											}
-										]
-									}
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"variables": {
-					"latestDatetimeFileName": {
-						"type": "String"
-					},
-					"tempLatestDatetimeFileName": {
-						"type": "String"
-					}
-				},
-				"folder": {
-					"name": "実績損益"
-				},
-				"annotations": [],
-				"lastPublishTime": "2025-10-09T04:54:59Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/test_db_nsw_link_service')]",
-				"[concat(variables('factoryId'), '/datasets/binary_common')]",
-				"[concat(variables('factoryId'), '/dataflows/csv_db_bulk_plstatement_temp_table')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/test_csv_file_delete')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -2933,6 +2517,1224 @@
 						"container": "sales-forecast-data"
 					}
 				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/test_blob_storage_nsw')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/input_common_delimited_text')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "test_blob_storage_nsw",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"fileName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "共通"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@dataset().fileName",
+							"type": "Expression"
+						},
+						"container": "sales-forecast-data"
+					},
+					"columnDelimiter": ",",
+					"encodingName": "SHIFT-JIS",
+					"escapeChar": "\"",
+					"firstRowAsHeader": false,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "���t",
+						"type": "String"
+					},
+					{
+						"name": "�̔�����",
+						"type": "String"
+					},
+					{
+						"name": "���׍s�ԍ�2",
+						"type": "String"
+					},
+					{
+						"name": "�@�l�R�[�h",
+						"type": "String"
+					},
+					{
+						"name": "�R�s�[��ID",
+						"type": "String"
+					},
+					{
+						"name": "�`�[�^�C�v",
+						"type": "String"
+					},
+					{
+						"name": "�c�Ə�",
+						"type": "String"
+					},
+					{
+						"name": "�c�Ə���",
+						"type": "String"
+					},
+					{
+						"name": "�c�ƃO���[�v",
+						"type": "String"
+					},
+					{
+						"name": "�c�ƃO���[�v��",
+						"type": "String"
+					},
+					{
+						"name": "�ڋq",
+						"type": "String"
+					},
+					{
+						"name": "����11",
+						"type": "String"
+					},
+					{
+						"name": "�d�b�ԍ�",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-����14",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-���O",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-���O2",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-����17",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-���O���l",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-�s���{��",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-�s����",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-�Z��",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-������",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-�Z�����l",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-���l1",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-���l2",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-���l3",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-�d�b�ԍ�",
+						"type": "String"
+					},
+					{
+						"name": "�J�X�^�}�[",
+						"type": "String"
+					},
+					{
+						"name": "�J�X�^�}�[-����",
+						"type": "String"
+					},
+					{
+						"name": "������/��ID",
+						"type": "String"
+					},
+					{
+						"name": "������-����31",
+						"type": "String"
+					},
+					{
+						"name": "������-���O",
+						"type": "String"
+					},
+					{
+						"name": "������-���O2",
+						"type": "String"
+					},
+					{
+						"name": "������-����34",
+						"type": "String"
+					},
+					{
+						"name": "������-���O���l",
+						"type": "String"
+					},
+					{
+						"name": "������-�X�֔ԍ�",
+						"type": "String"
+					},
+					{
+						"name": "������-�s���{��",
+						"type": "String"
+					},
+					{
+						"name": "������-�s����",
+						"type": "String"
+					},
+					{
+						"name": "������-�Z��",
+						"type": "String"
+					},
+					{
+						"name": "������-������",
+						"type": "String"
+					},
+					{
+						"name": "������-�Z�����l",
+						"type": "String"
+					},
+					{
+						"name": "������-���l1",
+						"type": "String"
+					},
+					{
+						"name": "������-���l2",
+						"type": "String"
+					},
+					{
+						"name": "������-���l3",
+						"type": "String"
+					},
+					{
+						"name": "�����ID",
+						"type": "String"
+					},
+					{
+						"name": "�����-����",
+						"type": "String"
+					},
+					{
+						"name": "�c�ƈ�",
+						"type": "String"
+					},
+					{
+						"name": "�c�ƈ���",
+						"type": "String"
+					},
+					{
+						"name": "�^���Ǝ�",
+						"type": "String"
+					},
+					{
+						"name": "�^���Ǝ�-������",
+						"type": "String"
+					},
+					{
+						"name": "OEM�R�[�h",
+						"type": "String"
+					},
+					{
+						"name": "OEM-���O",
+						"type": "String"
+					},
+					{
+						"name": "OEM-���O2",
+						"type": "String"
+					},
+					{
+						"name": "OEM-�s���{��",
+						"type": "String"
+					},
+					{
+						"name": "OEM-�s����",
+						"type": "String"
+					},
+					{
+						"name": "OEM-�Z��",
+						"type": "String"
+					},
+					{
+						"name": "OEM-������",
+						"type": "String"
+					},
+					{
+						"name": "OEM-�Z�����l",
+						"type": "String"
+					},
+					{
+						"name": "OEM-���l1",
+						"type": "String"
+					},
+					{
+						"name": "OEM-���l2",
+						"type": "String"
+					},
+					{
+						"name": "OEM-���l3",
+						"type": "String"
+					},
+					{
+						"name": "�d����",
+						"type": "String"
+					},
+					{
+						"name": "�d����-������",
+						"type": "String"
+					},
+					{
+						"name": "�ڋq�̗v��",
+						"type": "String"
+					},
+					{
+						"name": "�����u���b�N",
+						"type": "String"
+					},
+					{
+						"name": "�i�ڔԍ�",
+						"type": "String"
+					},
+					{
+						"name": "�e�L�X�g",
+						"type": "String"
+					},
+					{
+						"name": "�׎p",
+						"type": "String"
+					},
+					{
+						"name": "�o�ז��R�[�h",
+						"type": "String"
+					},
+					{
+						"name": "�o�ז�",
+						"type": "String"
+					},
+					{
+						"name": "���W�R�[�h",
+						"type": "String"
+					},
+					{
+						"name": "���W��",
+						"type": "String"
+					},
+					{
+						"name": "���i�啪�ރR�[�h",
+						"type": "String"
+					},
+					{
+						"name": "���i�啪�ޖ�",
+						"type": "String"
+					},
+					{
+						"name": "���i�Q�R�[�h75",
+						"type": "String"
+					},
+					{
+						"name": "���i�Q��76",
+						"type": "String"
+					},
+					{
+						"name": "���i�Q�R�[�h77",
+						"type": "String"
+					},
+					{
+						"name": "���i�Q��78",
+						"type": "String"
+					},
+					{
+						"name": "�z���^�C�v",
+						"type": "String"
+					},
+					{
+						"name": "��ы敪",
+						"type": "String"
+					},
+					{
+						"name": "���i�^�C�v",
+						"type": "String"
+					},
+					{
+						"name": "�����敪",
+						"type": "String"
+					},
+					{
+						"name": "�T�C�g",
+						"type": "String"
+					},
+					{
+						"name": "�T�C�g��",
+						"type": "String"
+					},
+					{
+						"name": "�q��",
+						"type": "String"
+					},
+					{
+						"name": "�q�ɖ�",
+						"type": "String"
+					},
+					{
+						"name": "���׊�]��",
+						"type": "String"
+					},
+					{
+						"name": "�o�ח\\���",
+						"type": "String"
+					},
+					{
+						"name": "�o�ד�",
+						"type": "String"
+					},
+					{
+						"name": "�����X�e�[�^�X90",
+						"type": "String"
+					},
+					{
+						"name": "�דn���@",
+						"type": "String"
+					},
+					{
+						"name": "�דn���@-���",
+						"type": "String"
+					},
+					{
+						"name": "�ڍ׃X�e�[�^�X",
+						"type": "String"
+					},
+					{
+						"name": "�J�X�^�}�[�䒠�폜",
+						"type": "String"
+					},
+					{
+						"name": "�J�X�^�}�[�䒠�폜���R",
+						"type": "String"
+					},
+					{
+						"name": "�������ԍ�",
+						"type": "String"
+					},
+					{
+						"name": "������-�s�X�e�[�^�X",
+						"type": "String"
+					},
+					{
+						"name": "�s�b�L���O ���[�g",
+						"type": "String"
+					},
+					{
+						"name": "�݌ɒ���",
+						"type": "String"
+					},
+					{
+						"name": "�����X�e�[�^�X100",
+						"type": "String"
+					},
+					{
+						"name": "�̔�����-�s�X�e�[�^�X",
+						"type": "String"
+					},
+					{
+						"name": "��ъ����敪",
+						"type": "String"
+					},
+					{
+						"name": "������103",
+						"type": "String"
+					},
+					{
+						"name": "���׍s�ԍ�104",
+						"type": "String"
+					},
+					{
+						"name": "������105",
+						"type": "String"
+					},
+					{
+						"name": "�[�i���敪",
+						"type": "String"
+					},
+					{
+						"name": "�[�i���敪��",
+						"type": "String"
+					},
+					{
+						"name": "����108",
+						"type": "String"
+					},
+					{
+						"name": "�쐬����",
+						"type": "String"
+					},
+					{
+						"name": "�쐬��",
+						"type": "String"
+					},
+					{
+						"name": "�z�����",
+						"type": "String"
+					},
+					{
+						"name": "�z�����-���",
+						"type": "String"
+					},
+					{
+						"name": "�x�����",
+						"type": "String"
+					},
+					{
+						"name": "�x�����-���",
+						"type": "String"
+					},
+					{
+						"name": "���v��",
+						"type": "String"
+					},
+					{
+						"name": "�ύX����",
+						"type": "String"
+					},
+					{
+						"name": "�X�V��",
+						"type": "String"
+					},
+					{
+						"name": "���v���S����",
+						"type": "String"
+					},
+					{
+						"name": "����119",
+						"type": "String"
+					},
+					{
+						"name": "����120",
+						"type": "String"
+					},
+					{
+						"name": "�̔��P��",
+						"type": "String"
+					},
+					{
+						"name": "�_��P������",
+						"type": "String"
+					},
+					{
+						"name": "�_��P���P��",
+						"type": "String"
+					},
+					{
+						"name": "�_��P��",
+						"type": "String"
+					},
+					{
+						"name": "������z",
+						"type": "String"
+					},
+					{
+						"name": "�o�א���",
+						"type": "String"
+					},
+					{
+						"name": "����������",
+						"type": "String"
+					},
+					{
+						"name": "�������_��P������",
+						"type": "String"
+					},
+					{
+						"name": "�������_��P��",
+						"type": "String"
+					},
+					{
+						"name": "������������z",
+						"type": "String"
+					},
+					{
+						"name": "����Ŋz",
+						"type": "String"
+					},
+					{
+						"name": "�ŗ�",
+						"type": "String"
+					},
+					{
+						"name": "�ϓ�������i�H��j",
+						"type": "String"
+					},
+					{
+						"name": "�Œ萻����i�H��j",
+						"type": "String"
+					},
+					{
+						"name": "�ϓ�������i���[�j",
+						"type": "String"
+					},
+					{
+						"name": "�ϓ�������i�ꕨ�ꉿ�j",
+						"type": "String"
+					},
+					{
+						"name": "�Œ萻����i�ꕨ�ꉿ�j",
+						"type": "String"
+					},
+					{
+						"name": "��v�ʉ�",
+						"type": "String"
+					},
+					{
+						"name": "���^�n��R�[�h",
+						"type": "String"
+					},
+					{
+						"name": "����140",
+						"type": "String"
+					},
+					{
+						"name": "�����N��",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/test_blob_storage_nsw')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/output_common_delimited_text')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "test_blob_storage_nsw",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"fileName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "共通"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@dataset().fileName",
+							"type": "Expression"
+						},
+						"folderPath": "output",
+						"container": "sales-forecast-data"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\"",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "���t",
+						"type": "String"
+					},
+					{
+						"name": "�̔�����",
+						"type": "String"
+					},
+					{
+						"name": "���׍s�ԍ�2",
+						"type": "String"
+					},
+					{
+						"name": "�@�l�R�[�h",
+						"type": "String"
+					},
+					{
+						"name": "�R�s�[��ID",
+						"type": "String"
+					},
+					{
+						"name": "�`�[�^�C�v",
+						"type": "String"
+					},
+					{
+						"name": "�c�Ə�",
+						"type": "String"
+					},
+					{
+						"name": "�c�Ə���",
+						"type": "String"
+					},
+					{
+						"name": "�c�ƃO���[�v",
+						"type": "String"
+					},
+					{
+						"name": "�c�ƃO���[�v��",
+						"type": "String"
+					},
+					{
+						"name": "�ڋq",
+						"type": "String"
+					},
+					{
+						"name": "����11",
+						"type": "String"
+					},
+					{
+						"name": "�d�b�ԍ�",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-����14",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-���O",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-���O2",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-����17",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-���O���l",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-�s���{��",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-�s����",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-�Z��",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-������",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-�Z�����l",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-���l1",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-���l2",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-���l3",
+						"type": "String"
+					},
+					{
+						"name": "�o�א�-�d�b�ԍ�",
+						"type": "String"
+					},
+					{
+						"name": "�J�X�^�}�[",
+						"type": "String"
+					},
+					{
+						"name": "�J�X�^�}�[-����",
+						"type": "String"
+					},
+					{
+						"name": "������/��ID",
+						"type": "String"
+					},
+					{
+						"name": "������-����31",
+						"type": "String"
+					},
+					{
+						"name": "������-���O",
+						"type": "String"
+					},
+					{
+						"name": "������-���O2",
+						"type": "String"
+					},
+					{
+						"name": "������-����34",
+						"type": "String"
+					},
+					{
+						"name": "������-���O���l",
+						"type": "String"
+					},
+					{
+						"name": "������-�X�֔ԍ�",
+						"type": "String"
+					},
+					{
+						"name": "������-�s���{��",
+						"type": "String"
+					},
+					{
+						"name": "������-�s����",
+						"type": "String"
+					},
+					{
+						"name": "������-�Z��",
+						"type": "String"
+					},
+					{
+						"name": "������-������",
+						"type": "String"
+					},
+					{
+						"name": "������-�Z�����l",
+						"type": "String"
+					},
+					{
+						"name": "������-���l1",
+						"type": "String"
+					},
+					{
+						"name": "������-���l2",
+						"type": "String"
+					},
+					{
+						"name": "������-���l3",
+						"type": "String"
+					},
+					{
+						"name": "�����ID",
+						"type": "String"
+					},
+					{
+						"name": "�����-����",
+						"type": "String"
+					},
+					{
+						"name": "�c�ƈ�",
+						"type": "String"
+					},
+					{
+						"name": "�c�ƈ���",
+						"type": "String"
+					},
+					{
+						"name": "�^���Ǝ�",
+						"type": "String"
+					},
+					{
+						"name": "�^���Ǝ�-������",
+						"type": "String"
+					},
+					{
+						"name": "OEM�R�[�h",
+						"type": "String"
+					},
+					{
+						"name": "OEM-���O",
+						"type": "String"
+					},
+					{
+						"name": "OEM-���O2",
+						"type": "String"
+					},
+					{
+						"name": "OEM-�s���{��",
+						"type": "String"
+					},
+					{
+						"name": "OEM-�s����",
+						"type": "String"
+					},
+					{
+						"name": "OEM-�Z��",
+						"type": "String"
+					},
+					{
+						"name": "OEM-������",
+						"type": "String"
+					},
+					{
+						"name": "OEM-�Z�����l",
+						"type": "String"
+					},
+					{
+						"name": "OEM-���l1",
+						"type": "String"
+					},
+					{
+						"name": "OEM-���l2",
+						"type": "String"
+					},
+					{
+						"name": "OEM-���l3",
+						"type": "String"
+					},
+					{
+						"name": "�d����",
+						"type": "String"
+					},
+					{
+						"name": "�d����-������",
+						"type": "String"
+					},
+					{
+						"name": "�ڋq�̗v��",
+						"type": "String"
+					},
+					{
+						"name": "�����u���b�N",
+						"type": "String"
+					},
+					{
+						"name": "�i�ڔԍ�",
+						"type": "String"
+					},
+					{
+						"name": "�e�L�X�g",
+						"type": "String"
+					},
+					{
+						"name": "�׎p",
+						"type": "String"
+					},
+					{
+						"name": "�o�ז��R�[�h",
+						"type": "String"
+					},
+					{
+						"name": "�o�ז�",
+						"type": "String"
+					},
+					{
+						"name": "���W�R�[�h",
+						"type": "String"
+					},
+					{
+						"name": "���W��",
+						"type": "String"
+					},
+					{
+						"name": "���i�啪�ރR�[�h",
+						"type": "String"
+					},
+					{
+						"name": "���i�啪�ޖ�",
+						"type": "String"
+					},
+					{
+						"name": "���i�Q�R�[�h75",
+						"type": "String"
+					},
+					{
+						"name": "���i�Q��76",
+						"type": "String"
+					},
+					{
+						"name": "���i�Q�R�[�h77",
+						"type": "String"
+					},
+					{
+						"name": "���i�Q��78",
+						"type": "String"
+					},
+					{
+						"name": "�z���^�C�v",
+						"type": "String"
+					},
+					{
+						"name": "��ы敪",
+						"type": "String"
+					},
+					{
+						"name": "���i�^�C�v",
+						"type": "String"
+					},
+					{
+						"name": "�����敪",
+						"type": "String"
+					},
+					{
+						"name": "�T�C�g",
+						"type": "String"
+					},
+					{
+						"name": "�T�C�g��",
+						"type": "String"
+					},
+					{
+						"name": "�q��",
+						"type": "String"
+					},
+					{
+						"name": "�q�ɖ�",
+						"type": "String"
+					},
+					{
+						"name": "���׊�]��",
+						"type": "String"
+					},
+					{
+						"name": "�o�ח\\���",
+						"type": "String"
+					},
+					{
+						"name": "�o�ד�",
+						"type": "String"
+					},
+					{
+						"name": "�����X�e�[�^�X90",
+						"type": "String"
+					},
+					{
+						"name": "�דn���@",
+						"type": "String"
+					},
+					{
+						"name": "�דn���@-���",
+						"type": "String"
+					},
+					{
+						"name": "�ڍ׃X�e�[�^�X",
+						"type": "String"
+					},
+					{
+						"name": "�J�X�^�}�[�䒠�폜",
+						"type": "String"
+					},
+					{
+						"name": "�J�X�^�}�[�䒠�폜���R",
+						"type": "String"
+					},
+					{
+						"name": "�������ԍ�",
+						"type": "String"
+					},
+					{
+						"name": "������-�s�X�e�[�^�X",
+						"type": "String"
+					},
+					{
+						"name": "�s�b�L���O ���[�g",
+						"type": "String"
+					},
+					{
+						"name": "�݌ɒ���",
+						"type": "String"
+					},
+					{
+						"name": "�����X�e�[�^�X100",
+						"type": "String"
+					},
+					{
+						"name": "�̔�����-�s�X�e�[�^�X",
+						"type": "String"
+					},
+					{
+						"name": "��ъ����敪",
+						"type": "String"
+					},
+					{
+						"name": "������103",
+						"type": "String"
+					},
+					{
+						"name": "���׍s�ԍ�104",
+						"type": "String"
+					},
+					{
+						"name": "������105",
+						"type": "String"
+					},
+					{
+						"name": "�[�i���敪",
+						"type": "String"
+					},
+					{
+						"name": "�[�i���敪��",
+						"type": "String"
+					},
+					{
+						"name": "����108",
+						"type": "String"
+					},
+					{
+						"name": "�쐬����",
+						"type": "String"
+					},
+					{
+						"name": "�쐬��",
+						"type": "String"
+					},
+					{
+						"name": "�z�����",
+						"type": "String"
+					},
+					{
+						"name": "�z�����-���",
+						"type": "String"
+					},
+					{
+						"name": "�x�����",
+						"type": "String"
+					},
+					{
+						"name": "�x�����-���",
+						"type": "String"
+					},
+					{
+						"name": "���v��",
+						"type": "String"
+					},
+					{
+						"name": "�ύX����",
+						"type": "String"
+					},
+					{
+						"name": "�X�V��",
+						"type": "String"
+					},
+					{
+						"name": "���v���S����",
+						"type": "String"
+					},
+					{
+						"name": "����119",
+						"type": "String"
+					},
+					{
+						"name": "����120",
+						"type": "String"
+					},
+					{
+						"name": "�̔��P��",
+						"type": "String"
+					},
+					{
+						"name": "�_��P������",
+						"type": "String"
+					},
+					{
+						"name": "�_��P���P��",
+						"type": "String"
+					},
+					{
+						"name": "�_��P��",
+						"type": "String"
+					},
+					{
+						"name": "������z",
+						"type": "String"
+					},
+					{
+						"name": "�o�א���",
+						"type": "String"
+					},
+					{
+						"name": "����������",
+						"type": "String"
+					},
+					{
+						"name": "�������_��P������",
+						"type": "String"
+					},
+					{
+						"name": "�������_��P��",
+						"type": "String"
+					},
+					{
+						"name": "������������z",
+						"type": "String"
+					},
+					{
+						"name": "����Ŋz",
+						"type": "String"
+					},
+					{
+						"name": "�ŗ�",
+						"type": "String"
+					},
+					{
+						"name": "�ϓ�������i�H��j",
+						"type": "String"
+					},
+					{
+						"name": "�Œ萻����i�H��j",
+						"type": "String"
+					},
+					{
+						"name": "�ϓ�������i���[�j",
+						"type": "String"
+					},
+					{
+						"name": "�ϓ�������i�ꕨ�ꉿ�j",
+						"type": "String"
+					},
+					{
+						"name": "�Œ萻����i�ꕨ�ꉿ�j",
+						"type": "String"
+					},
+					{
+						"name": "��v�ʉ�",
+						"type": "String"
+					},
+					{
+						"name": "���^�n��R�[�h",
+						"type": "String"
+					},
+					{
+						"name": "����140",
+						"type": "String"
+					},
+					{
+						"name": "�����N��",
+						"type": "String"
+					}
+				]
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/test_blob_storage_nsw')]"
@@ -5461,148 +6263,148 @@
 						"     latestDatetimeFileName as string ('plstatement_20251105053200.csv')",
 						"}",
 						"source(output(",
-						"          {日付} as date 'yyyy/MM/dd',",
-						"          {販売注文} as string,",
-						"          {明細行番号2} as integer,",
-						"          {法人コード} as string,",
-						"          {コピー元ID} as string,",
-						"          {伝票タイプ} as string,",
-						"          {営業所} as string,",
-						"          {営業所名} as string,",
-						"          {営業グループ} as string,",
-						"          {営業グループ名} as string,",
-						"          {顧客} as string,",
-						"          {略称} as string,",
-						"          {電話番号} as string,",
-						"          {出荷先} as string,",
-						"          {出荷先-略称} as string,",
-						"          {出荷先-名前} as string,",
-						"          {出荷先-名前2} as string,",
-						"          {出荷先-所属} as string,",
-						"          {出荷先-名前備考} as string,",
-						"          {出荷先-都道府県} as string,",
-						"          {出荷先-市町村} as string,",
-						"          {出荷先-住所} as string,",
-						"          {出荷先-建物名} as string,",
-						"          {出荷先-住所備考} as string,",
-						"          {出荷先-備考1} as string,",
-						"          {出荷先-備考2} as string,",
-						"          {出荷先-備考3} as string,",
-						"          {出荷先-電話番号} as string,",
-						"          {カスタマー} as string,",
-						"          {カスタマー-略称} as string,",
-						"          {請求先/元ID} as string,",
-						"          {請求先-略称} as string,",
-						"          {請求先-名前} as string,",
-						"          {請求先-名前2} as string,",
-						"          {請求先-所属} as string,",
-						"          {請求先-名前備考} as string,",
-						"          {請求先-郵便番号} as string,",
-						"          {請求先-都道府県} as string,",
-						"          {請求先-市町村} as string,",
-						"          {請求先-住所} as string,",
-						"          {請求先-建物名} as string,",
-						"          {請求先-住所備考} as string,",
-						"          {請求先-備考1} as string,",
-						"          {請求先-備考2} as string,",
-						"          {請求先-備考3} as string,",
-						"          {回収先ID} as string,",
-						"          {回収先-略称} as string,",
-						"          {営業員} as string,",
-						"          {営業員名} as string,",
-						"          {運送業者} as string,",
-						"          {運送業者-検索名} as string,",
-						"          {OEMコード} as string,",
-						"          {OEM-名前} as string,",
-						"          {OEM-名前2} as string,",
-						"          {OEM-都道府県} as string,",
-						"          {OEM-市町村} as string,",
-						"          {OEM-住所} as string,",
-						"          {OEM-建物名} as string,",
-						"          {OEM-住所備考} as string,",
-						"          {OEM-備考1} as string,",
-						"          {OEM-備考2} as string,",
-						"          {OEM-備考3} as string,",
-						"          {仕入先} as string,",
-						"          {仕入先-検索名} as string,",
-						"          {顧客の要求} as string,",
-						"          {請求ブロック} as string,",
-						"          {品目番号} as string,",
-						"          {テキスト} as string,",
-						"          {荷姿} as string,",
-						"          {出荷名コード} as string,",
-						"          {出荷名} as string,",
-						"          {商標コード} as string,",
-						"          {商標名} as string,",
-						"          {商品大分類コード} as string,",
-						"          {商品大分類名} as string,",
-						"          {製品群コード} as string,",
-						"          {製品群名} as string,",
-						"          {商品群コード} as string,",
-						"          {商品群名} as string,",
-						"          {配送タイプ} as string,",
-						"          {台貫区分} as string,",
-						"          {製品タイプ} as string,",
-						"          {訂正区分} as string,",
-						"          {サイト} as string,",
-						"          {サイト名} as string,",
-						"          {倉庫} as string,",
-						"          {倉庫名} as string,",
-						"          {入荷希望日} as date 'yyyy/MM/dd',",
-						"          {出荷予定日} as date 'yyyy/MM/dd',",
-						"          {出荷日} as date 'yyyy/MM/dd',",
-						"          {処理ステータス90} as string,",
-						"          {荷渡方法} as string,",
-						"          {荷渡方法-説明} as string,",
-						"          {詳細ステータス} as string,",
-						"          {カスタマー台帳削除} as string,",
-						"          {カスタマー台帳削除理由} as string,",
-						"          {発注書番号} as string,",
-						"          {発注書-行ステータス} as string,",
-						"          {ピッキング ルート} as string,",
-						"          {在庫注文} as string,",
-						"          {処理ステータス100} as string,",
-						"          {販売注文-行ステータス} as string,",
-						"          {台貫完了区分} as string,",
-						"          {請求書} as string,",
-						"          {明細行番号104} as integer,",
-						"          {請求日} as date 'yyyy/MM/dd',",
-						"          {納品書区分} as string,",
-						"          {納品書区分名} as string,",
-						"          {締日} as integer,",
-						"          {作成日時} as timestamp 'yyyy/MM/dd HH:mm',",
-						"          {作成者} as string,",
-						"          {配送条件} as string,",
-						"          {配送条件-説明} as string,",
-						"          {支払条件} as string,",
-						"          {支払条件-説明} as string,",
-						"          {需要家} as string,",
-						"          {変更日時} as timestamp 'yyyy/MM/dd HH:mm',",
-						"          {更新者} as string,",
-						"          {損益負担部門} as string,",
-						"          {入数} as string,",
-						"          {数量} as string,",
-						"          {販売単位} as string,",
-						"          {契約単価数量} as string,",
-						"          {契約単価単位} as string,",
-						"          {契約単価} as string,",
-						"          {正味金額} as string,",
-						"          {出荷数量} as string,",
-						"          {請求時数量} as string,",
-						"          {請求時契約単価数量} as string,",
-						"          {請求時契約単価} as string,",
-						"          {請求時正味金額} as string,",
-						"          {消費税額} as string,",
-						"          {税率} as string,",
-						"          {変動製造費（工場）} as string,",
-						"          {固定製造費（工場）} as string,",
-						"          {変動製造費（直納）} as string,",
-						"          {変動製造費（一物一価）} as string,",
-						"          {固定製造費（一物一価）} as string,",
-						"          {会計通貨} as string,",
-						"          {国／地域コード} as string,",
-						"          {国名} as string,",
-						"          {請求年月} as string",
+						"          Column1 as date 'yyyy/MM/dd',",
+						"          Column2 as string,",
+						"          Column3 as integer,",
+						"          Column4 as string,",
+						"          Column5 as string,",
+						"          Column6 as string,",
+						"          Column7 as string,",
+						"          Column8 as string,",
+						"          Column9 as string,",
+						"          Column10 as string,",
+						"          Column11 as string,",
+						"          Column12 as string,",
+						"          Column13 as string,",
+						"          Column14 as string,",
+						"          Column15 as string,",
+						"          Column16 as string,",
+						"          Column17 as string,",
+						"          Column18 as string,",
+						"          Column19 as string,",
+						"          Column20 as string,",
+						"          Column21 as string,",
+						"          Column22 as string,",
+						"          Column23 as string,",
+						"          Column24 as string,",
+						"          Column25 as string,",
+						"          Column26 as string,",
+						"          Column27 as string,",
+						"          Column28 as string,",
+						"          Column29 as string,",
+						"          Column30 as string,",
+						"          Column31 as string,",
+						"          Column32 as string,",
+						"          Column33 as string,",
+						"          Column34 as string,",
+						"          Column35 as string,",
+						"          Column36 as string,",
+						"          Column37 as string,",
+						"          Column38 as string,",
+						"          Column39 as string,",
+						"          Column40 as string,",
+						"          Column41 as string,",
+						"          Column42 as string,",
+						"          Column43 as string,",
+						"          Column44 as string,",
+						"          Column45 as string,",
+						"          Column46 as string,",
+						"          Column47 as string,",
+						"          Column48 as string,",
+						"          Column49 as string,",
+						"          Column50 as string,",
+						"          Column51 as string,",
+						"          Column52 as string,",
+						"          Column53 as string,",
+						"          Column54 as string,",
+						"          Column55 as string,",
+						"          Column56 as string,",
+						"          Column57 as string,",
+						"          Column58 as string,",
+						"          Column59 as string,",
+						"          Column60 as string,",
+						"          Column61 as string,",
+						"          Column62 as string,",
+						"          Column63 as string,",
+						"          Column64 as string,",
+						"          Column65 as string,",
+						"          Column66 as string,",
+						"          Column67 as string,",
+						"          Column68 as string,",
+						"          Column69 as string,",
+						"          Column70 as string,",
+						"          Column71 as string,",
+						"          Column72 as string,",
+						"          Column73 as string,",
+						"          Column74 as string,",
+						"          Column75 as string,",
+						"          Column76 as string,",
+						"          Column77 as string,",
+						"          Column78 as string,",
+						"          Column79 as string,",
+						"          Column80 as string,",
+						"          Column81 as string,",
+						"          Column82 as string,",
+						"          Column83 as string,",
+						"          Column84 as string,",
+						"          Column85 as string,",
+						"          Column86 as string,",
+						"          Column87 as string,",
+						"          Column88 as date 'yyyy/MM/dd',",
+						"          Column89 as date 'yyyy/MM/dd',",
+						"          Column90 as date 'yyyy/MM/dd',",
+						"          Column91 as string,",
+						"          Column92 as string,",
+						"          Column93 as string,",
+						"          Column94 as string,",
+						"          Column95 as string,",
+						"          Column96 as string,",
+						"          Column97 as string,",
+						"          Column98 as string,",
+						"          Column99 as string,",
+						"          Column100 as string,",
+						"          Column101 as string,",
+						"          Column102 as string,",
+						"          Column103 as string,",
+						"          Column104 as string,",
+						"          Column105 as integer,",
+						"          Column106 as date 'yyyy/MM/dd',",
+						"          Column107 as string,",
+						"          Column108 as string,",
+						"          Column109 as integer,",
+						"          Column110 as timestamp 'yyyy/MM/dd HH:mm:ss',",
+						"          Column111 as string,",
+						"          Column112 as string,",
+						"          Column113 as string,",
+						"          Column114 as string,",
+						"          Column115 as string,",
+						"          Column116 as string,",
+						"          Column117 as timestamp 'yyyy/MM/dd HH:mm:ss',",
+						"          Column118 as string,",
+						"          Column119 as string,",
+						"          Column120 as string,",
+						"          Column121 as string,",
+						"          Column122 as string,",
+						"          Column123 as string,",
+						"          Column124 as string,",
+						"          Column125 as string,",
+						"          Column126 as string,",
+						"          Column127 as string,",
+						"          Column128 as string,",
+						"          Column129 as string,",
+						"          Column130 as string,",
+						"          Column131 as string,",
+						"          Column132 as string,",
+						"          Column133 as string,",
+						"          Column134 as string,",
+						"          Column135 as string,",
+						"          Column136 as string,",
+						"          Column137 as string,",
+						"          Column138 as string,",
+						"          Column139 as string,",
+						"          Column140 as string,",
+						"          Column141 as string,",
+						"          Column142 as string",
 						"     ),",
 						"     useSchema: false,",
 						"     allowSchemaDrift: false,",
@@ -5613,26 +6415,25 @@
 						"     columnDelimiter: ',',",
 						"     escapeChar: '\\\"',",
 						"     quoteChar: '\\\"',",
-						"     encodingName: 'SHIFT-JIS',",
 						"     columnNamesAsHeader: true,",
-						"     wildcardPaths:[($latestDatetimeFileName)]) ~> csvFileRead",
-						"csvFileRead derive({入数} = toDecimal({入数}, 12, 2),",
-						"          {数量} = toDecimal({数量}, 12, 2),",
-						"          {契約単価数量} = toDecimal({契約単価数量}, 12, 2),",
-						"          {契約単価} = toDecimal({契約単価}, 15, 2),",
-						"          {正味金額} = toDecimal({正味金額}, 15, 2),",
-						"          {出荷数量} = toDecimal({出荷数量}, 12, 2),",
-						"          {請求時数量} = toDecimal({請求時数量}, 12, 2),",
-						"          {請求時契約単価数量} = toDecimal({請求時契約単価数量}, 12, 2),",
-						"          {請求時契約単価} = toDecimal({請求時契約単価}, 15, 2),",
-						"          {請求時正味金額} = toDecimal({請求時正味金額}, 15, 2),",
-						"          {消費税額} = toDecimal({消費税額}, 15, 2),",
-						"          {税率} = toDecimal({税率}, 5, 2),",
-						"          {変動製造費（工場）} = toDecimal({変動製造費（工場）}, 15, 2),",
-						"          {固定製造費（工場）} = toDecimal({固定製造費（工場）}, 15, 2),",
-						"          {変動製造費（直納）} = toDecimal({変動製造費（直納）}, 15, 2),",
-						"          {変動製造費（一物一価）} = toDecimal({変動製造費（一物一価）}, 15, 2),",
-						"          {固定製造費（一物一価）} = toDecimal({固定製造費（一物一価）}, 15, 2)) ~> toDecimal",
+						"     wildcardPaths:[(concat('output/', $latestDatetimeFileName))]) ~> csvFileRead",
+						"csvFileRead derive(Column120 = toDecimal(Column120, 12, 2),",
+						"          Column121 = toDecimal(Column121, 12, 2),",
+						"          Column123 = toDecimal(Column123, 12, 2),",
+						"          Column125 = toDecimal(Column125, 15, 2),",
+						"          Column126 = toDecimal(Column126, 15, 2),",
+						"          Column127 = toDecimal(Column127, 12, 2),",
+						"          Column128 = toDecimal(Column128, 12, 2),",
+						"          Column129 = toDecimal(Column129, 12, 2),",
+						"          Column130 = toDecimal(Column130, 15, 2),",
+						"          Column131 = toDecimal(Column131, 15, 2),",
+						"          Column132 = toDecimal(Column132, 15, 2),",
+						"          Column133 = toDecimal(Column133, 5, 2),",
+						"          Column134 = toDecimal(Column134, 15, 2),",
+						"          Column135 = toDecimal(Column135, 15, 2),",
+						"          Column136 = toDecimal(Column136, 15, 2),",
+						"          Column137 = toDecimal(Column137, 15, 2),",
+						"          Column138 = toDecimal(Column138, 15, 2)) ~> toDecimal",
 						"toDecimal sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",
@@ -5789,148 +6590,148 @@
 						"     saveOrder: 1,",
 						"     errorHandlingOption: 'stopOnFirstError',",
 						"     mapColumn(",
-						"          system_date = {日付},",
-						"          sales_id = {販売注文},",
-						"          line_num = {明細行番号2},",
-						"          corporate_code = {法人コード},",
-						"          source_id = {コピー元ID},",
-						"          voucher_type = {伝票タイプ},",
-						"          sales_office = {営業所},",
-						"          sales_office_name = {営業所名},",
-						"          sales_group = {営業グループ},",
-						"          sales_group_name = {営業グループ名},",
-						"          cust_account = {顧客},",
-						"          cust_short_name = {略称},",
-						"          phone_number = {電話番号},",
-						"          sales_ship_to_account_num = {出荷先},",
-						"          sales_ship_to_short_name = {出荷先-略称},",
-						"          sales_ship_to_name = {出荷先-名前},",
-						"          sales_ship_to_name2 = {出荷先-名前2},",
-						"          sales_ship_to_belonging = {出荷先-所属},",
-						"          sales_ship_to_name_notes = {出荷先-名前備考},",
-						"          sales_ship_to_prefectures = {出荷先-都道府県},",
-						"          sales_ship_to_municipality = {出荷先-市町村},",
-						"          sales_ship_to_address = {出荷先-住所},",
-						"          sales_ship_to_building_name = {出荷先-建物名},",
-						"          sales_ship_to_address_notes = {出荷先-住所備考},",
-						"          sales_ship_to_remarks1 = {出荷先-備考1},",
-						"          sales_ship_to_remarks2 = {出荷先-備考2},",
-						"          sales_ship_to_remarks3 = {出荷先-備考3},",
-						"          sales_ship_to_phone_num = {出荷先-電話番号},",
-						"          sales_end_user_account_num = {カスタマー},",
-						"          sales_end_user_short_name = {カスタマー-略称},",
-						"          invoice_account = {請求先/元ID},",
-						"          sales_invoice_short_name = {請求先-略称},",
-						"          sales_invoice_name = {請求先-名前},",
-						"          sales_invoice_name2 = {請求先-名前2},",
-						"          sales_invoice_belonging = {請求先-所属},",
-						"          sales_invoice_name_notes = {請求先-名前備考},",
-						"          sales_invoice_post_code = {請求先-郵便番号},",
-						"          sales_invoice_prefectures = {請求先-都道府県},",
-						"          sales_invoice_municipality = {請求先-市町村},",
-						"          sales_invoice_address = {請求先-住所},",
-						"          sales_invoice_building_name = {請求先-建物名},",
-						"          sales_invoice_address_notes = {請求先-住所備考},",
-						"          sales_invoice_remarks1 = {請求先-備考1},",
-						"          sales_invoice_remarks2 = {請求先-備考2},",
-						"          sales_invoice_remarks3 = {請求先-備考3},",
-						"          cust_collections = {回収先ID},",
-						"          sales_cust_collection_short_name = {回収先-略称},",
-						"          sales_person = {営業員},",
-						"          sales_person_name = {営業員名},",
-						"          carrier_cd = {運送業者},",
-						"          carrier_name_alias = {運送業者-検索名},",
-						"          oem_cd = {OEMコード},",
-						"          oem_name = {OEM-名前},",
-						"          oem_name2 = {OEM-名前2},",
-						"          oem_prefectures = {OEM-都道府県},",
-						"          oem_municipality = {OEM-市町村},",
-						"          oem_address = {OEM-住所},",
-						"          oem_building_name = {OEM-建物名},",
-						"          oem_address_notes = {OEM-住所備考},",
-						"          oem_remarks1 = {OEM-備考1},",
-						"          oem_remarks2 = {OEM-備考2},",
-						"          oem_remarks3 = {OEM-備考3},",
-						"          sales_vend_account_num = {仕入先},",
-						"          sales_vend_name_alias = {仕入先-検索名},",
-						"          customer_requirements = {顧客の要求},",
-						"          billing_block = {請求ブロック},",
-						"          item_id = {品目番号},",
-						"          item_name = {テキスト},",
-						"          pack_style_name = {荷姿},",
-						"          shipping_name_code = {出荷名コード},",
-						"          shipping_name = {出荷名},",
-						"          trade_mark_code = {商標コード},",
-						"          trade_mark_name = {商標名},",
-						"          sales_item_class_code = {商品大分類コード},",
-						"          sales_item_class_name = {商品大分類名},",
-						"          product_item_group_code = {製品群コード},",
-						"          product_item_group_name = {製品群名},",
-						"          sales_item_group_code = {商品群コード},",
-						"          sales_item_group_name = {商品群名},",
-						"          shipping_type = {配送タイプ},",
-						"          truck_scale_type = {台貫区分},",
-						"          product_type = {製品タイプ},",
-						"          correction_category = {訂正区分},",
-						"          invent_site_id = {サイト},",
-						"          invent_site_name = {サイト名},",
-						"          invent_location_id = {倉庫},",
-						"          invent_location_name = {倉庫名},",
-						"          receipt_date_requested = {入荷希望日},",
-						"          shipping_date_requested = {出荷予定日},",
-						"          shipping_date = {出荷日},",
-						"          sales_status = {処理ステータス90},",
-						"          delivery_method = {荷渡方法},",
-						"          delivery_method_description = {荷渡方法-説明},",
-						"          detailed_status = {詳細ステータス},",
-						"          customer_delete_flag = {カスタマー台帳削除},",
-						"          customer_delete_reason = {カスタマー台帳削除理由},",
-						"          purchase_order_number = {発注書番号},",
-						"          purchase_order_status = {発注書-行ステータス},",
-						"          picking_route = {ピッキング ルート},",
-						"          inventory_order = {在庫注文},",
-						"          picking_status = {処理ステータス100},",
-						"          line_status = {販売注文-行ステータス},",
-						"          truck_scale_completion_flag = {台貫完了区分},",
-						"          invoice = {請求書},",
-						"          invoice_line_num = {明細行番号104},",
-						"          invoice_date = {請求日},",
-						"          delivery_note_category = {納品書区分},",
-						"          delivery_note_category_name = {納品書区分名},",
-						"          closing_date = {締日},",
-						"          created_date_time = {作成日時},",
-						"          created_by = {作成者},",
-						"          shipping_terms = {配送条件},",
-						"          shipping_terms_description = {配送条件-説明},",
-						"          payment_terms = {支払条件},",
-						"          payment_terms_description = {支払条件-説明},",
-						"          sales_consumer = {需要家},",
-						"          updated_date_time = {変更日時},",
-						"          updated_by = {更新者},",
-						"          profit_and_loss_department = {損益負担部門},",
-						"          qty_per_pack = {入数},",
-						"          sales_qty = {数量},",
-						"          sales_unit = {販売単位},",
-						"          contract_unit_qty = {契約単価数量},",
-						"          contract_unit_price_uom = {契約単価単位},",
-						"          contract_unit_price = {契約単価},",
-						"          net_amount = {正味金額},",
-						"          shipping_qty = {出荷数量},",
-						"          invoice_qty = {請求時数量},",
-						"          invoice_unit_qty = {請求時契約単価数量},",
-						"          invoice_contract_unit_price = {請求時契約単価},",
-						"          invoice_net_amount = {請求時正味金額},",
-						"          consumption_tax = {消費税額},",
-						"          tax_rate = {税率},",
-						"          factory_variable_costs = {変動製造費（工場）},",
-						"          factory_fixed_costs = {固定製造費（工場）},",
-						"          direct_delivery_variable_costs = {変動製造費（直納）},",
-						"          one_price_variable_costs = {変動製造費（一物一価）},",
-						"          one_price_fixed_costs = {固定製造費（一物一価）},",
-						"          accounting_currency = {会計通貨},",
-						"          countryregionid = {国／地域コード},",
-						"          country = {国名},",
-						"          billinig_date = {請求年月}",
+						"          system_date = Column1,",
+						"          sales_id = Column2,",
+						"          line_num = Column3,",
+						"          corporate_code = Column4,",
+						"          source_id = Column5,",
+						"          voucher_type = Column6,",
+						"          sales_office = Column7,",
+						"          sales_office_name = Column8,",
+						"          sales_group = Column9,",
+						"          sales_group_name = Column10,",
+						"          cust_account = Column11,",
+						"          cust_short_name = Column12,",
+						"          phone_number = Column13,",
+						"          sales_ship_to_account_num = Column14,",
+						"          sales_ship_to_short_name = Column15,",
+						"          sales_ship_to_name = Column16,",
+						"          sales_ship_to_name2 = Column17,",
+						"          sales_ship_to_belonging = Column18,",
+						"          sales_ship_to_name_notes = Column19,",
+						"          sales_ship_to_prefectures = Column20,",
+						"          sales_ship_to_municipality = Column21,",
+						"          sales_ship_to_address = Column22,",
+						"          sales_ship_to_building_name = Column23,",
+						"          sales_ship_to_address_notes = Column24,",
+						"          sales_ship_to_remarks1 = Column25,",
+						"          sales_ship_to_remarks2 = Column26,",
+						"          sales_ship_to_remarks3 = Column27,",
+						"          sales_ship_to_phone_num = Column28,",
+						"          sales_end_user_account_num = Column29,",
+						"          sales_end_user_short_name = Column30,",
+						"          invoice_account = Column31,",
+						"          sales_invoice_short_name = Column32,",
+						"          sales_invoice_name = Column33,",
+						"          sales_invoice_name2 = Column34,",
+						"          sales_invoice_belonging = Column35,",
+						"          sales_invoice_name_notes = Column36,",
+						"          sales_invoice_post_code = Column37,",
+						"          sales_invoice_prefectures = Column38,",
+						"          sales_invoice_municipality = Column39,",
+						"          sales_invoice_address = Column40,",
+						"          sales_invoice_building_name = Column41,",
+						"          sales_invoice_address_notes = Column42,",
+						"          sales_invoice_remarks1 = Column43,",
+						"          sales_invoice_remarks2 = Column44,",
+						"          sales_invoice_remarks3 = Column45,",
+						"          cust_collections = Column46,",
+						"          sales_cust_collection_short_name = Column47,",
+						"          sales_person = Column48,",
+						"          sales_person_name = Column49,",
+						"          carrier_cd = Column50,",
+						"          carrier_name_alias = Column51,",
+						"          oem_cd = Column52,",
+						"          oem_name = Column53,",
+						"          oem_name2 = Column54,",
+						"          oem_prefectures = Column55,",
+						"          oem_municipality = Column56,",
+						"          oem_address = Column57,",
+						"          oem_building_name = Column58,",
+						"          oem_address_notes = Column59,",
+						"          oem_remarks1 = Column60,",
+						"          oem_remarks2 = Column61,",
+						"          oem_remarks3 = Column62,",
+						"          sales_vend_account_num = Column63,",
+						"          sales_vend_name_alias = Column64,",
+						"          customer_requirements = Column65,",
+						"          billing_block = Column66,",
+						"          item_id = Column67,",
+						"          item_name = Column68,",
+						"          pack_style_name = Column69,",
+						"          shipping_name_code = Column70,",
+						"          shipping_name = Column71,",
+						"          trade_mark_code = Column72,",
+						"          trade_mark_name = Column73,",
+						"          sales_item_class_code = Column74,",
+						"          sales_item_class_name = Column75,",
+						"          product_item_group_code = Column76,",
+						"          product_item_group_name = Column77,",
+						"          sales_item_group_code = Column78,",
+						"          sales_item_group_name = Column79,",
+						"          shipping_type = Column80,",
+						"          truck_scale_type = Column81,",
+						"          product_type = Column82,",
+						"          correction_category = Column83,",
+						"          invent_site_id = Column84,",
+						"          invent_site_name = Column85,",
+						"          invent_location_id = Column86,",
+						"          invent_location_name = Column87,",
+						"          receipt_date_requested = Column88,",
+						"          shipping_date_requested = Column89,",
+						"          shipping_date = Column90,",
+						"          sales_status = Column91,",
+						"          delivery_method = Column92,",
+						"          delivery_method_description = Column93,",
+						"          detailed_status = Column94,",
+						"          customer_delete_flag = Column95,",
+						"          customer_delete_reason = Column96,",
+						"          purchase_order_number = Column97,",
+						"          purchase_order_status = Column98,",
+						"          picking_route = Column99,",
+						"          inventory_order = Column100,",
+						"          picking_status = Column101,",
+						"          line_status = Column102,",
+						"          truck_scale_completion_flag = Column103,",
+						"          invoice = Column104,",
+						"          invoice_line_num = Column105,",
+						"          invoice_date = Column106,",
+						"          delivery_note_category = Column107,",
+						"          delivery_note_category_name = Column108,",
+						"          closing_date = Column109,",
+						"          created_date_time = Column110,",
+						"          created_by = Column111,",
+						"          shipping_terms = Column112,",
+						"          shipping_terms_description = Column113,",
+						"          payment_terms = Column114,",
+						"          payment_terms_description = Column115,",
+						"          sales_consumer = Column116,",
+						"          updated_date_time = Column117,",
+						"          updated_by = Column118,",
+						"          profit_and_loss_department = Column119,",
+						"          qty_per_pack = Column120,",
+						"          sales_qty = Column121,",
+						"          sales_unit = Column122,",
+						"          contract_unit_qty = Column123,",
+						"          contract_unit_price_uom = Column124,",
+						"          contract_unit_price = Column125,",
+						"          net_amount = Column126,",
+						"          shipping_qty = Column127,",
+						"          invoice_qty = Column128,",
+						"          invoice_unit_qty = Column129,",
+						"          invoice_contract_unit_price = Column130,",
+						"          invoice_net_amount = Column131,",
+						"          consumption_tax = Column132,",
+						"          tax_rate = Column133,",
+						"          factory_variable_costs = Column134,",
+						"          factory_fixed_costs = Column135,",
+						"          direct_delivery_variable_costs = Column136,",
+						"          one_price_variable_costs = Column137,",
+						"          one_price_fixed_costs = Column138,",
+						"          accounting_currency = Column139,",
+						"          countryregionid = Column140,",
+						"          country = Column141,",
+						"          billinig_date = Column142",
 						"     )) ~> csvDataInMiddleTable"
 					]
 				}
@@ -6209,6 +7010,2461 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/test_blob_storage_nsw')]",
 				"[concat(variables('factoryId'), '/datasets/test_not_identity_db_nsw_dataset')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/plstatement_file_copy')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ExitCsvFile",
+						"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "ForEachGetLatestDatetime",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@greater(activity('FilterCsvFile').output.FilteredItemsCount, 0)",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "DeleteInsertCsvDataAndGroupByFileName",
+									"description": "CSV ファイルから読み込んだデータを DELETE INSERT します",
+									"type": "Script",
+									"dependsOn": [
+										{
+											"activity": "CsvDataInMiddleTable",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"linkedServiceName": {
+										"referenceName": "test_db_nsw_link_service",
+										"type": "LinkedServiceReference"
+									},
+									"typeProperties": {
+										"scripts": [
+											{
+												"type": "Query",
+												"text": "BEGIN TRY\n\t\t\n\tBEGIN TRANSACTION;\n\n\t-- 対象テーブルの内、年月が前月、当月、来月、当月より 2 年前のデータのみ削除\n\tDELETE FROM plstatement\n\tWHERE\n\t\tbillinig_date IN\n\t\t(\n\t\t\tSELECT\n\t\t\t\tbillinig_date\n\t\t\tFROM\n\t\t\t\ttemp_plstatement\n\t\t\tGROUP BY\n\t\t\t    billinig_date\n\t\t)\n\t\tOR\n\t\tbillinig_date <= FORMAT(DATEADD(YEAR, -2, GETDATE() AT TIME ZONE 'UTC' AT TIME ZONE 'Tokyo Standard Time'), 'yyyyMM');\n\n\t-- CSV ファイルから読み込んだデータを対象テーブルに INSERT\n\tINSERT INTO plstatement\n\t(\n\t\tsystem_date,\n\t    sales_id,\n\t    line_num,\n\t    corporate_code,\n\t    source_id,\n\t    voucher_type,\n\t    sales_office,\n\t    sales_office_name,\n\t    sales_group,\n\t    sales_group_name,\n\t    cust_account,\n\t    cust_short_name,\n\t    phone_number,\n\t    sales_ship_to_account_num,\n\t    sales_ship_to_short_name,\n\t    sales_ship_to_name,\n\t    sales_ship_to_name2,\n\t    sales_ship_to_belonging,\n\t    sales_ship_to_name_notes,\n\t    sales_ship_to_prefectures,\n\t    sales_ship_to_municipality,\n\t    sales_ship_to_address,\n\t    sales_ship_to_building_name,\n\t    sales_ship_to_address_notes,\n\t    sales_ship_to_remarks1,\n\t    sales_ship_to_remarks2,\n\t    sales_ship_to_remarks3,\n\t    sales_ship_to_phone_num,\n\t    sales_end_user_account_num,\n\t    sales_end_user_short_name,\n\t    invoice_account,\n\t    sales_invoice_short_name,\n\t    sales_invoice_name,\n\t    sales_invoice_name2,\n\t    sales_invoice_belonging,\n\t    sales_invoice_name_notes,\n\t    sales_invoice_post_code,\n\t    sales_invoice_prefectures,\n\t    sales_invoice_municipality,\n\t    sales_invoice_address,\n\t    sales_invoice_building_name,\n\t    sales_invoice_address_notes,\n\t    sales_invoice_remarks1,\n\t    sales_invoice_remarks2,\n\t    sales_invoice_remarks3,\n\t    cust_collections,\n\t    sales_cust_collection_short_name,\n\t    sales_person,\n\t    sales_person_name,\n\t    carrier_cd,\n\t    carrier_name_alias,\n\t    oem_cd,\n\t    oem_name,\n\t    oem_name2,\n\t    oem_prefectures,\n\t    oem_municipality,\n\t    oem_address,\n\t    oem_building_name,\n\t    oem_address_notes,\n\t    oem_remarks1,\n\t    oem_remarks2,\n\t    oem_remarks3,\n\t    sales_vend_account_num,\n\t    sales_vend_name_alias,\n\t    customer_requirements,\n\t    billing_block,\n\t    item_id,\n\t    item_name,\n\t    pack_style_name,\n\t    shipping_name_code,\n\t    shipping_name,\n\t    trade_mark_code,\n\t    trade_mark_name,\n\t    sales_item_class_code,\n\t    sales_item_class_name,\n\t    product_item_group_code,\n\t    product_item_group_name,\n\t    sales_item_group_code,\n\t    sales_item_group_name,\n\t    shipping_type,\n\t    truck_scale_type,\n\t    product_type,\n\t    correction_category,\n\t    invent_site_id,\n\t    invent_site_name,\n\t    invent_location_id,\n\t    invent_location_name,\n\t    receipt_date_requested,\n\t    shipping_date_requested,\n\t    shipping_date,\n\t    sales_status,\n\t    delivery_method,\n\t    delivery_method_description,\n\t    detailed_status,\n\t    customer_delete_flag,\n\t    customer_delete_reason,\n\t    purchase_order_number,\n\t    purchase_order_status,\n\t    picking_route,\n\t    inventory_order,\n\t    picking_status,\n\t    line_status,\n\t    truck_scale_completion_flag,\n\t    invoice,\n\t    invoice_line_num,\n\t    invoice_date,\n\t    delivery_note_category,\n\t    delivery_note_category_name,\n\t    closing_date,\n\t    created_date_time,\n\t    created_by,\n\t    shipping_terms,\n\t    shipping_terms_description,\n\t    payment_terms,\n\t    payment_terms_description,\n\t    sales_consumer,\n\t    updated_date_time,\n\t    updated_by,\n\t    profit_and_loss_department,\n\t    qty_per_pack,\n\t    sales_qty,\n\t    sales_unit,\n\t    contract_unit_qty,\n\t    contract_unit_price_uom,\n\t    contract_unit_price,\n\t    net_amount,\n\t    shipping_qty,\n\t    invoice_qty,\n\t    invoice_unit_qty,\n\t    invoice_contract_unit_price,\n\t    invoice_net_amount,\n\t    consumption_tax,\n\t    tax_rate,\n\t    factory_variable_costs,\n\t    factory_fixed_costs,\n\t    direct_delivery_variable_costs,\n\t    one_price_variable_costs,\n\t    one_price_fixed_costs,\n\t    accounting_currency,\n\t    countryregionid,\n\t    country,\n\t    billinig_date\n\t)\n\tSELECT\n\t\tsystem_date,\n\t    sales_id,\n\t    line_num,\n\t    corporate_code,\n\t    source_id,\n\t    voucher_type,\n\t    sales_office,\n\t    sales_office_name,\n\t    sales_group,\n\t    sales_group_name,\n\t    cust_account,\n\t    cust_short_name,\n\t    phone_number,\n\t    sales_ship_to_account_num,\n\t    sales_ship_to_short_name,\n\t    sales_ship_to_name,\n\t    sales_ship_to_name2,\n\t    sales_ship_to_belonging,\n\t    sales_ship_to_name_notes,\n\t    sales_ship_to_prefectures,\n\t    sales_ship_to_municipality,\n\t    sales_ship_to_address,\n\t    sales_ship_to_building_name,\n\t    sales_ship_to_address_notes,\n\t    sales_ship_to_remarks1,\n\t    sales_ship_to_remarks2,\n\t    sales_ship_to_remarks3,\n\t    sales_ship_to_phone_num,\n\t    sales_end_user_account_num,\n\t    sales_end_user_short_name,\n\t    invoice_account,\n\t    sales_invoice_short_name,\n\t    sales_invoice_name,\n\t    sales_invoice_name2,\n\t    sales_invoice_belonging,\n\t    sales_invoice_name_notes,\n\t    sales_invoice_post_code,\n\t    sales_invoice_prefectures,\n\t    sales_invoice_municipality,\n\t    sales_invoice_address,\n\t    sales_invoice_building_name,\n\t    sales_invoice_address_notes,\n\t    sales_invoice_remarks1,\n\t    sales_invoice_remarks2,\n\t    sales_invoice_remarks3,\n\t    cust_collections,\n\t    sales_cust_collection_short_name,\n\t    sales_person,\n\t    sales_person_name,\n\t    carrier_cd,\n\t    carrier_name_alias,\n\t    oem_cd,\n\t    oem_name,\n\t    oem_name2,\n\t    oem_prefectures,\n\t    oem_municipality,\n\t    oem_address,\n\t    oem_building_name,\n\t    oem_address_notes,\n\t    oem_remarks1,\n\t    oem_remarks2,\n\t    oem_remarks3,\n\t    sales_vend_account_num,\n\t    sales_vend_name_alias,\n\t    customer_requirements,\n\t    billing_block,\n\t    item_id,\n\t    item_name,\n\t    pack_style_name,\n\t    shipping_name_code,\n\t    shipping_name,\n\t    trade_mark_code,\n\t    trade_mark_name,\n\t    sales_item_class_code,\n\t    sales_item_class_name,\n\t    product_item_group_code,\n\t    product_item_group_name,\n\t    sales_item_group_code,\n\t    sales_item_group_name,\n\t    shipping_type,\n\t    truck_scale_type,\n\t    product_type,\n\t    correction_category,\n\t    invent_site_id,\n\t    invent_site_name,\n\t    invent_location_id,\n\t    invent_location_name,\n\t    receipt_date_requested,\n\t    shipping_date_requested,\n\t    shipping_date,\n\t    sales_status,\n\t    delivery_method,\n\t    delivery_method_description,\n\t    detailed_status,\n\t    customer_delete_flag,\n\t    customer_delete_reason,\n\t    purchase_order_number,\n\t    purchase_order_status,\n\t    picking_route,\n\t    inventory_order,\n\t    picking_status,\n\t    line_status,\n\t    truck_scale_completion_flag,\n\t    invoice,\n\t    invoice_line_num,\n\t    invoice_date,\n\t    delivery_note_category,\n\t    delivery_note_category_name,\n\t    closing_date,\n\t    created_date_time,\n\t    created_by,\n\t    shipping_terms,\n\t    shipping_terms_description,\n\t    payment_terms,\n\t    payment_terms_description,\n\t    sales_consumer,\n\t    updated_date_time,\n\t    updated_by,\n\t    profit_and_loss_department,\n\t    qty_per_pack,\n\t    sales_qty,\n\t    sales_unit,\n\t    contract_unit_qty,\n\t    contract_unit_price_uom,\n\t    contract_unit_price,\n\t    net_amount,\n\t    shipping_qty,\n\t    invoice_qty,\n\t    invoice_unit_qty,\n\t    invoice_contract_unit_price,\n\t    invoice_net_amount,\n\t    consumption_tax,\n\t    tax_rate,\n\t    factory_variable_costs,\n\t    factory_fixed_costs,\n\t    direct_delivery_variable_costs,\n\t    one_price_variable_costs,\n\t    one_price_fixed_costs,\n\t    accounting_currency,\n\t    countryregionid,\n\t    country,\n\t    billinig_date\n\tFROM\n\t\ttemp_plstatement\n\n\tCOMMIT TRANSACTION;\n\nEND TRY\n\nBEGIN CATCH\n\n\tROLLBACK TRANSACTION;\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
+											}
+										],
+										"scriptBlockExecutionTimeout": "02:00:00"
+									}
+								},
+								{
+									"name": "TruncateMiddelTableAfterCsvFileDelete",
+									"description": "中間テーブルのテーブルデータを全削除します。\n次のアクティビティで CSV ファイルを削除します。",
+									"type": "Script",
+									"dependsOn": [
+										{
+											"activity": "DeleteInsertCsvDataAndGroupByFileName",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"linkedServiceName": {
+										"referenceName": "test_db_nsw_link_service",
+										"type": "LinkedServiceReference"
+									},
+									"typeProperties": {
+										"scripts": [
+											{
+												"type": "Query",
+												"text": "BEGIN TRY\r\n\r\n    -- 中間テーブルに格納されているデータを削除\r\n    TRUNCATE TABLE temp_plstatement;\r\n\r\nEND TRY\r\n\r\nBEGIN CATCH\r\n\r\n\t-- ADF に異常終了を伝えるため\r\n\tTHROW;\r\n\r\nEND CATCH"
+											}
+										],
+										"scriptBlockExecutionTimeout": "02:00:00"
+									}
+								},
+								{
+									"name": "TruncateMiddelTableNotAfterCsvFileDelete",
+									"description": "中間テーブルのテーブルデータを全削除します。\n次のアクティビティで CSV ファイルを削除しません",
+									"type": "Script",
+									"dependsOn": [
+										{
+											"activity": "DeleteInsertCsvDataAndGroupByFileName",
+											"dependencyConditions": [
+												"Failed"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"linkedServiceName": {
+										"referenceName": "test_db_nsw_link_service",
+										"type": "LinkedServiceReference"
+									},
+									"typeProperties": {
+										"scripts": [
+											{
+												"type": "Query",
+												"text": "BEGIN TRY\r\n\r\n    -- 中間テーブルに格納されているデータを削除\r\n    TRUNCATE TABLE temp_plstatement;\r\n\r\nEND TRY\r\n\r\nBEGIN CATCH\r\n\r\n\t-- ADF に異常終了を伝えるため\r\n\tTHROW;\r\n\r\nEND CATCH"
+											}
+										],
+										"scriptBlockExecutionTimeout": "02:00:00"
+									}
+								},
+								{
+									"name": "DeleteCsvFile",
+									"description": "対象のフォルダ配下に存在するアイテムの内、プレフィックスが \"plstatement_\" の CSV ファイルのみ削除します。",
+									"type": "Delete",
+									"dependsOn": [
+										{
+											"activity": "TruncateMiddelTableAfterCsvFileDelete",
+											"dependencyConditions": [
+												"Completed"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "binary_common",
+											"type": "DatasetReference",
+											"parameters": {}
+										},
+										"enableLogging": false,
+										"storeSettings": {
+											"type": "AzureBlobStorageReadSettings",
+											"recursive": true,
+											"wildcardFileName": "plstatement_*.csv",
+											"enablePartitionDiscovery": false
+										}
+									}
+								},
+								{
+									"name": "CsvDataInMiddleTable",
+									"description": "CSV ファイルから読み込んだデータを中間テーブルに保存します。",
+									"type": "ExecuteDataFlow",
+									"dependsOn": [
+										{
+											"activity": "CsvCopyAlterEncoding",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataflow": {
+											"referenceName": "csv_db_bulk_plstatement_temp_table",
+											"type": "DataFlowReference",
+											"parameters": {
+												"latestDatetimeFileName": {
+													"value": "'@{variables('latestDatetimeFileName')}'",
+													"type": "Expression"
+												}
+											},
+											"datasetParameters": {
+												"csvFileRead": {},
+												"csvDataInMiddleTable": {}
+											}
+										},
+										"staging": {},
+										"compute": {
+											"coreCount": 8,
+											"computeType": "General"
+										},
+										"traceLevel": "Fine"
+									}
+								},
+								{
+									"name": "CsvCopyAlterEncoding",
+									"description": "エンコーディングを Shift-Jis → UTF-8 に変更したうえで、処理対象の CSV ファイルを別フォルダにコピーします。",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "DelimitedTextSource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": true,
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "DelimitedTextReadSettings",
+												"skipLineCount": 1
+											}
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".txt"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"mappings": [
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 1
+													},
+													"sink": {
+														"name": "日付",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 2
+													},
+													"sink": {
+														"name": "販売注文",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 3
+													},
+													"sink": {
+														"name": "明細行番号",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 4
+													},
+													"sink": {
+														"name": "法人コード",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 5
+													},
+													"sink": {
+														"name": "コピー元ID",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 6
+													},
+													"sink": {
+														"name": "伝票タイプ",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 7
+													},
+													"sink": {
+														"name": "営業所",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 8
+													},
+													"sink": {
+														"name": "営業所名",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 9
+													},
+													"sink": {
+														"name": "営業グループ",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 10
+													},
+													"sink": {
+														"name": "営業グループ名",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 11
+													},
+													"sink": {
+														"name": "顧客",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 12
+													},
+													"sink": {
+														"name": "略称",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 13
+													},
+													"sink": {
+														"name": "電話番号",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 14
+													},
+													"sink": {
+														"name": "出荷先",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 15
+													},
+													"sink": {
+														"name": "出荷先-略称",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 16
+													},
+													"sink": {
+														"name": "出荷先-名前",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 17
+													},
+													"sink": {
+														"name": "出荷先-名前2",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 18
+													},
+													"sink": {
+														"name": "出荷先-所属",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 19
+													},
+													"sink": {
+														"name": "出荷先-名前備考",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 20
+													},
+													"sink": {
+														"name": "出荷先-都道府県",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 21
+													},
+													"sink": {
+														"name": "出荷先-市町村",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 22
+													},
+													"sink": {
+														"name": "出荷先-住所",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 23
+													},
+													"sink": {
+														"name": "出荷先-建物名",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 24
+													},
+													"sink": {
+														"name": "出荷先-住所備考",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 25
+													},
+													"sink": {
+														"name": "出荷先-備考1",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 26
+													},
+													"sink": {
+														"name": "出荷先-備考2",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 27
+													},
+													"sink": {
+														"name": "出荷先-備考3",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 28
+													},
+													"sink": {
+														"name": "出荷先-電話番号",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 29
+													},
+													"sink": {
+														"name": "カスタマー",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 30
+													},
+													"sink": {
+														"name": "カスタマー-略称",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 31
+													},
+													"sink": {
+														"name": "請求先/元ID",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 32
+													},
+													"sink": {
+														"name": "請求先-略称",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 33
+													},
+													"sink": {
+														"name": "請求先-名前",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 34
+													},
+													"sink": {
+														"name": "請求先-名前2",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 35
+													},
+													"sink": {
+														"name": "請求先-所属",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 36
+													},
+													"sink": {
+														"name": "請求先-名前備考",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 37
+													},
+													"sink": {
+														"name": "請求先-郵便番号",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 38
+													},
+													"sink": {
+														"name": "請求先-都道府県",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 39
+													},
+													"sink": {
+														"name": "請求先-市町村",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 40
+													},
+													"sink": {
+														"name": "請求先-住所",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 41
+													},
+													"sink": {
+														"name": "請求先-建物名",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 42
+													},
+													"sink": {
+														"name": "請求先-住所備考",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 43
+													},
+													"sink": {
+														"name": "請求先-備考1",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 44
+													},
+													"sink": {
+														"name": "請求先-備考2",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 45
+													},
+													"sink": {
+														"name": "請求先-備考3",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 46
+													},
+													"sink": {
+														"name": "回収先-略称",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 47
+													},
+													"sink": {
+														"name": "営業員",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 48
+													},
+													"sink": {
+														"name": "営業員名",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 49
+													},
+													"sink": {
+														"name": "運送業者",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 50
+													},
+													"sink": {
+														"name": "運送業者-検索名",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 51
+													},
+													"sink": {
+														"name": "OEMコード",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 52
+													},
+													"sink": {
+														"name": "OEM-名前",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 53
+													},
+													"sink": {
+														"name": "OEM-名前2",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 54
+													},
+													"sink": {
+														"name": "OEM-都道府県",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 55
+													},
+													"sink": {
+														"name": "OEM-市町村",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 56
+													},
+													"sink": {
+														"name": "OEM-住所",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 57
+													},
+													"sink": {
+														"name": "OEM-建物名",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 58
+													},
+													"sink": {
+														"name": "OEM-住所備考",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 59
+													},
+													"sink": {
+														"name": "OEM-備考1",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 60
+													},
+													"sink": {
+														"name": "OEM-備考2",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 61
+													},
+													"sink": {
+														"name": "OEM-備考3",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 62
+													},
+													"sink": {
+														"name": "Column62",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 63
+													},
+													"sink": {
+														"name": "Column63",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 64
+													},
+													"sink": {
+														"name": "Column64",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 65
+													},
+													"sink": {
+														"name": "Column65",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 66
+													},
+													"sink": {
+														"name": "Column66",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 67
+													},
+													"sink": {
+														"name": "Column67",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 68
+													},
+													"sink": {
+														"name": "Column68",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 69
+													},
+													"sink": {
+														"name": "Column69",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 70
+													},
+													"sink": {
+														"name": "Column70",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 71
+													},
+													"sink": {
+														"name": "Column71",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 72
+													},
+													"sink": {
+														"name": "Column72",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 73
+													},
+													"sink": {
+														"name": "Column73",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 74
+													},
+													"sink": {
+														"name": "Column74",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 75
+													},
+													"sink": {
+														"name": "Column75",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 76
+													},
+													"sink": {
+														"name": "Column76",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 77
+													},
+													"sink": {
+														"name": "Column77",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 78
+													},
+													"sink": {
+														"name": "Column78",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 79
+													},
+													"sink": {
+														"name": "Column79",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 80
+													},
+													"sink": {
+														"name": "Column80",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 81
+													},
+													"sink": {
+														"name": "Column81",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 82
+													},
+													"sink": {
+														"name": "Column82",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 83
+													},
+													"sink": {
+														"name": "Column83",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 84
+													},
+													"sink": {
+														"name": "Column84",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 85
+													},
+													"sink": {
+														"name": "Column85",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 86
+													},
+													"sink": {
+														"name": "Column86",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 87
+													},
+													"sink": {
+														"name": "Column87",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 88
+													},
+													"sink": {
+														"name": "Column88",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 89
+													},
+													"sink": {
+														"name": "Column89",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 90
+													},
+													"sink": {
+														"name": "Column90",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 91
+													},
+													"sink": {
+														"name": "Column91",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 92
+													},
+													"sink": {
+														"name": "Column92",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 93
+													},
+													"sink": {
+														"name": "Column93",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 94
+													},
+													"sink": {
+														"name": "Column94",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 95
+													},
+													"sink": {
+														"name": "Column95",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 96
+													},
+													"sink": {
+														"name": "Column96",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 97
+													},
+													"sink": {
+														"name": "Column97",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 98
+													},
+													"sink": {
+														"name": "Column98",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 99
+													},
+													"sink": {
+														"name": "Column99",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 100
+													},
+													"sink": {
+														"name": "Column100",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 101
+													},
+													"sink": {
+														"name": "Column101",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 102
+													},
+													"sink": {
+														"name": "Column102",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 103
+													},
+													"sink": {
+														"name": "Column103",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 104
+													},
+													"sink": {
+														"name": "Column104",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 105
+													},
+													"sink": {
+														"name": "Column105",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 106
+													},
+													"sink": {
+														"name": "Column106",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 107
+													},
+													"sink": {
+														"name": "Column107",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 108
+													},
+													"sink": {
+														"name": "Column108",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 109
+													},
+													"sink": {
+														"name": "Column109",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 110
+													},
+													"sink": {
+														"name": "Column110",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 111
+													},
+													"sink": {
+														"name": "Column111",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 112
+													},
+													"sink": {
+														"name": "Column112",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 113
+													},
+													"sink": {
+														"name": "Column113",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 114
+													},
+													"sink": {
+														"name": "Column114",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 115
+													},
+													"sink": {
+														"name": "Column115",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 116
+													},
+													"sink": {
+														"name": "Column116",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 117
+													},
+													"sink": {
+														"name": "Column117",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 118
+													},
+													"sink": {
+														"name": "Column118",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 119
+													},
+													"sink": {
+														"name": "Column119",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 120
+													},
+													"sink": {
+														"name": "Column120",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 121
+													},
+													"sink": {
+														"name": "Column121",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 122
+													},
+													"sink": {
+														"name": "Column122",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 123
+													},
+													"sink": {
+														"name": "Column123",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 124
+													},
+													"sink": {
+														"name": "Column124",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 125
+													},
+													"sink": {
+														"name": "Column125",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 126
+													},
+													"sink": {
+														"name": "Column126",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 127
+													},
+													"sink": {
+														"name": "Column127",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 128
+													},
+													"sink": {
+														"name": "Column128",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 129
+													},
+													"sink": {
+														"name": "Column129",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 130
+													},
+													"sink": {
+														"name": "Column130",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 131
+													},
+													"sink": {
+														"name": "Column131",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 132
+													},
+													"sink": {
+														"name": "Column132",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 133
+													},
+													"sink": {
+														"name": "Column133",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 134
+													},
+													"sink": {
+														"name": "Column134",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 135
+													},
+													"sink": {
+														"name": "Column135",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 136
+													},
+													"sink": {
+														"name": "Column136",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 137
+													},
+													"sink": {
+														"name": "Column137",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 138
+													},
+													"sink": {
+														"name": "Column138",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 139
+													},
+													"sink": {
+														"name": "Column139",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 140
+													},
+													"sink": {
+														"name": "Column140",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 141
+													},
+													"sink": {
+														"name": "Column141",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"type": "String",
+														"ordinal": 142
+													},
+													"sink": {
+														"name": "Column142",
+														"type": "String",
+														"physicalType": "String"
+													}
+												}
+											],
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "input_common_delimited_text",
+											"type": "DatasetReference",
+											"parameters": {
+												"fileName": {
+													"value": "@variables('latestDatetimeFileName')",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "output_common_delimited_text",
+											"type": "DatasetReference",
+											"parameters": {
+												"fileName": {
+													"value": "@variables('latestDatetimeFileName')",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								},
+								{
+									"name": "DeleteCsvFile2",
+									"description": "コピー先のフォルダに存在する処理対象の CSV ファイルを削除します。",
+									"type": "Delete",
+									"dependsOn": [
+										{
+											"activity": "DeleteCsvFile",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "output_common_delimited_text",
+											"type": "DatasetReference",
+											"parameters": {
+												"fileName": {
+													"value": "@variables('latestDatetimeFileName')",
+													"type": "Expression"
+												}
+											}
+										},
+										"enableLogging": false,
+										"storeSettings": {
+											"type": "AzureBlobStorageReadSettings",
+											"recursive": true,
+											"enablePartitionDiscovery": false
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "TruncateMiddelTableIfExitMiddelTableData",
+						"description": "中間テーブルにレコードが存在する場合にのみ、中間テーブルのテーブルデータを全削除します。",
+						"type": "Script",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "test_db_nsw_link_service",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "BEGIN TRY\n\n    DECLARE @RecordCount INT;\n\n\tSELECT @RecordCount = COUNT(sales_id)\n\tFROM temp_plstatement;\n\n\t-- 中間テーブルにレコードが存在する場合\n\tIF @RecordCount > 0\n\tBEGIN\n\t\t-- 中間テーブルに格納されているデータを削除\n\t\tTRUNCATE TABLE temp_plstatement;\n\tEND\n\nEND TRY\n\nBEGIN CATCH\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
+						}
+					},
+					{
+						"name": "GetFileNameList",
+						"description": "対象のフォルダ配下に存在するアイテム一覧を取得します。",
+						"type": "GetMetadata",
+						"dependsOn": [
+							{
+								"activity": "TruncateMiddelTableIfExitMiddelTableData",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "binary_common",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "BinaryReadSettings"
+							}
+						}
+					},
+					{
+						"name": "FilterCsvFile",
+						"description": "取得したアイテムの内、プレフィックスが \"plstatement_\" のCSV ファイルのみを抽出します。",
+						"type": "Filter",
+						"dependsOn": [
+							{
+								"activity": "GetFileNameList",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('GetFileNameList').output.childItems",
+								"type": "Expression"
+							},
+							"condition": {
+								"value": "@and(startswith(item().name, 'plstatement'), endswith(item().name, 'csv'))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "ForEachGetLatestDatetime",
+						"description": "フィルタリングで残った CSV ファイルの数だけループします。",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "FilterCsvFile",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('FilterCsvFile').output.value",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "LatestDatetimeFileNameIsEmpty",
+									"description": "latestDatetimeFileName の値が empty かどうか判断します。",
+									"type": "IfCondition",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"expression": {
+											"value": "@empty(variables('latestDatetimeFileName'))",
+											"type": "Expression"
+										},
+										"ifFalseActivities": [
+											{
+												"name": "SetTempLatestDatetimeFileName",
+												"description": "tempLatestDatetimeFileName に latestDatetimeFileName の値を設定します。",
+												"type": "SetVariable",
+												"dependsOn": [],
+												"policy": {
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"variableName": "tempLatestDatetimeFileName",
+													"value": {
+														"value": "@variables('latestDatetimeFileName')",
+														"type": "Expression"
+													}
+												}
+											},
+											{
+												"name": "SetLatestDatetimeFileName",
+												"description": "ForEach に渡されたファイル名の日時と tempLatestDatetimeFileName の日時を比較し、最新の日時のファイル名のみを保持します。",
+												"type": "SetVariable",
+												"dependsOn": [
+													{
+														"activity": "SetTempLatestDatetimeFileName",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"variableName": "latestDatetimeFileName",
+													"value": {
+														"value": "@if(greater(substring(item().name, 12, 14), substring(variables('tempLatestDatetimeFileName'), 12, 14)), item().name, variables('tempLatestDatetimeFileName'))",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"ifTrueActivities": [
+											{
+												"name": "SetFileName",
+												"description": "latestDatetimeFileName に ForEach に渡されたファイル名を設定します。",
+												"type": "SetVariable",
+												"dependsOn": [],
+												"policy": {
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"variableName": "latestDatetimeFileName",
+													"value": {
+														"value": "@item().name",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"latestDatetimeFileName": {
+						"type": "String"
+					},
+					"tempLatestDatetimeFileName": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "実績損益"
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-10-09T04:54:59Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/test_db_nsw_link_service')]",
+				"[concat(variables('factoryId'), '/datasets/binary_common')]",
+				"[concat(variables('factoryId'), '/dataflows/csv_db_bulk_plstatement_temp_table')]",
+				"[concat(variables('factoryId'), '/datasets/input_common_delimited_text')]",
+				"[concat(variables('factoryId'), '/datasets/output_common_delimited_text')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/plstatement')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ExitCsvFile",
+						"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "ForEachGetLatestDatetime",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@greater(activity('FilterCsvFile').output.FilteredItemsCount, 0)",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "DeleteInsertCsvDataAndGroupByFileName",
+									"description": "CSV ファイルから読み込んだデータを DELETE INSERT します",
+									"type": "Script",
+									"dependsOn": [
+										{
+											"activity": "CsvDataInTempTable",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"linkedServiceName": {
+										"referenceName": "test_db_nsw_link_service",
+										"type": "LinkedServiceReference"
+									},
+									"typeProperties": {
+										"scripts": [
+											{
+												"type": "Query",
+												"text": "BEGIN TRY\n\t\t\n\tBEGIN TRANSACTION;\n\n\t-- 対象テーブルの内、年月が前月、当月、来月、当月より 2 年前のデータのみ削除\n\tDELETE FROM plstatement\n\tWHERE\n\t\tbillinig_date IN\n\t\t(\n\t\t\tSELECT\n\t\t\t\tbillinig_date\n\t\t\tFROM\n\t\t\t\ttemp_plstatement\n\t\t\tGROUP BY\n\t\t\t    billinig_date\n\t\t)\n\t\tOR\n\t\tbillinig_date <= FORMAT(DATEADD(YEAR, -2, GETDATE() AT TIME ZONE 'UTC' AT TIME ZONE 'Tokyo Standard Time'), 'yyyyMM');\n\n\t-- CSV ファイルから読み込んだデータを対象テーブルに INSERT\n\tINSERT INTO plstatement\n\t(\n\t\tsystem_date,\n\t    sales_id,\n\t    line_num,\n\t    corporate_code,\n\t    source_id,\n\t    voucher_type,\n\t    sales_office,\n\t    sales_office_name,\n\t    sales_group,\n\t    sales_group_name,\n\t    cust_account,\n\t    cust_short_name,\n\t    phone_number,\n\t    sales_ship_to_account_num,\n\t    sales_ship_to_short_name,\n\t    sales_ship_to_name,\n\t    sales_ship_to_name2,\n\t    sales_ship_to_belonging,\n\t    sales_ship_to_name_notes,\n\t    sales_ship_to_prefectures,\n\t    sales_ship_to_municipality,\n\t    sales_ship_to_address,\n\t    sales_ship_to_building_name,\n\t    sales_ship_to_address_notes,\n\t    sales_ship_to_remarks1,\n\t    sales_ship_to_remarks2,\n\t    sales_ship_to_remarks3,\n\t    sales_ship_to_phone_num,\n\t    sales_end_user_account_num,\n\t    sales_end_user_short_name,\n\t    invoice_account,\n\t    sales_invoice_short_name,\n\t    sales_invoice_name,\n\t    sales_invoice_name2,\n\t    sales_invoice_belonging,\n\t    sales_invoice_name_notes,\n\t    sales_invoice_post_code,\n\t    sales_invoice_prefectures,\n\t    sales_invoice_municipality,\n\t    sales_invoice_address,\n\t    sales_invoice_building_name,\n\t    sales_invoice_address_notes,\n\t    sales_invoice_remarks1,\n\t    sales_invoice_remarks2,\n\t    sales_invoice_remarks3,\n\t    cust_collections,\n\t    sales_cust_collection_short_name,\n\t    sales_person,\n\t    sales_person_name,\n\t    carrier_cd,\n\t    carrier_name_alias,\n\t    oem_cd,\n\t    oem_name,\n\t    oem_name2,\n\t    oem_prefectures,\n\t    oem_municipality,\n\t    oem_address,\n\t    oem_building_name,\n\t    oem_address_notes,\n\t    oem_remarks1,\n\t    oem_remarks2,\n\t    oem_remarks3,\n\t    sales_vend_account_num,\n\t    sales_vend_name_alias,\n\t    customer_requirements,\n\t    billing_block,\n\t    item_id,\n\t    item_name,\n\t    pack_style_name,\n\t    shipping_name_code,\n\t    shipping_name,\n\t    trade_mark_code,\n\t    trade_mark_name,\n\t    sales_item_class_code,\n\t    sales_item_class_name,\n\t    product_item_group_code,\n\t    product_item_group_name,\n\t    sales_item_group_code,\n\t    sales_item_group_name,\n\t    shipping_type,\n\t    truck_scale_type,\n\t    product_type,\n\t    correction_category,\n\t    invent_site_id,\n\t    invent_site_name,\n\t    invent_location_id,\n\t    invent_location_name,\n\t    receipt_date_requested,\n\t    shipping_date_requested,\n\t    shipping_date,\n\t    sales_status,\n\t    delivery_method,\n\t    delivery_method_description,\n\t    detailed_status,\n\t    customer_delete_flag,\n\t    customer_delete_reason,\n\t    purchase_order_number,\n\t    purchase_order_status,\n\t    picking_route,\n\t    inventory_order,\n\t    picking_status,\n\t    line_status,\n\t    truck_scale_completion_flag,\n\t    invoice,\n\t    invoice_line_num,\n\t    invoice_date,\n\t    delivery_note_category,\n\t    delivery_note_category_name,\n\t    closing_date,\n\t    created_date_time,\n\t    created_by,\n\t    shipping_terms,\n\t    shipping_terms_description,\n\t    payment_terms,\n\t    payment_terms_description,\n\t    sales_consumer,\n\t    updated_date_time,\n\t    updated_by,\n\t    profit_and_loss_department,\n\t    qty_per_pack,\n\t    sales_qty,\n\t    sales_unit,\n\t    contract_unit_qty,\n\t    contract_unit_price_uom,\n\t    contract_unit_price,\n\t    net_amount,\n\t    shipping_qty,\n\t    invoice_qty,\n\t    invoice_unit_qty,\n\t    invoice_contract_unit_price,\n\t    invoice_net_amount,\n\t    consumption_tax,\n\t    tax_rate,\n\t    factory_variable_costs,\n\t    factory_fixed_costs,\n\t    direct_delivery_variable_costs,\n\t    one_price_variable_costs,\n\t    one_price_fixed_costs,\n\t    accounting_currency,\n\t    countryregionid,\n\t    country,\n\t    billinig_date\n\t)\n\tSELECT\n\t\tsystem_date,\n\t    sales_id,\n\t    line_num,\n\t    corporate_code,\n\t    source_id,\n\t    voucher_type,\n\t    sales_office,\n\t    sales_office_name,\n\t    sales_group,\n\t    sales_group_name,\n\t    cust_account,\n\t    cust_short_name,\n\t    phone_number,\n\t    sales_ship_to_account_num,\n\t    sales_ship_to_short_name,\n\t    sales_ship_to_name,\n\t    sales_ship_to_name2,\n\t    sales_ship_to_belonging,\n\t    sales_ship_to_name_notes,\n\t    sales_ship_to_prefectures,\n\t    sales_ship_to_municipality,\n\t    sales_ship_to_address,\n\t    sales_ship_to_building_name,\n\t    sales_ship_to_address_notes,\n\t    sales_ship_to_remarks1,\n\t    sales_ship_to_remarks2,\n\t    sales_ship_to_remarks3,\n\t    sales_ship_to_phone_num,\n\t    sales_end_user_account_num,\n\t    sales_end_user_short_name,\n\t    invoice_account,\n\t    sales_invoice_short_name,\n\t    sales_invoice_name,\n\t    sales_invoice_name2,\n\t    sales_invoice_belonging,\n\t    sales_invoice_name_notes,\n\t    sales_invoice_post_code,\n\t    sales_invoice_prefectures,\n\t    sales_invoice_municipality,\n\t    sales_invoice_address,\n\t    sales_invoice_building_name,\n\t    sales_invoice_address_notes,\n\t    sales_invoice_remarks1,\n\t    sales_invoice_remarks2,\n\t    sales_invoice_remarks3,\n\t    cust_collections,\n\t    sales_cust_collection_short_name,\n\t    sales_person,\n\t    sales_person_name,\n\t    carrier_cd,\n\t    carrier_name_alias,\n\t    oem_cd,\n\t    oem_name,\n\t    oem_name2,\n\t    oem_prefectures,\n\t    oem_municipality,\n\t    oem_address,\n\t    oem_building_name,\n\t    oem_address_notes,\n\t    oem_remarks1,\n\t    oem_remarks2,\n\t    oem_remarks3,\n\t    sales_vend_account_num,\n\t    sales_vend_name_alias,\n\t    customer_requirements,\n\t    billing_block,\n\t    item_id,\n\t    item_name,\n\t    pack_style_name,\n\t    shipping_name_code,\n\t    shipping_name,\n\t    trade_mark_code,\n\t    trade_mark_name,\n\t    sales_item_class_code,\n\t    sales_item_class_name,\n\t    product_item_group_code,\n\t    product_item_group_name,\n\t    sales_item_group_code,\n\t    sales_item_group_name,\n\t    shipping_type,\n\t    truck_scale_type,\n\t    product_type,\n\t    correction_category,\n\t    invent_site_id,\n\t    invent_site_name,\n\t    invent_location_id,\n\t    invent_location_name,\n\t    receipt_date_requested,\n\t    shipping_date_requested,\n\t    shipping_date,\n\t    sales_status,\n\t    delivery_method,\n\t    delivery_method_description,\n\t    detailed_status,\n\t    customer_delete_flag,\n\t    customer_delete_reason,\n\t    purchase_order_number,\n\t    purchase_order_status,\n\t    picking_route,\n\t    inventory_order,\n\t    picking_status,\n\t    line_status,\n\t    truck_scale_completion_flag,\n\t    invoice,\n\t    invoice_line_num,\n\t    invoice_date,\n\t    delivery_note_category,\n\t    delivery_note_category_name,\n\t    closing_date,\n\t    created_date_time,\n\t    created_by,\n\t    shipping_terms,\n\t    shipping_terms_description,\n\t    payment_terms,\n\t    payment_terms_description,\n\t    sales_consumer,\n\t    updated_date_time,\n\t    updated_by,\n\t    profit_and_loss_department,\n\t    qty_per_pack,\n\t    sales_qty,\n\t    sales_unit,\n\t    contract_unit_qty,\n\t    contract_unit_price_uom,\n\t    contract_unit_price,\n\t    net_amount,\n\t    shipping_qty,\n\t    invoice_qty,\n\t    invoice_unit_qty,\n\t    invoice_contract_unit_price,\n\t    invoice_net_amount,\n\t    consumption_tax,\n\t    tax_rate,\n\t    factory_variable_costs,\n\t    factory_fixed_costs,\n\t    direct_delivery_variable_costs,\n\t    one_price_variable_costs,\n\t    one_price_fixed_costs,\n\t    accounting_currency,\n\t    countryregionid,\n\t    country,\n\t    billinig_date\n\tFROM\n\t\ttemp_plstatement\n\n\tCOMMIT TRANSACTION;\n\nEND TRY\n\nBEGIN CATCH\n\n\tROLLBACK TRANSACTION;\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
+											}
+										],
+										"scriptBlockExecutionTimeout": "02:00:00"
+									}
+								},
+								{
+									"name": "TruncateMiddelTableAfterCsvFileDelete",
+									"description": "中間テーブルのテーブルデータを全削除します。\n次のアクティビティで CSV ファイルを削除します。",
+									"type": "Script",
+									"dependsOn": [
+										{
+											"activity": "DeleteInsertCsvDataAndGroupByFileName",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"linkedServiceName": {
+										"referenceName": "test_db_nsw_link_service",
+										"type": "LinkedServiceReference"
+									},
+									"typeProperties": {
+										"scripts": [
+											{
+												"type": "Query",
+												"text": "BEGIN TRY\r\n\r\n    -- 中間テーブルに格納されているデータを削除\r\n    TRUNCATE TABLE temp_plstatement;\r\n\r\nEND TRY\r\n\r\nBEGIN CATCH\r\n\r\n\t-- ADF に異常終了を伝えるため\r\n\tTHROW;\r\n\r\nEND CATCH"
+											}
+										],
+										"scriptBlockExecutionTimeout": "02:00:00"
+									}
+								},
+								{
+									"name": "TruncateMiddelTableNotAfterCsvFileDelete",
+									"description": "中間テーブルのテーブルデータを全削除します。\n次のアクティビティで CSV ファイルを削除しません",
+									"type": "Script",
+									"dependsOn": [
+										{
+											"activity": "DeleteInsertCsvDataAndGroupByFileName",
+											"dependencyConditions": [
+												"Failed"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"linkedServiceName": {
+										"referenceName": "test_db_nsw_link_service",
+										"type": "LinkedServiceReference"
+									},
+									"typeProperties": {
+										"scripts": [
+											{
+												"type": "Query",
+												"text": "BEGIN TRY\r\n\r\n    -- 中間テーブルに格納されているデータを削除\r\n    TRUNCATE TABLE temp_plstatement;\r\n\r\nEND TRY\r\n\r\nBEGIN CATCH\r\n\r\n\t-- ADF に異常終了を伝えるため\r\n\tTHROW;\r\n\r\nEND CATCH"
+											}
+										],
+										"scriptBlockExecutionTimeout": "02:00:00"
+									}
+								},
+								{
+									"name": "DeleteCsvFile",
+									"description": "対象のフォルダ配下に存在するアイテムの内、プレフィックスが \"plstatement_\" の CSV ファイルのみ削除します。",
+									"type": "Delete",
+									"dependsOn": [
+										{
+											"activity": "TruncateMiddelTableAfterCsvFileDelete",
+											"dependencyConditions": [
+												"Completed"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "binary_common",
+											"type": "DatasetReference",
+											"parameters": {}
+										},
+										"enableLogging": false,
+										"storeSettings": {
+											"type": "AzureBlobStorageReadSettings",
+											"recursive": true,
+											"wildcardFileName": "plstatement_*.csv",
+											"enablePartitionDiscovery": false
+										}
+									}
+								},
+								{
+									"name": "CsvDataInTempTable",
+									"description": "CSV ファイルから読み込んだデータを中間テーブルに保存します。",
+									"type": "ExecuteDataFlow",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataflow": {
+											"referenceName": "csv_db_bulk_plstatement_temp_table",
+											"type": "DataFlowReference",
+											"parameters": {
+												"latestDatetimeFileName": {
+													"value": "'@{variables('latestDatetimeFileName')}'",
+													"type": "Expression"
+												}
+											},
+											"datasetParameters": {
+												"csvFileRead": {},
+												"csvDataInMiddleTable": {}
+											}
+										},
+										"staging": {},
+										"compute": {
+											"coreCount": 8,
+											"computeType": "General"
+										},
+										"traceLevel": "Fine"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "TruncateMiddelTableIfExitMiddelTableData",
+						"description": "中間テーブルにレコードが存在する場合にのみ、中間テーブルのテーブルデータを全削除します。",
+						"type": "Script",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "test_db_nsw_link_service",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "BEGIN TRY\n\n    DECLARE @RecordCount INT;\n\n\tSELECT @RecordCount = COUNT(sales_id)\n\tFROM temp_plstatement;\n\n\t-- 中間テーブルにレコードが存在する場合\n\tIF @RecordCount > 0\n\tBEGIN\n\t\t-- 中間テーブルに格納されているデータを削除\n\t\tTRUNCATE TABLE temp_plstatement;\n\tEND\n\nEND TRY\n\nBEGIN CATCH\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
+						}
+					},
+					{
+						"name": "GetFileNameList",
+						"description": "対象のフォルダ配下に存在するアイテム一覧を取得します。",
+						"type": "GetMetadata",
+						"dependsOn": [
+							{
+								"activity": "TruncateMiddelTableIfExitMiddelTableData",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "binary_common",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "BinaryReadSettings"
+							}
+						}
+					},
+					{
+						"name": "FilterCsvFile",
+						"description": "取得したアイテムの内、プレフィックスが \"plstatement_\" のCSV ファイルのみを抽出します。",
+						"type": "Filter",
+						"dependsOn": [
+							{
+								"activity": "GetFileNameList",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('GetFileNameList').output.childItems",
+								"type": "Expression"
+							},
+							"condition": {
+								"value": "@and(startswith(item().name, 'plstatement'), endswith(item().name, 'csv'))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "ForEachGetLatestDatetime",
+						"description": "フィルタリングで残った CSV ファイルの数だけループします。",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "FilterCsvFile",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('FilterCsvFile').output.value",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "LatestDatetimeFileNameIsEmpty",
+									"description": "latestDatetimeFileName の値が empty かどうか判断します。",
+									"type": "IfCondition",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"expression": {
+											"value": "@empty(variables('latestDatetimeFileName'))",
+											"type": "Expression"
+										},
+										"ifFalseActivities": [
+											{
+												"name": "SetTempLatestDatetimeFileName",
+												"description": "tempLatestDatetimeFileName に latestDatetimeFileName の値を設定します。",
+												"type": "SetVariable",
+												"dependsOn": [],
+												"policy": {
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"variableName": "tempLatestDatetimeFileName",
+													"value": {
+														"value": "@variables('latestDatetimeFileName')",
+														"type": "Expression"
+													}
+												}
+											},
+											{
+												"name": "SetLatestDatetimeFileName",
+												"description": "ForEach に渡されたファイル名の日時と tempLatestDatetimeFileName の日時を比較し、最新の日時のファイル名のみを保持します。",
+												"type": "SetVariable",
+												"dependsOn": [
+													{
+														"activity": "SetTempLatestDatetimeFileName",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"variableName": "latestDatetimeFileName",
+													"value": {
+														"value": "@if(greater(substring(item().name, 12, 14), substring(variables('tempLatestDatetimeFileName'), 12, 14)), item().name, variables('tempLatestDatetimeFileName'))",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"ifTrueActivities": [
+											{
+												"name": "SetFileName",
+												"description": "latestDatetimeFileName に ForEach に渡されたファイル名を設定します。",
+												"type": "SetVariable",
+												"dependsOn": [],
+												"policy": {
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"variableName": "latestDatetimeFileName",
+													"value": {
+														"value": "@item().name",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"latestDatetimeFileName": {
+						"type": "String"
+					},
+					"tempLatestDatetimeFileName": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "実績損益"
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-12-23T05:37:39Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/test_db_nsw_link_service')]",
+				"[concat(variables('factoryId'), '/datasets/binary_common')]",
+				"[concat(variables('factoryId'), '/dataflows/csv_db_bulk_plstatement_temp_table')]"
 			]
 		}
 	]
