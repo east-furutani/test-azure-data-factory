@@ -1,0 +1,2021 @@
+{
+	"name": "plstatement_file_copy",
+	"properties": {
+		"activities": [
+			{
+				"name": "ExitCsvFile",
+				"description": "処理対象のフォルダに CSV ファイルが存在する場合にのみ後続の処理を実行します。",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "ForEachGetLatestDatetime",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greater(activity('FilterCsvFile').output.FilteredItemsCount, 0)",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "DeleteInsertCsvDataAndGroupByFileName",
+							"description": "CSV ファイルから読み込んだデータを DELETE INSERT します",
+							"type": "Script",
+							"dependsOn": [
+								{
+									"activity": "CsvDataInMiddleTable",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"linkedServiceName": {
+								"referenceName": "test_db_nsw_link_service",
+								"type": "LinkedServiceReference"
+							},
+							"typeProperties": {
+								"scripts": [
+									{
+										"type": "Query",
+										"text": "BEGIN TRY\n\t\t\n\tBEGIN TRANSACTION;\n\n\t-- 対象テーブルの内、年月が前月、当月、来月、当月より 2 年前のデータのみ削除\n\tDELETE FROM plstatement\n\tWHERE\n\t\tbillinig_date IN\n\t\t(\n\t\t\tSELECT\n\t\t\t\tbillinig_date\n\t\t\tFROM\n\t\t\t\ttemp_plstatement\n\t\t\tGROUP BY\n\t\t\t    billinig_date\n\t\t)\n\t\tOR\n\t\tbillinig_date <= FORMAT(DATEADD(YEAR, -2, GETDATE() AT TIME ZONE 'UTC' AT TIME ZONE 'Tokyo Standard Time'), 'yyyyMM');\n\n\t-- CSV ファイルから読み込んだデータを対象テーブルに INSERT\n\tINSERT INTO plstatement\n\t(\n\t\tsystem_date,\n\t    sales_id,\n\t    line_num,\n\t    corporate_code,\n\t    source_id,\n\t    voucher_type,\n\t    sales_office,\n\t    sales_office_name,\n\t    sales_group,\n\t    sales_group_name,\n\t    cust_account,\n\t    cust_short_name,\n\t    phone_number,\n\t    sales_ship_to_account_num,\n\t    sales_ship_to_short_name,\n\t    sales_ship_to_name,\n\t    sales_ship_to_name2,\n\t    sales_ship_to_belonging,\n\t    sales_ship_to_name_notes,\n\t    sales_ship_to_prefectures,\n\t    sales_ship_to_municipality,\n\t    sales_ship_to_address,\n\t    sales_ship_to_building_name,\n\t    sales_ship_to_address_notes,\n\t    sales_ship_to_remarks1,\n\t    sales_ship_to_remarks2,\n\t    sales_ship_to_remarks3,\n\t    sales_ship_to_phone_num,\n\t    sales_end_user_account_num,\n\t    sales_end_user_short_name,\n\t    invoice_account,\n\t    sales_invoice_short_name,\n\t    sales_invoice_name,\n\t    sales_invoice_name2,\n\t    sales_invoice_belonging,\n\t    sales_invoice_name_notes,\n\t    sales_invoice_post_code,\n\t    sales_invoice_prefectures,\n\t    sales_invoice_municipality,\n\t    sales_invoice_address,\n\t    sales_invoice_building_name,\n\t    sales_invoice_address_notes,\n\t    sales_invoice_remarks1,\n\t    sales_invoice_remarks2,\n\t    sales_invoice_remarks3,\n\t    cust_collections,\n\t    sales_cust_collection_short_name,\n\t    sales_person,\n\t    sales_person_name,\n\t    carrier_cd,\n\t    carrier_name_alias,\n\t    oem_cd,\n\t    oem_name,\n\t    oem_name2,\n\t    oem_prefectures,\n\t    oem_municipality,\n\t    oem_address,\n\t    oem_building_name,\n\t    oem_address_notes,\n\t    oem_remarks1,\n\t    oem_remarks2,\n\t    oem_remarks3,\n\t    sales_vend_account_num,\n\t    sales_vend_name_alias,\n\t    customer_requirements,\n\t    billing_block,\n\t    item_id,\n\t    item_name,\n\t    pack_style_name,\n\t    shipping_name_code,\n\t    shipping_name,\n\t    trade_mark_code,\n\t    trade_mark_name,\n\t    sales_item_class_code,\n\t    sales_item_class_name,\n\t    product_item_group_code,\n\t    product_item_group_name,\n\t    sales_item_group_code,\n\t    sales_item_group_name,\n\t    shipping_type,\n\t    truck_scale_type,\n\t    product_type,\n\t    correction_category,\n\t    invent_site_id,\n\t    invent_site_name,\n\t    invent_location_id,\n\t    invent_location_name,\n\t    receipt_date_requested,\n\t    shipping_date_requested,\n\t    shipping_date,\n\t    sales_status,\n\t    delivery_method,\n\t    delivery_method_description,\n\t    detailed_status,\n\t    customer_delete_flag,\n\t    customer_delete_reason,\n\t    purchase_order_number,\n\t    purchase_order_status,\n\t    picking_route,\n\t    inventory_order,\n\t    picking_status,\n\t    line_status,\n\t    truck_scale_completion_flag,\n\t    invoice,\n\t    invoice_line_num,\n\t    invoice_date,\n\t    delivery_note_category,\n\t    delivery_note_category_name,\n\t    closing_date,\n\t    created_date_time,\n\t    created_by,\n\t    shipping_terms,\n\t    shipping_terms_description,\n\t    payment_terms,\n\t    payment_terms_description,\n\t    sales_consumer,\n\t    updated_date_time,\n\t    updated_by,\n\t    profit_and_loss_department,\n\t    qty_per_pack,\n\t    sales_qty,\n\t    sales_unit,\n\t    contract_unit_qty,\n\t    contract_unit_price_uom,\n\t    contract_unit_price,\n\t    net_amount,\n\t    shipping_qty,\n\t    invoice_qty,\n\t    invoice_unit_qty,\n\t    invoice_contract_unit_price,\n\t    invoice_net_amount,\n\t    consumption_tax,\n\t    tax_rate,\n\t    factory_variable_costs,\n\t    factory_fixed_costs,\n\t    direct_delivery_variable_costs,\n\t    one_price_variable_costs,\n\t    one_price_fixed_costs,\n\t    accounting_currency,\n\t    countryregionid,\n\t    country,\n\t    billinig_date\n\t)\n\tSELECT\n\t\tsystem_date,\n\t    sales_id,\n\t    line_num,\n\t    corporate_code,\n\t    source_id,\n\t    voucher_type,\n\t    sales_office,\n\t    sales_office_name,\n\t    sales_group,\n\t    sales_group_name,\n\t    cust_account,\n\t    cust_short_name,\n\t    phone_number,\n\t    sales_ship_to_account_num,\n\t    sales_ship_to_short_name,\n\t    sales_ship_to_name,\n\t    sales_ship_to_name2,\n\t    sales_ship_to_belonging,\n\t    sales_ship_to_name_notes,\n\t    sales_ship_to_prefectures,\n\t    sales_ship_to_municipality,\n\t    sales_ship_to_address,\n\t    sales_ship_to_building_name,\n\t    sales_ship_to_address_notes,\n\t    sales_ship_to_remarks1,\n\t    sales_ship_to_remarks2,\n\t    sales_ship_to_remarks3,\n\t    sales_ship_to_phone_num,\n\t    sales_end_user_account_num,\n\t    sales_end_user_short_name,\n\t    invoice_account,\n\t    sales_invoice_short_name,\n\t    sales_invoice_name,\n\t    sales_invoice_name2,\n\t    sales_invoice_belonging,\n\t    sales_invoice_name_notes,\n\t    sales_invoice_post_code,\n\t    sales_invoice_prefectures,\n\t    sales_invoice_municipality,\n\t    sales_invoice_address,\n\t    sales_invoice_building_name,\n\t    sales_invoice_address_notes,\n\t    sales_invoice_remarks1,\n\t    sales_invoice_remarks2,\n\t    sales_invoice_remarks3,\n\t    cust_collections,\n\t    sales_cust_collection_short_name,\n\t    sales_person,\n\t    sales_person_name,\n\t    carrier_cd,\n\t    carrier_name_alias,\n\t    oem_cd,\n\t    oem_name,\n\t    oem_name2,\n\t    oem_prefectures,\n\t    oem_municipality,\n\t    oem_address,\n\t    oem_building_name,\n\t    oem_address_notes,\n\t    oem_remarks1,\n\t    oem_remarks2,\n\t    oem_remarks3,\n\t    sales_vend_account_num,\n\t    sales_vend_name_alias,\n\t    customer_requirements,\n\t    billing_block,\n\t    item_id,\n\t    item_name,\n\t    pack_style_name,\n\t    shipping_name_code,\n\t    shipping_name,\n\t    trade_mark_code,\n\t    trade_mark_name,\n\t    sales_item_class_code,\n\t    sales_item_class_name,\n\t    product_item_group_code,\n\t    product_item_group_name,\n\t    sales_item_group_code,\n\t    sales_item_group_name,\n\t    shipping_type,\n\t    truck_scale_type,\n\t    product_type,\n\t    correction_category,\n\t    invent_site_id,\n\t    invent_site_name,\n\t    invent_location_id,\n\t    invent_location_name,\n\t    receipt_date_requested,\n\t    shipping_date_requested,\n\t    shipping_date,\n\t    sales_status,\n\t    delivery_method,\n\t    delivery_method_description,\n\t    detailed_status,\n\t    customer_delete_flag,\n\t    customer_delete_reason,\n\t    purchase_order_number,\n\t    purchase_order_status,\n\t    picking_route,\n\t    inventory_order,\n\t    picking_status,\n\t    line_status,\n\t    truck_scale_completion_flag,\n\t    invoice,\n\t    invoice_line_num,\n\t    invoice_date,\n\t    delivery_note_category,\n\t    delivery_note_category_name,\n\t    closing_date,\n\t    created_date_time,\n\t    created_by,\n\t    shipping_terms,\n\t    shipping_terms_description,\n\t    payment_terms,\n\t    payment_terms_description,\n\t    sales_consumer,\n\t    updated_date_time,\n\t    updated_by,\n\t    profit_and_loss_department,\n\t    qty_per_pack,\n\t    sales_qty,\n\t    sales_unit,\n\t    contract_unit_qty,\n\t    contract_unit_price_uom,\n\t    contract_unit_price,\n\t    net_amount,\n\t    shipping_qty,\n\t    invoice_qty,\n\t    invoice_unit_qty,\n\t    invoice_contract_unit_price,\n\t    invoice_net_amount,\n\t    consumption_tax,\n\t    tax_rate,\n\t    factory_variable_costs,\n\t    factory_fixed_costs,\n\t    direct_delivery_variable_costs,\n\t    one_price_variable_costs,\n\t    one_price_fixed_costs,\n\t    accounting_currency,\n\t    countryregionid,\n\t    country,\n\t    billinig_date\n\tFROM\n\t\ttemp_plstatement\n\n\tCOMMIT TRANSACTION;\n\nEND TRY\n\nBEGIN CATCH\n\n\tROLLBACK TRANSACTION;\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
+									}
+								],
+								"scriptBlockExecutionTimeout": "02:00:00"
+							}
+						},
+						{
+							"name": "TruncateMiddelTableAfterCsvFileDelete",
+							"description": "中間テーブルのテーブルデータを全削除します。\n次のアクティビティで CSV ファイルを削除します。",
+							"type": "Script",
+							"dependsOn": [
+								{
+									"activity": "DeleteInsertCsvDataAndGroupByFileName",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"linkedServiceName": {
+								"referenceName": "test_db_nsw_link_service",
+								"type": "LinkedServiceReference"
+							},
+							"typeProperties": {
+								"scripts": [
+									{
+										"type": "Query",
+										"text": "BEGIN TRY\r\n\r\n    -- 中間テーブルに格納されているデータを削除\r\n    TRUNCATE TABLE temp_plstatement;\r\n\r\nEND TRY\r\n\r\nBEGIN CATCH\r\n\r\n\t-- ADF に異常終了を伝えるため\r\n\tTHROW;\r\n\r\nEND CATCH"
+									}
+								],
+								"scriptBlockExecutionTimeout": "02:00:00"
+							}
+						},
+						{
+							"name": "TruncateMiddelTableNotAfterCsvFileDelete",
+							"description": "中間テーブルのテーブルデータを全削除します。\n次のアクティビティで CSV ファイルを削除しません",
+							"type": "Script",
+							"dependsOn": [
+								{
+									"activity": "DeleteInsertCsvDataAndGroupByFileName",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"linkedServiceName": {
+								"referenceName": "test_db_nsw_link_service",
+								"type": "LinkedServiceReference"
+							},
+							"typeProperties": {
+								"scripts": [
+									{
+										"type": "Query",
+										"text": "BEGIN TRY\r\n\r\n    -- 中間テーブルに格納されているデータを削除\r\n    TRUNCATE TABLE temp_plstatement;\r\n\r\nEND TRY\r\n\r\nBEGIN CATCH\r\n\r\n\t-- ADF に異常終了を伝えるため\r\n\tTHROW;\r\n\r\nEND CATCH"
+									}
+								],
+								"scriptBlockExecutionTimeout": "02:00:00"
+							}
+						},
+						{
+							"name": "DeleteCsvFile",
+							"description": "対象のフォルダ配下に存在するアイテムの内、プレフィックスが \"plstatement_\" の CSV ファイルのみ削除します。",
+							"type": "Delete",
+							"dependsOn": [
+								{
+									"activity": "TruncateMiddelTableAfterCsvFileDelete",
+									"dependencyConditions": [
+										"Completed"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "binary_common",
+									"type": "DatasetReference"
+								},
+								"enableLogging": false,
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFileName": "plstatement_*.csv",
+									"enablePartitionDiscovery": false
+								}
+							}
+						},
+						{
+							"name": "CsvDataInMiddleTable",
+							"description": "CSV ファイルから読み込んだデータを中間テーブルに保存します。",
+							"type": "ExecuteDataFlow",
+							"dependsOn": [
+								{
+									"activity": "CsvCopyAlterEncoding",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataflow": {
+									"referenceName": "csv_db_bulk_plstatement_temp_table",
+									"type": "DataFlowReference",
+									"parameters": {
+										"latestDatetimeFileName": {
+											"value": "'@{variables('latestDatetimeFileName')}'",
+											"type": "Expression"
+										}
+									}
+								},
+								"compute": {
+									"coreCount": 8,
+									"computeType": "General"
+								},
+								"traceLevel": "Fine"
+							}
+						},
+						{
+							"name": "CsvCopyAlterEncoding",
+							"description": "エンコーディングを Shift-Jis → UTF-8 に変更したうえで、処理対象の CSV ファイルを別フォルダにコピーします。",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "DelimitedTextSource",
+									"storeSettings": {
+										"type": "AzureBlobStorageReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings",
+										"skipLineCount": 1
+									}
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobStorageWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 1
+											},
+											"sink": {
+												"name": "日付",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 2
+											},
+											"sink": {
+												"name": "販売注文",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 3
+											},
+											"sink": {
+												"name": "明細行番号",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 4
+											},
+											"sink": {
+												"name": "法人コード",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 5
+											},
+											"sink": {
+												"name": "コピー元ID",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 6
+											},
+											"sink": {
+												"name": "伝票タイプ",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 7
+											},
+											"sink": {
+												"name": "営業所",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 8
+											},
+											"sink": {
+												"name": "営業所名",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 9
+											},
+											"sink": {
+												"name": "営業グループ",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 10
+											},
+											"sink": {
+												"name": "営業グループ名",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 11
+											},
+											"sink": {
+												"name": "顧客",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 12
+											},
+											"sink": {
+												"name": "略称",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 13
+											},
+											"sink": {
+												"name": "電話番号",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 14
+											},
+											"sink": {
+												"name": "出荷先",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 15
+											},
+											"sink": {
+												"name": "出荷先-略称",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 16
+											},
+											"sink": {
+												"name": "出荷先-名前",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 17
+											},
+											"sink": {
+												"name": "出荷先-名前2",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 18
+											},
+											"sink": {
+												"name": "出荷先-所属",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 19
+											},
+											"sink": {
+												"name": "出荷先-名前備考",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 20
+											},
+											"sink": {
+												"name": "出荷先-都道府県",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 21
+											},
+											"sink": {
+												"name": "出荷先-市町村",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 22
+											},
+											"sink": {
+												"name": "出荷先-住所",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 23
+											},
+											"sink": {
+												"name": "出荷先-建物名",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 24
+											},
+											"sink": {
+												"name": "出荷先-住所備考",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 25
+											},
+											"sink": {
+												"name": "出荷先-備考1",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 26
+											},
+											"sink": {
+												"name": "出荷先-備考2",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 27
+											},
+											"sink": {
+												"name": "出荷先-備考3",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 28
+											},
+											"sink": {
+												"name": "出荷先-電話番号",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 29
+											},
+											"sink": {
+												"name": "カスタマー",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 30
+											},
+											"sink": {
+												"name": "カスタマー-略称",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 31
+											},
+											"sink": {
+												"name": "請求先/元ID",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 32
+											},
+											"sink": {
+												"name": "請求先-略称",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 33
+											},
+											"sink": {
+												"name": "請求先-名前",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 34
+											},
+											"sink": {
+												"name": "請求先-名前2",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 35
+											},
+											"sink": {
+												"name": "請求先-所属",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 36
+											},
+											"sink": {
+												"name": "請求先-名前備考",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 37
+											},
+											"sink": {
+												"name": "請求先-郵便番号",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 38
+											},
+											"sink": {
+												"name": "請求先-都道府県",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 39
+											},
+											"sink": {
+												"name": "請求先-市町村",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 40
+											},
+											"sink": {
+												"name": "請求先-住所",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 41
+											},
+											"sink": {
+												"name": "請求先-建物名",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 42
+											},
+											"sink": {
+												"name": "請求先-住所備考",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 43
+											},
+											"sink": {
+												"name": "請求先-備考1",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 44
+											},
+											"sink": {
+												"name": "請求先-備考2",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 45
+											},
+											"sink": {
+												"name": "請求先-備考3",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 46
+											},
+											"sink": {
+												"name": "回収先-略称",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 47
+											},
+											"sink": {
+												"name": "営業員",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 48
+											},
+											"sink": {
+												"name": "営業員名",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 49
+											},
+											"sink": {
+												"name": "運送業者",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 50
+											},
+											"sink": {
+												"name": "運送業者-検索名",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 51
+											},
+											"sink": {
+												"name": "OEMコード",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 52
+											},
+											"sink": {
+												"name": "OEM-名前",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 53
+											},
+											"sink": {
+												"name": "OEM-名前2",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 54
+											},
+											"sink": {
+												"name": "OEM-都道府県",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 55
+											},
+											"sink": {
+												"name": "OEM-市町村",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 56
+											},
+											"sink": {
+												"name": "OEM-住所",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 57
+											},
+											"sink": {
+												"name": "OEM-建物名",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 58
+											},
+											"sink": {
+												"name": "OEM-住所備考",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 59
+											},
+											"sink": {
+												"name": "OEM-備考1",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 60
+											},
+											"sink": {
+												"name": "OEM-備考2",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 61
+											},
+											"sink": {
+												"name": "OEM-備考3",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 62
+											},
+											"sink": {
+												"name": "Column62",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 63
+											},
+											"sink": {
+												"name": "Column63",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 64
+											},
+											"sink": {
+												"name": "Column64",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 65
+											},
+											"sink": {
+												"name": "Column65",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 66
+											},
+											"sink": {
+												"name": "Column66",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 67
+											},
+											"sink": {
+												"name": "Column67",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 68
+											},
+											"sink": {
+												"name": "Column68",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 69
+											},
+											"sink": {
+												"name": "Column69",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 70
+											},
+											"sink": {
+												"name": "Column70",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 71
+											},
+											"sink": {
+												"name": "Column71",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 72
+											},
+											"sink": {
+												"name": "Column72",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 73
+											},
+											"sink": {
+												"name": "Column73",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 74
+											},
+											"sink": {
+												"name": "Column74",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 75
+											},
+											"sink": {
+												"name": "Column75",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 76
+											},
+											"sink": {
+												"name": "Column76",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 77
+											},
+											"sink": {
+												"name": "Column77",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 78
+											},
+											"sink": {
+												"name": "Column78",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 79
+											},
+											"sink": {
+												"name": "Column79",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 80
+											},
+											"sink": {
+												"name": "Column80",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 81
+											},
+											"sink": {
+												"name": "Column81",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 82
+											},
+											"sink": {
+												"name": "Column82",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 83
+											},
+											"sink": {
+												"name": "Column83",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 84
+											},
+											"sink": {
+												"name": "Column84",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 85
+											},
+											"sink": {
+												"name": "Column85",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 86
+											},
+											"sink": {
+												"name": "Column86",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 87
+											},
+											"sink": {
+												"name": "Column87",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 88
+											},
+											"sink": {
+												"name": "Column88",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 89
+											},
+											"sink": {
+												"name": "Column89",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 90
+											},
+											"sink": {
+												"name": "Column90",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 91
+											},
+											"sink": {
+												"name": "Column91",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 92
+											},
+											"sink": {
+												"name": "Column92",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 93
+											},
+											"sink": {
+												"name": "Column93",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 94
+											},
+											"sink": {
+												"name": "Column94",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 95
+											},
+											"sink": {
+												"name": "Column95",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 96
+											},
+											"sink": {
+												"name": "Column96",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 97
+											},
+											"sink": {
+												"name": "Column97",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 98
+											},
+											"sink": {
+												"name": "Column98",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 99
+											},
+											"sink": {
+												"name": "Column99",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 100
+											},
+											"sink": {
+												"name": "Column100",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 101
+											},
+											"sink": {
+												"name": "Column101",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 102
+											},
+											"sink": {
+												"name": "Column102",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 103
+											},
+											"sink": {
+												"name": "Column103",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 104
+											},
+											"sink": {
+												"name": "Column104",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 105
+											},
+											"sink": {
+												"name": "Column105",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 106
+											},
+											"sink": {
+												"name": "Column106",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 107
+											},
+											"sink": {
+												"name": "Column107",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 108
+											},
+											"sink": {
+												"name": "Column108",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 109
+											},
+											"sink": {
+												"name": "Column109",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 110
+											},
+											"sink": {
+												"name": "Column110",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 111
+											},
+											"sink": {
+												"name": "Column111",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 112
+											},
+											"sink": {
+												"name": "Column112",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 113
+											},
+											"sink": {
+												"name": "Column113",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 114
+											},
+											"sink": {
+												"name": "Column114",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 115
+											},
+											"sink": {
+												"name": "Column115",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 116
+											},
+											"sink": {
+												"name": "Column116",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 117
+											},
+											"sink": {
+												"name": "Column117",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 118
+											},
+											"sink": {
+												"name": "Column118",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 119
+											},
+											"sink": {
+												"name": "Column119",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 120
+											},
+											"sink": {
+												"name": "Column120",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 121
+											},
+											"sink": {
+												"name": "Column121",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 122
+											},
+											"sink": {
+												"name": "Column122",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 123
+											},
+											"sink": {
+												"name": "Column123",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 124
+											},
+											"sink": {
+												"name": "Column124",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 125
+											},
+											"sink": {
+												"name": "Column125",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 126
+											},
+											"sink": {
+												"name": "Column126",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 127
+											},
+											"sink": {
+												"name": "Column127",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 128
+											},
+											"sink": {
+												"name": "Column128",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 129
+											},
+											"sink": {
+												"name": "Column129",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 130
+											},
+											"sink": {
+												"name": "Column130",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 131
+											},
+											"sink": {
+												"name": "Column131",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 132
+											},
+											"sink": {
+												"name": "Column132",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 133
+											},
+											"sink": {
+												"name": "Column133",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 134
+											},
+											"sink": {
+												"name": "Column134",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 135
+											},
+											"sink": {
+												"name": "Column135",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 136
+											},
+											"sink": {
+												"name": "Column136",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 137
+											},
+											"sink": {
+												"name": "Column137",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 138
+											},
+											"sink": {
+												"name": "Column138",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 139
+											},
+											"sink": {
+												"name": "Column139",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 140
+											},
+											"sink": {
+												"name": "Column140",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 141
+											},
+											"sink": {
+												"name": "Column141",
+												"type": "String",
+												"physicalType": "String"
+											}
+										},
+										{
+											"source": {
+												"type": "String",
+												"ordinal": 142
+											},
+											"sink": {
+												"name": "Column142",
+												"type": "String",
+												"physicalType": "String"
+											}
+										}
+									],
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "input_common_delimited_text",
+									"type": "DatasetReference",
+									"parameters": {
+										"fileName": {
+											"value": "@variables('latestDatetimeFileName')",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "output_common_delimited_text",
+									"type": "DatasetReference",
+									"parameters": {
+										"fileName": {
+											"value": "@variables('latestDatetimeFileName')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "DeleteCsvFile2",
+							"description": "コピー先のフォルダに存在する処理対象の CSV ファイルを削除します。",
+							"type": "Delete",
+							"dependsOn": [
+								{
+									"activity": "DeleteCsvFile",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "output_common_delimited_text",
+									"type": "DatasetReference",
+									"parameters": {
+										"fileName": {
+											"value": "@variables('latestDatetimeFileName')",
+											"type": "Expression"
+										}
+									}
+								},
+								"enableLogging": false,
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "TruncateMiddelTableIfExitMiddelTableData",
+				"description": "中間テーブルにレコードが存在する場合にのみ、中間テーブルのテーブルデータを全削除します。",
+				"type": "Script",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "test_db_nsw_link_service",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "BEGIN TRY\n\n    DECLARE @RecordCount INT;\n\n\tSELECT @RecordCount = COUNT(sales_id)\n\tFROM temp_plstatement;\n\n\t-- 中間テーブルにレコードが存在する場合\n\tIF @RecordCount > 0\n\tBEGIN\n\t\t-- 中間テーブルに格納されているデータを削除\n\t\tTRUNCATE TABLE temp_plstatement;\n\tEND\n\nEND TRY\n\nBEGIN CATCH\n\n\t-- ADF に異常終了を伝えるため\n\tTHROW;\n\nEND CATCH"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			},
+			{
+				"name": "GetFileNameList",
+				"description": "対象のフォルダ配下に存在するアイテム一覧を取得します。",
+				"type": "GetMetadata",
+				"dependsOn": [
+					{
+						"activity": "TruncateMiddelTableIfExitMiddelTableData",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "binary_common",
+						"type": "DatasetReference"
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "BinaryReadSettings"
+					}
+				}
+			},
+			{
+				"name": "FilterCsvFile",
+				"description": "取得したアイテムの内、プレフィックスが \"plstatement_\" のCSV ファイルのみを抽出します。",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "GetFileNameList",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('GetFileNameList').output.childItems",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(startswith(item().name, 'plstatement'), endswith(item().name, 'csv'))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ForEachGetLatestDatetime",
+				"description": "フィルタリングで残った CSV ファイルの数だけループします。",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FilterCsvFile",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FilterCsvFile').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "LatestDatetimeFileNameIsEmpty",
+							"description": "latestDatetimeFileName の値が empty かどうか判断します。",
+							"type": "IfCondition",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@empty(variables('latestDatetimeFileName'))",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "SetTempLatestDatetimeFileName",
+										"description": "tempLatestDatetimeFileName に latestDatetimeFileName の値を設定します。",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "tempLatestDatetimeFileName",
+											"value": {
+												"value": "@variables('latestDatetimeFileName')",
+												"type": "Expression"
+											}
+										}
+									},
+									{
+										"name": "SetLatestDatetimeFileName",
+										"description": "ForEach に渡されたファイル名の日時と tempLatestDatetimeFileName の日時を比較し、最新の日時のファイル名のみを保持します。",
+										"type": "SetVariable",
+										"dependsOn": [
+											{
+												"activity": "SetTempLatestDatetimeFileName",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "latestDatetimeFileName",
+											"value": {
+												"value": "@if(greater(substring(item().name, 12, 14), substring(variables('tempLatestDatetimeFileName'), 12, 14)), item().name, variables('tempLatestDatetimeFileName'))",
+												"type": "Expression"
+											}
+										}
+									}
+								],
+								"ifTrueActivities": [
+									{
+										"name": "SetFileName",
+										"description": "latestDatetimeFileName に ForEach に渡されたファイル名を設定します。",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "latestDatetimeFileName",
+											"value": {
+												"value": "@item().name",
+												"type": "Expression"
+											}
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		],
+		"variables": {
+			"latestDatetimeFileName": {
+				"type": "String"
+			},
+			"tempLatestDatetimeFileName": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "実績損益"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-10-09T04:54:59Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
