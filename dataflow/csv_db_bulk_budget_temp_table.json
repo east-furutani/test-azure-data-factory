@@ -133,7 +133,6 @@
 				"     columnDelimiter: ',',",
 				"     escapeChar: '\\\"',",
 				"     quoteChar: '\\\"',",
-				"     encodingName: 'SHIFT-JIS',",
 				"     columnNamesAsHeader: true,",
 				"     wildcardPaths:[($latestDatetimeFileName)]) ~> csvFileRead",
 				"csvFileRead derive({売上（基本）数量} = toDecimal({売上（基本）数量}, 12, 2),",

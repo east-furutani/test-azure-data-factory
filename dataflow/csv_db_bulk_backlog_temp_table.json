@@ -108,7 +108,6 @@
 				"     columnDelimiter: ',',",
 				"     escapeChar: '\\\"',",
 				"     quoteChar: '\\\"',",
-				"     encodingName: 'SHIFT-JIS',",
 				"     columnNamesAsHeader: true,",
 				"     wildcardPaths:[($latestDatetimeFileName)]) ~> csvFileRead",
 				"csvFileRead derive({契約単位数量} = toDecimal({契約単位数量}, 12, 2),",
